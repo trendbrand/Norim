@@ -232,17 +232,16 @@ const DEV_ENC_KEY_FALLBACK =
 
 function getEncKey(): Buffer {
   const hex = process.env.APP_ENCRYPTION_KEY_HEX;
-  const valid = Boolean(hex && /^[0-9a-fA-F]{64}$/.test(hex) && hex !== DEV_ENC_KEY_FALLBACK);
-  if (!valid) {
-    // Fail-fast in production: never encrypt tenant secrets-at-rest with a world-known key.
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        "FATAL: APP_ENCRYPTION_KEY_HEX must be a fresh 64-char hex key (openssl rand -hex 32) in production."
-      );
-    }
-    return Buffer.from(DEV_ENC_KEY_FALLBACK, "hex");
+  if (hex && /^[0-9a-fA-F]{64}$/.test(hex) && hex !== DEV_ENC_KEY_FALLBACK) {
+    return Buffer.from(hex, "hex");
   }
-  return Buffer.from(hex, "hex");
+  // Fail-fast in production: never encrypt tenant secrets-at-rest with a world-known key.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "FATAL: APP_ENCRYPTION_KEY_HEX must be a fresh 64-char hex key (openssl rand -hex 32) in production."
+    );
+  }
+  return Buffer.from(DEV_ENC_KEY_FALLBACK, "hex");
 }
 
 export function encryptField(plain: string): string {
