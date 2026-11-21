@@ -1,0 +1,49 @@
+name: NormInvoice CI — Compliance, Security Audit & E2E Pre-Flight
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  full-production-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run 31 Unit & Cryptographic Security Tests (Core + DB + SDK)
+        run: pnpm test
+
+      - name: Strict Typecheck All 5 Workspaces
+        run: pnpm typecheck
+
+      - name: Full Production Build
+        run: pnpm build
+
+      - name: Live E2E Pre-Flight + OWASP Security & EU Law Penetration Suite
+        run: |
+          pnpm --filter @norminvoice/web start &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/launch-preflight.mjs http://127.0.0.1:3000
+          node scripts/security-audit.mjs http://127.0.0.1:3000
+          kill $SERVER_PID || true

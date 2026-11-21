@@ -1,0 +1,34 @@
+# Local Developer Infrastructure Stack (Postgres 16 + Redis 7 + KoSIT + Python PDF/A-3b Engine)
+# Run: docker compose -f infra/docker-compose.dev.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: norminvoice
+      POSTGRES_USER: norminvoice
+      POSTGRES_PASSWORD: dev_password_only
+    volumes:
+      - ../packages/db/migrations:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  kosit-validator:
+    build:
+      context: ../services/kosit-validator
+    ports:
+      - "8081:8081"
+
+  einvoice-engine:
+    build:
+      context: ../services/einvoice-engine
+    ports:
+      - "8000:8000"
+    environment:
+      KOSIT_VALIDATOR_URL: http://kosit-validator:8081
+    depends_on:
+      - kosit-validator

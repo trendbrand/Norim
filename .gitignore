@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Build artifacts & local SQLite runtime data
+.next/
+dist/
+out/
+build/
+coverage/
+*.tsbuildinfo
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

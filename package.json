@@ -1,0 +1,21 @@
+{
+  "name": "norminvoice-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NormInvoice — Production EU E-Invoice Bridge & Dual Validator (ZUGFeRD 2.3 / Factur-X 1.07 / XRechnung 3.0.2)",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @norminvoice/web dev",
+    "build": "pnpm --filter @norminvoice/einvoice-core build && pnpm --filter @norminvoice/db build && pnpm --filter @norminvoice/sdk build && pnpm --filter @norminvoice/worker build && pnpm --filter @norminvoice/web build",
+    "test": "pnpm --filter @norminvoice/einvoice-core test && pnpm --filter @norminvoice/db test && pnpm --filter @norminvoice/sdk test",
+    "typecheck": "pnpm --filter @norminvoice/einvoice-core build && pnpm --filter @norminvoice/db build && pnpm --filter @norminvoice/sdk build && pnpm -r typecheck",
+    "preflight": "node scripts/launch-preflight.mjs",
+    "security:audit": "node scripts/security-audit.mjs",
+    "env:init": "node scripts/generate-prod-env.mjs",
+    "worker:dev": "pnpm --filter @norminvoice/worker dev",
+    "db:generate": "pnpm --filter @norminvoice/db generate"
+  }
+}

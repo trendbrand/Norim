@@ -1,0 +1,34 @@
+FROM node:24-alpine AS builder
+RUN corepack enable && corepack prepare pnpm@12.21.0 --activate
+WORKDIR /app
+
+COPY package.json pnpm-workspace.yaml tsconfig.base.json ./
+COPY packages/einvoice-core/package.json packages/einvoice-core/
+COPY packages/db/package.json packages/db/
+COPY apps/web/package.json apps/web/
+
+RUN pnpm install --filter @norminvoice/web...
+
+COPY packages/einvoice-core packages/einvoice-core
+COPY packages/db packages/db
+COPY apps/web apps/web
+
+ENV NEXT_STANDALONE=true
+RUN pnpm --filter @norminvoice/einvoice-core build && \
+    pnpm --filter @norminvoice/db build && \
+    pnpm --filter @norminvoice/web build
+
+FROM node:24-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV SQLITE_DATA_DIR=/app/data
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs && \
+    mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000 HOSTNAME="0.0.0.0"
+CMD ["node", "apps/web/server.js"]

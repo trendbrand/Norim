@@ -1,0 +1,168 @@
+# =============================================================================
+# NormInvoice — Production Docker Compose (Hetzner Germany / EU-Central)
+# Security: einvoice-engine & kosit-validator live on internal zero-egress VPC
+# =============================================================================
+services:
+  caddy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - public_edge
+      - app_internal
+    depends_on:
+      - web-api
+
+  web-api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      - NODE_ENV=production
+      - SQLITE_DATA_DIR=/app/data
+      - ENABLE_DEMO_LOGIN=false
+      - EINVOICE_ENGINE_URL=http://einvoice-engine:8000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - web_data:/app/data
+    networks:
+      - app_internal
+      - engine_sandbox
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      einvoice-engine:
+        condition: service_healthy
+
+  worker-orchestrator:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.worker
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      - NODE_ENV=production
+      - SQLITE_DATA_DIR=/app/data
+      - ENABLE_DEMO_LOGIN=false
+      - EINVOICE_ENGINE_URL=http://einvoice-engine:8000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - web_data:/app/data
+    networks:
+      - app_internal
+      - engine_sandbox
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    depends_on:
+      - postgres
+      - redis
+      - einvoice-engine
+
+  einvoice-engine:
+    build:
+      context: ../services/einvoice-engine
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp/ephemeral:rw,noexec,nosuid,nodev,size=256m
+    environment:
+      - KOSIT_VALIDATOR_URL=http://kosit-validator:8081
+      - EINVOICE_ENGINE_SHARED_SECRET=${EINVOICE_ENGINE_SHARED_SECRET}
+    networks:
+      - engine_sandbox # Strictly internal: true (zero outbound internet egress)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+    depends_on:
+      kosit-validator:
+        condition: service_healthy
+
+  kosit-validator:
+    build:
+      context: ../services/kosit-validator
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m
+    networks:
+      - engine_sandbox # Strictly internal: true (zero outbound internet egress)
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=norminvoice
+      - POSTGRES_USER=norminvoice
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_strong_password}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ../packages/db/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - app_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U norminvoice"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "384mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+networks:
+  public_edge:
+    driver: bridge
+  app_internal:
+    driver: bridge
+  engine_sandbox:
+    driver: bridge
+    internal: true # Zero internet egress for untrusted XML/PDF processing
+
+volumes:
+  web_data:
+  pg_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
