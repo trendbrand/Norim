@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE_NAME, checkRateLimit, signSessionToken } from "@/lib/auth";
+import { SESSION_COOKIE_NAME, signSessionToken } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { createNewAccountWithOrg, findUserByEmailDb } from "@/lib/db-store";
 import { persistUserAndOrgToPostgres } from "@/lib/pg-persistence";
 
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-    const rl = checkRateLimit(`auth_register:${ip}`, 15, 15 * 60_000);
+    const rl = await enforceRateLimit(`auth_register:${ip}`, 15, 15 * 60_000);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Too many registration attempts. Please try again later." },
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
       fullName: created.fullName,
       orgName: created.orgName,
       role: created.role,
+      sv: 0,
     });
 
     const res = NextResponse.json({

@@ -6,7 +6,7 @@ import {
   parseEInvoiceXml,
   validateCanonicalInvoice,
 } from "@norminvoice/einvoice-core";
-import { checkRateLimit } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { requireTenantAuth } from "@/lib/security";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!access.ok) return access.response;
 
   const rlKey = `api_validate:${access.ctx.orgId}:${access.ctx.apiKeyPrefix || access.ctx.userId}`;
-  const rl = checkRateLimit(rlKey, 300, 60_000);
+  const rl = await enforceRateLimit(rlKey, 300, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       {

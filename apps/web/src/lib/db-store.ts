@@ -350,6 +350,7 @@ function getDb(): DatabaseSync {
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       full_name TEXT NOT NULL,
+      session_version INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
 
@@ -556,6 +557,10 @@ function getDb(): DatabaseSync {
   if (!invCols.some((c) => c.name === "paid_at")) {
     db.exec("ALTER TABLE invoices ADD COLUMN paid_at TEXT;");
   }
+  const userCols = db.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+  if (!userCols.some((c) => c.name === "session_version")) {
+    db.exec("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0;");
+  }
 
   globalSqlite.__normInvoiceSqlite = db;
   // SECURITY: never seed the known-password demo/super-admin workspace into a production
@@ -714,11 +719,11 @@ function seedDemoWorkspaceIfEmpty(db: DatabaseSync) {
 // Organization, User & Team Operations
 // ============================================================================
 
-export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean }) | null {
+export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean; sessionVersion: number }) | null {
   const db = getDb();
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at,
+      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at, u.session_version,
               m.org_id, m.role, o.name as org_name, o.onboarding_completed
        FROM users u
        JOIN memberships m ON m.user_id = u.id
@@ -739,7 +744,17 @@ export function findUserByEmailDb(email: string): (UserRecord & { orgId: string;
     orgName: row.org_name,
     role: row.role,
     onboardingCompleted: Boolean(row.onboarding_completed),
+    sessionVersion: Number(row.session_version) || 0,
   };
+}
+
+/** Current session version for a user; mismatched tokens are treated as revoked. */
+export function getUserSessionVersion(userId: string): number {
+  const db = getDb();
+  const row = db.prepare("SELECT session_version FROM users WHERE id = ?").get(userId) as
+    | { session_version: number }
+    | undefined;
+  return row ? Number(row.session_version) || 0 : -1;
 }
 
 export function createNewAccountWithOrg(params: {
@@ -851,7 +866,11 @@ export function changeUserPassword(userId: string, currentPassword: string, newP
   if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
     return { ok: false, error: "New password must be at least 8 characters and include letters and numbers." };
   }
-  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hashPasswordScrypt(newPassword), userId);
+  // Bump session_version so every existing session for this user is immediately invalidated.
+  db.prepare("UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?").run(
+    hashPasswordScrypt(newPassword),
+    userId
+  );
   return { ok: true };
 }
 

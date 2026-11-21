@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
+import { getUserSessionVersion } from "./db-store";
 
 export const SESSION_COOKIE_NAME = "norminvoice_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -11,6 +12,8 @@ export interface SessionPayload {
   fullName: string;
   orgName: string;
   role: "owner" | "admin" | "accountant" | "member";
+  /** Session version at issue time; bumped on password change to revoke old sessions. */
+  sv: number;
   exp: number;
 }
 
@@ -76,7 +79,14 @@ export function verifySessionToken(token: string | undefined | null): SessionPay
 export async function getServerSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  return verifySessionToken(token);
+  const payload = verifySessionToken(token);
+  if (!payload) return null;
+  // Revocation check: the token's session version must still match the user's current one.
+  // A password change bumps the stored version, invalidating all previously issued tokens.
+  if (getUserSessionVersion(payload.userId) !== (payload.sv ?? 0)) {
+    return null;
+  }
+  return payload;
 }
 
 const rateWindows = new Map<string, number[]>();

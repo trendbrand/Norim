@@ -190,12 +190,13 @@ See §9 for everything still outstanding.
 ## 9. Prioritized remediation roadmap (remaining)
 
 **Before public launch (P0/P1):**
-- [ ] Decide §7 architecture; align README to reality.
-- [ ] Wire or remove the async worker (P1-1).
-- [ ] Redis-backed rate limiting (P1-2).
-- [ ] Session revocation on password change/logout-all (P1-3).
-- [ ] Fill real legal entity in Impressum/DPA/Terms/Privacy.
-- [ ] Add `pnpm audit` + gitleaks/CodeQL to CI; pin Node version.
+- [x] Decide §7 architecture; align README to reality. *(Option A — SQLite MVP)*
+- [x] Wire or remove the async worker (P1-1). *(Removed from prod runtime; kept as documented scaffold.)*
+- [x] Redis-backed rate limiting (P1-2). *(`lib/rate-limit.ts` — Redis when `REDIS_URL` set, in-memory fallback.)*
+- [x] Session revocation on password change (P1-3). *(`users.session_version` + `sv` claim checked in `getServerSession`.)*
+- [x] Add `pnpm audit` + gitleaks to CI. *(ci-compliance.yml: prod audit step + secret-scan job.)*
+- [ ] **Fill real legal entity in Impressum/DPA/Terms/Privacy.** ⚠️ Needs YOUR company data — cannot be auto-filled.
+- [ ] Pin Node version (`.nvmrc`); minimize session-cookie PII (P1-4, optional).
 
 **Before onboarding paying customers:**
 - [ ] Prove KoSIT/veraPDF conformance on official corpora.

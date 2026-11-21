@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import QRCode from "qrcode";
-import { checkRateLimit } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import {
   GOLDEN_FIXTURES,
   extractXmlFromHybridPdf,
@@ -21,7 +21,7 @@ const MAX_BYTES = 10 * 1024 * 1024; // 10 MB hard upload guard
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-    const rl = checkRateLimit(`public_inspect:${ip}`, 60, 60_000);
+    const rl = await enforceRateLimit(`public_inspect:${ip}`, 60, 60_000);
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Rate limit exceeded (60 inspections/minute). Please retry shortly or use an API key." },
