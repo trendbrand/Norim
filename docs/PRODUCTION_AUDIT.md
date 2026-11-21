@@ -145,9 +145,16 @@ means more than green unit tests:
 
 ---
 
-## 7. The one architecture decision you must make
+## 7. The one architecture decision — ✅ DECIDED: Option A (SQLite MVP)
 
-**Is the production store SQLite (single node) or PostgreSQL (clustered)?** Pick one:
+**Decision (2026-11-21): single-node SQLite is the committed production store.** Applied: Postgres
+container, migration step, and `DATABASE_URL` removed from the prod runtime; the PG write-through is
+now permanently inert (guarded by `isPostgresConfigured()`); README corrected to reflect reality;
+`backup-sqlite.sh` added (replaces `backup-postgres.sh`); health endpoint reports `mode: "sqlite"`.
+The Postgres/RLS code (`packages/db`, `db-repository.ts`, `pg-persistence.ts`) is retained, dormant,
+as the future Option B scale path. The options below are kept for the record.
+
+**Was: is the production store SQLite (single node) or PostgreSQL (clustered)?**
 
 - **Option A — SQLite single-node MVP (recommended to launch fastest):** Keep SQLite as truth. Delete
   the Postgres write-through + container, drop RLS claims, back up the sqlite file + S3. Honest,
@@ -172,6 +179,9 @@ The following P0 code fixes were made directly (safe, non-behavioral in dev):
    start/serve if `AUTH_SECRET` or `APP_ENCRYPTION_KEY_HEX` is missing, too short, or equals the known
    default, instead of silently using dev keys.
 4. **`git init`** + `.gitignore` already excludes `.env`, `data/`, `*.sqlite` — initial commit created.
+5. **Committed to SQLite (§7, Option A):** removed Postgres from the prod stack (compose/deploy/env),
+   added `infra/backup-sqlite.sh`, rewrote `README.md` to the single-node reality, and relabelled the
+   health store mode. The dormant Postgres code is kept as the future Option B.
 
 See §9 for everything still outstanding.
 

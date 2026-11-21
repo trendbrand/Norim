@@ -4,8 +4,8 @@ import path from "node:path";
 
 /**
  * Generates a cryptographically strong production .env file from .env.example
- * with fresh random secrets (APP_ENCRYPTION_KEY_HEX, AUTH_SECRET, EINVOICE_ENGINE_SHARED_SECRET, POSTGRES_PASSWORD).
- * Usage: pnpm env:init
+ * with fresh random secrets (APP_ENCRYPTION_KEY_HEX, AUTH_SECRET, EINVOICE_ENGINE_SHARED_SECRET).
+ * Single-node SQLite MVP: no Postgres password is generated. Usage: pnpm env:init
  */
 const root = process.cwd();
 const envExamplePath = path.join(root, ".env.example");
@@ -20,15 +20,13 @@ let content = fs.readFileSync(envExamplePath, "utf8");
 const encKey = crypto.randomBytes(32).toString("hex");
 const authSecret = crypto.randomBytes(32).toString("base64url");
 const engineSecret = crypto.randomBytes(24).toString("hex");
-const pgPassword = crypto.randomBytes(20).toString("hex");
 
 content = content
-  .replace("change_me_strong_password", pgPassword)
   .replace("change_me_internal_engine_secret", engineSecret)
   .replace("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", encKey)
   .replace("change_me_auth_secret_at_least_32_chars", authSecret);
 
-content += `\n# Generated Postgres container password matching DATABASE_URL\nPOSTGRES_PASSWORD=${pgPassword}\nAPP_DOMAIN=norminvoice.eu\n`;
+content += `\n# Your purchased production domain (used by Caddy + health checks)\nAPP_DOMAIN=norminvoice.eu\n`;
 
 fs.writeFileSync(envPath, content, "utf8");
 console.log("Created production-ready .env with cryptographically random secrets.");

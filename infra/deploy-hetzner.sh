@@ -29,19 +29,14 @@ if [[ "${AUTH_SECRET:-}" == *"change_me"* ]] || [[ ${#AUTH_SECRET} -lt 32 ]]; th
   exit 1
 fi
 
-echo "==> [2/5] Building & launching EU-sovereign Docker stack..."
+echo "==> [2/4] Building & launching EU-sovereign Docker stack (single-node SQLite)..."
 docker compose -f infra/docker-compose.prod.yml up -d --build --remove-orphans
 
-echo "==> [3/5] Waiting for PostgreSQL & applying idempotent GoBD RLS migrations..."
-sleep 6
-docker compose -f infra/docker-compose.prod.yml exec -T postgres \
-  psql -U norminvoice -d norminvoice -f /docker-entrypoint-initdb.d/0001_initial_gobd_rls.sql || true
-
-echo "==> [4/5] Verifying live /api/health endpoint..."
+echo "==> [3/4] Verifying live /api/health endpoint..."
 for i in {1..15}; do
   if curl -fsS http://127.0.0.1:3000/api/health 2>/dev/null || curl -fsS "https://${APP_DOMAIN:-localhost}/api/health" 2>/dev/null; then
     echo ""
-    echo "==> [5/5] NormInvoice is LIVE and healthy!"
+    echo "==> [4/4] NormInvoice is LIVE and healthy!"
     exit 0
   fi
   sleep 2

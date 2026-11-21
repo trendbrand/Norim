@@ -41,8 +41,6 @@ services:
         limits:
           memory: 1G
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       einvoice-engine:
@@ -70,7 +68,6 @@ services:
         limits:
           memory: 512M
     depends_on:
-      - postgres
       - redis
       - einvoice-engine
 
@@ -115,27 +112,10 @@ services:
           cpus: "2.0"
           memory: 1536M
 
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=norminvoice
-      - POSTGRES_USER=norminvoice
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_strong_password}
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ../packages/db/migrations:/docker-entrypoint-initdb.d:ro
-    networks:
-      - app_internal
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U norminvoice"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 2G
+  # NOTE: This is a single-node SQLite MVP (see README + docs/PRODUCTION_AUDIT.md).
+  # The source of truth is data/norminvoice.sqlite inside the web_data volume.
+  # PostgreSQL is intentionally NOT run here. To adopt the Postgres/RLS scale path
+  # (future Option B), re-add a postgres service, set DATABASE_URL, and migrate reads.
 
   redis:
     image: redis:7-alpine
@@ -162,7 +142,6 @@ networks:
 
 volumes:
   web_data:
-  pg_data:
   redis_data:
   caddy_data:
   caddy_config:

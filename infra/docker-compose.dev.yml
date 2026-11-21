@@ -1,5 +1,7 @@
-# Local Developer Infrastructure Stack (Postgres 16 + Redis 7 + KoSIT + Python PDF/A-3b Engine)
+# Local Developer Infrastructure Stack (Redis 7 + KoSIT + Python PDF/A-3b Engine, plus optional Postgres)
 # Run: docker compose -f infra/docker-compose.dev.yml up -d
+# NOTE: The app's production store is SQLite (see README). Postgres below is OPTIONAL — only used
+# if you set DATABASE_URL to experiment with the future Postgres/RLS scale path (Option B).
 services:
   postgres:
     image: postgres:16-alpine

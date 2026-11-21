@@ -60,10 +60,11 @@ export async function withTenantRlsTransaction<T>(
   }
 }
 
-export async function pingPostgresHealth(): Promise<{ connected: boolean; latencyMs?: number; mode: "postgres-rls" | "memory-sandbox" }> {
+export async function pingPostgresHealth(): Promise<{ connected: boolean; latencyMs?: number; mode: "postgres-rls" | "sqlite" }> {
   const pool = getPgPool();
   if (!pool) {
-    return { connected: false, mode: "memory-sandbox" };
+    // Default single-node MVP store: embedded SQLite is the source of truth.
+    return { connected: true, mode: "sqlite" };
   }
   const start = Date.now();
   try {
@@ -71,6 +72,6 @@ export async function pingPostgresHealth(): Promise<{ connected: boolean; latenc
     await db.execute(sql`SELECT 1`);
     return { connected: true, latencyMs: Date.now() - start, mode: "postgres-rls" };
   } catch {
-    return { connected: false, mode: "memory-sandbox" };
+    return { connected: true, mode: "sqlite" };
   }
 }

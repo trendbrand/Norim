@@ -18,10 +18,10 @@
    - Point DNS `A` record for `norminvoice.eu` (and `www`) to the Hetzner IPv4.
    - SSH in, install Docker Engine + Compose plugin, clone repo, copy `.env`, and run:
      ```bash
-     chmod +x infra/deploy-hetzner.sh infra/backup-postgres.sh
+     chmod +x infra/deploy-hetzner.sh infra/backup-sqlite.sh
      ./infra/deploy-hetzner.sh
      ```
-   - Add daily backup cron (`crontab -e`): `0 2 * * * /opt/norminvoice/infra/backup-postgres.sh >> /var/log/norminvoice-backup.log 2>&1`
+   - Add daily SQLite backup cron (`crontab -e`): `0 2 * * * /opt/norminvoice/infra/backup-sqlite.sh >> /var/log/norminvoice-backup.log 2>&1`
 4. **Run Live E2E Pre-Flight Verification Against Production:**
    ```bash
    node scripts/launch-preflight.mjs https://norminvoice.eu
