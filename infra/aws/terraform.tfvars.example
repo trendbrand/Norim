@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars and adjust. Do NOT commit real values.
+region      = "eu-central-1"
+environment = "production"
+name_prefix = "norminvoice"
+
+# After the first `apply` creates the ECR repo, build & push the image, then set:
+# app_image = "<account>.dkr.ecr.eu-central-1.amazonaws.com/norminvoice/web:<tag>"
+app_image         = ""
+app_desired_count = 1 # keep 1 until the app reads RDS instead of embedded SQLite
+
+db_instance_class    = "db.t4g.small"
+db_allocated_storage = 20
+
+worm_retention_years = 10 # 10 = FR; use 8 for DE-only GoBD
+
+# For a custom domain on CloudFront, create an ACM cert in us-east-1 and set:
+# acm_certificate_arn = "arn:aws:acm:us-east-1:...:certificate/..."
+# domain_aliases      = ["app.norminvoice.eu"]
