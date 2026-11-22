@@ -3302,3 +3302,132 @@ export function listDelegatedClientsForAccountant(accountantEmail: string) {
     };
   });
 }
+
+/**
+ * Consent guard: return the active (non-revoked, non-expired) delegation that
+ * authorizes `accountantEmail` to access `clientOrgId`, or null. This is the
+ * ONLY path by which an accountant may read another tenant's data.
+ */
+export function getActiveDelegationForAccountant(
+  accountantEmail: string,
+  clientOrgId: string
+): AccountantDelegationRecord | null {
+  const db = getDb();
+  const today = new Date().toISOString().slice(0, 10);
+  const row = db
+    .prepare(
+      `SELECT * FROM accountant_delegations
+         WHERE lower(accountant_email) = lower(?) AND org_id = ?
+           AND revoked_at IS NULL AND expires_at >= ?
+         ORDER BY created_at DESC LIMIT 1`
+    )
+    .get(accountantEmail.trim(), clientOrgId, today) as Record<string, any> | undefined;
+  if (!row) return null;
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    accountantEmail: row.accountant_email,
+    accountantName: row.accountant_name,
+    scope: row.scope,
+    expiresAt: row.expires_at,
+    revokedAt: row.revoked_at ?? null,
+    grantedBy: row.granted_by,
+    createdAt: row.created_at,
+  };
+}
+
+export interface ClientReviewItem {
+  id: string;
+  invoiceNumber: string;
+  counterparty: string;
+  grossAmount: number;
+  currency: string;
+  date: string;
+  reasons: string[];
+}
+
+export interface DelegatedClientReview {
+  orgId: string;
+  orgName: string;
+  scope: "READ_EXPORT" | "FULL_BOOKKEEPING";
+  expiresAt: string;
+  gobdVerified: boolean;
+  outgoing: ClientReviewItem[];
+  incoming: ClientReviewItem[];
+}
+
+/**
+ * Consent-checked review queue for one delegated client: outgoing and incoming
+ * documents that need accountant attention. Returns null if no active consent.
+ * Records a tamper-evident access event in the CLIENT org's audit chain so the
+ * delegated access is documented (access attestation).
+ */
+export function getDelegatedClientReview(
+  accountantEmail: string,
+  clientOrgId: string
+): DelegatedClientReview | null {
+  const delegation = getActiveDelegationForAccountant(accountantEmail, clientOrgId);
+  if (!delegation) return null;
+
+  const org = getOrgById(clientOrgId);
+  if (!org) return null;
+  const today = new Date().toISOString().slice(0, 10);
+
+  const outgoing: ClientReviewItem[] = [];
+  for (const inv of listInvoicesForOrg(clientOrgId)) {
+    const reasons: string[] = [];
+    if (!inv.validationPassed || inv.status === "ACTION_REQUIRED") reasons.push("EN 16931 validation blocked");
+    if (inv.status !== "DRAFT" && inv.paymentStatus !== "PAID" && inv.dueDate && inv.dueDate < today) {
+      reasons.push("Payment overdue");
+    }
+    if (inv.status !== "DRAFT" && inv.approvalStatus === "REJECTED") reasons.push("Approval rejected");
+    if (reasons.length > 0) {
+      outgoing.push({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        counterparty: inv.buyerName,
+        grossAmount: inv.grossAmount,
+        currency: inv.currency,
+        date: inv.dueDate || inv.issueDate,
+        reasons,
+      });
+    }
+  }
+
+  const incoming: ClientReviewItem[] = [];
+  for (const inc of listIncomingInvoicesForOrg(clientOrgId)) {
+    const reasons: string[] = [];
+    if (inc.approvalStatus === "PENDING_REVIEW") reasons.push("Awaiting approval");
+    if (!inc.validationPassed) reasons.push("Validation issues");
+    if (inc.isDuplicate) reasons.push("Possible duplicate");
+    if (reasons.length > 0) {
+      incoming.push({
+        id: inc.id,
+        invoiceNumber: inc.invoiceNumber,
+        counterparty: inc.sellerName,
+        grossAmount: inc.grossAmount,
+        currency: inc.currency,
+        date: inc.dueDate || inc.issueDate,
+        reasons,
+      });
+    }
+  }
+
+  // Document the delegated access in the client's tamper-evident audit chain.
+  appendOrgAuditEvent(clientOrgId, null, "ACCOUNTANT", "ACCOUNTANT_REVIEW_ACCESS", accountantEmail, {
+    delegationId: delegation.id,
+    scope: delegation.scope,
+    outgoingFlagged: outgoing.length,
+    incomingFlagged: incoming.length,
+  });
+
+  return {
+    orgId: clientOrgId,
+    orgName: org.name,
+    scope: delegation.scope,
+    expiresAt: delegation.expiresAt,
+    gobdVerified: verifyOrgAuditHashChain(clientOrgId).verified,
+    outgoing,
+    incoming,
+  };
+}

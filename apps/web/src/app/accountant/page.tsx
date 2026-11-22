@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Briefcase, CheckCircle2, Loader2, ShieldCheck, Trash2, UserPlus } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Briefcase,
+  CheckCircle2,
+  Inbox,
+  Loader2,
+  ShieldCheck,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
 import {
   Alert,
   Card,
@@ -40,6 +51,26 @@ interface DelegatedClient {
   gobdVerified: boolean;
 }
 
+interface ReviewItem {
+  id: string;
+  invoiceNumber: string;
+  counterparty: string;
+  grossAmount: number;
+  currency: string;
+  date: string;
+  reasons: string[];
+}
+
+interface ClientReview {
+  orgId: string;
+  orgName: string;
+  scope: "READ_EXPORT" | "FULL_BOOKKEEPING";
+  expiresAt: string;
+  gobdVerified: boolean;
+  outgoing: ReviewItem[];
+  incoming: ReviewItem[];
+}
+
 export default function AccountantWorkspacePage() {
   const [granted, setGranted] = useState<Delegation[]>([]);
   const [clients, setClients] = useState<DelegatedClient[]>([]);
@@ -51,6 +82,22 @@ export default function AccountantWorkspacePage() {
   const [name, setName] = useState("");
   const [scope, setScope] = useState<"READ_EXPORT" | "FULL_BOOKKEEPING">("READ_EXPORT");
   const [expiresDays, setExpiresDays] = useState(365);
+
+  const [review, setReview] = useState<ClientReview | null>(null);
+  const [reviewLoading, setReviewLoading] = useState<string | null>(null);
+
+  async function openReview(orgId: string) {
+    setReviewLoading(orgId);
+    setToast(null);
+    try {
+      const data = await apiJson<{ review: ClientReview }>(`/api/v1/accountant/clients/${orgId}/review`);
+      setReview(data.review);
+    } catch (err) {
+      setToast({ kind: "error", text: err instanceof Error ? err.message : "Could not open client review" });
+    } finally {
+      setReviewLoading(null);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -152,6 +199,19 @@ export default function AccountantWorkspacePage() {
                 <p className="mt-2 text-[11px] text-slate-500">
                   {c.outgoingCount} outgoing · {c.incomingCount} incoming · Consent valid until {c.expiresAt}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => void openReview(c.orgId)}
+                  disabled={reviewLoading !== null}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-[11px] font-bold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                >
+                  {reviewLoading === c.orgId ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  )}
+                  Open review queue
+                </button>
               </div>
             ))}
           </div>
@@ -231,6 +291,81 @@ export default function AccountantWorkspacePage() {
           </div>
         )}
       </Card>
+
+      {review && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={() => setReview(null)}>
+          <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Review queue · {review.orgName}</h3>
+                <p className="text-xs text-slate-500">
+                  Scope: {review.scope} · Consent until {review.expiresAt} ·{" "}
+                  <span className={review.gobdVerified ? "text-emerald-700" : "text-amber-700"}>
+                    GoBD chain {review.gobdVerified ? "verified" : "needs check"}
+                  </span>
+                </p>
+              </div>
+              <button type="button" onClick={() => setReview(null)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+              Read-only, consent-scoped view. This access was recorded in {review.orgName}&apos;s audit chain.
+            </p>
+
+            {review.outgoing.length === 0 && review.incoming.length === 0 ? (
+              <div className="mt-6 flex flex-col items-center gap-2 py-8 text-center">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                <p className="text-sm font-bold text-slate-900">All clear — nothing needs attention.</p>
+                <p className="text-xs text-slate-500">No blocked, overdue, duplicate or unapproved documents.</p>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-5">
+                <ReviewSection
+                  title="Outgoing invoices needing attention"
+                  icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
+                  items={review.outgoing}
+                />
+                <ReviewSection
+                  title="Incoming supplier invoices needing attention"
+                  icon={<Inbox className="h-4 w-4 text-brand-600" />}
+                  items={review.incoming}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReviewSection({ title, icon, items }: { title: string; icon: React.ReactNode; items: ReviewItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-800">
+        {icon} {title} ({items.length})
+      </p>
+      <div className="space-y-2">
+        {items.map((it) => (
+          <div key={it.id} className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono font-bold text-slate-900">{it.invoiceNumber}</span>
+              <span className="font-mono font-bold text-slate-900">{formatMoney(it.grossAmount, it.currency)}</span>
+            </div>
+            <p className="mt-0.5 text-[11px] text-slate-500">{it.counterparty} · {it.date}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {it.reasons.map((r, i) => (
+                <span key={i} className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
