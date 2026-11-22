@@ -103,3 +103,44 @@ export async function dispatchEInvoiceEmail(params: EInvoiceEmailParams): Promis
     messageId: `sandbox_mail_${Date.now()}`,
   };
 }
+
+export async function dispatchTransactionalEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<EmailDispatchResult> {
+  const resendKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM || "NormInvoice <official@trendandbrands.com>";
+
+  if (resendKey) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [params.to],
+        subject: params.subject,
+        html: params.html,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Resend API error (${res.status}): ${txt.slice(0, 200)}`);
+    }
+    const data = (await res.json()) as { id?: string };
+    return {
+      dispatched: true,
+      provider: "resend",
+      messageId: data.id || `resend_${Date.now()}`,
+    };
+  }
+
+  return {
+    dispatched: true,
+    provider: "sandbox-log",
+    messageId: `sandbox_auth_${Date.now()}`,
+  };
+}

@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe2,
   Loader2,
+  Mail,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
@@ -23,6 +24,7 @@ interface AdminOverview {
     totalOutgoingInvoices: number;
     totalIncomingInvoices: number;
     estimatedMrrEur: number;
+    openInquiries?: number;
   };
   organizations: Array<{
     id: string;
@@ -31,7 +33,7 @@ interface AdminOverview {
     orgStatus: "ACTIVE" | "SUSPENDED";
     ownerEmail: string;
     onboardingCompleted: boolean;
-    planTier: "free" | "solo" | "business" | "agency";
+    planTier: "free" | "trial" | "solo" | "business" | "agency";
     monthlyQuota: number;
     monthlyUsed: number;
     invoiceCount: number;
@@ -58,10 +60,22 @@ interface AdminOverview {
     reason: string;
     createdAt: string;
   }>;
+  contactInquiries?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    company: string;
+    country: string;
+    topic: string;
+    message: string;
+    marketingOptIn: boolean;
+    status: "OPEN" | "IN_REVIEW" | "RESOLVED";
+    createdAt: string;
+  }>;
 }
 
 export default function SuperAdminPage() {
-  const [tab, setTab] = useState<"tenants" | "rules" | "gateways" | "audit">("tenants");
+  const [tab, setTab] = useState<"tenants" | "inquiries" | "rules" | "gateways" | "audit">("tenants");
   const [data, setData] = useState<AdminOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +99,7 @@ export default function SuperAdminPage() {
     void load();
   }, [load]);
 
-  async function updateOrgPlan(orgId: string, planTier: "free" | "solo" | "business" | "agency") {
+  async function updateOrgPlan(orgId: string, planTier: "free" | "trial" | "solo" | "business" | "agency") {
     setSavingOrg(orgId);
     setToast(null);
     try {
@@ -122,10 +136,27 @@ export default function SuperAdminPage() {
     }
   }
 
+  async function setInquiryStatus(inquiryId: string, inquiryStatus: "OPEN" | "IN_REVIEW" | "RESOLVED") {
+    setSavingOrg(inquiryId);
+    setToast(null);
+    try {
+      await apiJson("/api/v1/admin/overview", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "UPDATE_INQUIRY", inquiryId, inquiryStatus }),
+      });
+      setToast(`Inquiry ${inquiryId} updated to ${inquiryStatus}.`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Inquiry update failed");
+    } finally {
+      setSavingOrg(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-20 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading Platform Super-Admin Control Plane…
+        <Loader2 className="h-4 w-4 animate-spin text-accent-500" /> Loading Platform Super-Admin Control Plane…
       </div>
     );
   }
@@ -139,15 +170,29 @@ export default function SuperAdminPage() {
     );
   }
 
+  const inquiries = data.contactInquiries ?? [];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Platform Super-Admin Control Plane"
-        subtitle="Internal staff operations — tenant directory, 13-country rule pack registry, gateway telemetry, and immutable privileged action log."
+        subtitle="Separated staff operations — tenant directory, contact inquiries, 13-country rule packs, gateway telemetry, and immutable privileged audit log."
         actions={
-          <button type="button" onClick={() => void load()} className={btnSecondary}>
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </button>
+          <>
+            <button type="button" onClick={() => void load()} className={btnSecondary}>
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch("/api/v1/admin/auth", { method: "DELETE" });
+                window.location.href = "/admin/login";
+              }}
+              className={btnSecondary}
+            >
+              Sign out
+            </button>
+          </>
         }
       />
 
@@ -155,27 +200,28 @@ export default function SuperAdminPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
-          { label: "Estimated MRR", value: formatMoney(data.kpis.estimatedMrrEur), accent: true },
+          { label: "Estimated MRR", value: formatMoney(data.kpis.estimatedMrrEur, "USD"), accent: true },
           { label: "Organizations", value: String(data.kpis.totalOrganizations) },
-          { label: "Country Rule Packs", value: String(EU_COUNTRY_MODULES.length) },
+          { label: "Open Inquiries", value: String(data.kpis.openInquiries ?? 0) },
           { label: "Outgoing E-Invoices", value: String(data.kpis.totalOutgoingInvoices) },
           { label: "Incoming Archived", value: String(data.kpis.totalIncomingInvoices) },
         ].map((k) => (
-          <div key={k.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div key={k.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{k.label}</p>
-            <p className={`mt-2 text-2xl font-extrabold tabular-money ${k.accent ? "text-brand-700" : "text-slate-900"}`}>
+            <p className={`mt-2 text-2xl font-extrabold tabular-money ${k.accent ? "text-accent-600" : "text-navy-900"}`}>
               {k.value}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+      <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-card">
         {[
           { id: "tenants", label: "Organizations & Plans", icon: ShieldCheck },
-          { id: "rules", label: "13-Country Rule Packs (A05)", icon: Globe2 },
-          { id: "gateways", label: "Gateway Telemetry (A07)", icon: Webhook },
-          { id: "audit", label: "Privileged Staff Audit (A09)", icon: ShieldAlert },
+          { id: "inquiries", label: `Contact Inquiries (${inquiries.length})`, icon: Mail },
+          { id: "rules", label: "13-Country Rule Packs", icon: Globe2 },
+          { id: "gateways", label: "Gateway Telemetry", icon: Webhook },
+          { id: "audit", label: "Privileged Staff Audit", icon: ShieldAlert },
         ].map((t) => {
           const Icon = t.icon;
           return (
@@ -183,8 +229,8 @@ export default function SuperAdminPage() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id as any)}
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold ${
-                tab === t.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                tab === t.id ? "bg-navy-900 text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               <Icon className="h-3.5 w-3.5" /> {t.label}
@@ -196,14 +242,14 @@ export default function SuperAdminPage() {
       {tab === "tenants" && (
         <Card
           title={`Tenant Directory (${data.organizations.length})`}
-          description="No default invoice-body access (Master Plan Section 2.1). Suspensions require a mandatory reason code."
+          description="Zero default invoice-body access. Suspensions require a mandatory reason code."
         >
           <div className="-mx-6 -my-6 overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-xs">
-              <thead className="bg-slate-50 uppercase text-slate-500">
+              <thead className="bg-canvas uppercase text-slate-500">
                 <tr>
                   <th className="px-5 py-3 text-left font-semibold">Organization</th>
-                  <th className="px-5 py-3 text-left font-semibold">Owner & Status</th>
+                  <th className="px-5 py-3 text-left font-semibold">Owner &amp; Status</th>
                   <th className="px-5 py-3 text-left font-semibold">Docs (Out / In)</th>
                   <th className="px-5 py-3 text-left font-semibold">GoBD Chain</th>
                   <th className="px-5 py-3 text-right font-semibold">Controls</th>
@@ -211,9 +257,9 @@ export default function SuperAdminPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.organizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-slate-50">
+                  <tr key={org.id} className="hover:bg-canvas">
                     <td className="px-5 py-3">
-                      <p className="font-bold text-slate-900">{org.name}</p>
+                      <p className="font-bold text-navy-900">{org.name}</p>
                       <p className="font-mono text-[11px] text-slate-400">{org.id}</p>
                     </td>
                     <td className="px-5 py-3">
@@ -245,9 +291,10 @@ export default function SuperAdminPage() {
                           className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold uppercase"
                         >
                           <option value="free">FREE</option>
-                          <option value="solo">SOLO</option>
-                          <option value="business">BUSINESS</option>
-                          <option value="agency">AGENCY</option>
+                          <option value="trial">TRIAL (15d)</option>
+                          <option value="solo">SOLO ($39)</option>
+                          <option value="business">BUSINESS ($49)</option>
+                          <option value="agency">AGENCY ($129)</option>
                         </select>
                         <button
                           type="button"
@@ -271,11 +318,68 @@ export default function SuperAdminPage() {
         </Card>
       )}
 
+      {tab === "inquiries" && (
+        <Card title={`Public Website Contact & Partner Inquiries (${inquiries.length})`} description="Real messages submitted through /contact.">
+          {inquiries.length === 0 ? (
+            <p className="text-xs text-slate-500">No contact inquiries submitted yet.</p>
+          ) : (
+            <div className="-mx-6 -my-6 overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-xs">
+                <thead className="bg-canvas uppercase text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3 text-left font-semibold">Sender</th>
+                    <th className="px-5 py-3 text-left font-semibold">Topic &amp; Message</th>
+                    <th className="px-5 py-3 text-left font-semibold">Submitted</th>
+                    <th className="px-5 py-3 text-right font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {inquiries.map((inq) => (
+                    <tr key={inq.id} className="hover:bg-canvas">
+                      <td className="px-5 py-3 align-top">
+                        <p className="font-bold text-navy-900">{inq.name}</p>
+                        <p className="text-slate-600">{inq.email}</p>
+                        {(inq.company || inq.country) && (
+                          <p className="text-[11px] text-slate-400">
+                            {[inq.company, inq.country].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 align-top max-w-md">
+                        <span className="inline-block rounded-full bg-navy-50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-navy-800">
+                          {inq.topic}
+                        </span>
+                        <p className="mt-1 whitespace-pre-wrap text-slate-700">{inq.message}</p>
+                      </td>
+                      <td className="px-5 py-3 align-top font-mono text-[11px] text-slate-500">
+                        {inq.createdAt.slice(0, 19).replace("T", " ")}
+                      </td>
+                      <td className="px-5 py-3 align-top text-right">
+                        <select
+                          disabled={savingOrg === inq.id}
+                          value={inq.status}
+                          onChange={(e) => void setInquiryStatus(inq.id, e.target.value as any)}
+                          className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold"
+                        >
+                          <option value="OPEN">OPEN</option>
+                          <option value="IN_REVIEW">IN_REVIEW</option>
+                          <option value="RESOLVED">RESOLVED</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
       {tab === "rules" && (
         <Card title="Versioned 13-Country Compliance Rule Registry" description="Source-anchored national rulesets with confidence & effective dates.">
           <div className="-mx-6 -my-6 overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-xs">
-              <thead className="bg-slate-50 uppercase text-slate-500">
+              <thead className="bg-canvas uppercase text-slate-500">
                 <tr>
                   <th className="px-5 py-3 text-left font-semibold">Country</th>
                   <th className="px-5 py-3 text-left font-semibold">Ruleset Version</th>
@@ -287,8 +391,8 @@ export default function SuperAdminPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {EU_COUNTRY_MODULES.map((m) => (
-                  <tr key={m.code} className="hover:bg-slate-50">
-                    <td className="px-5 py-3 font-bold text-slate-900">{m.code} · {m.name}</td>
+                  <tr key={m.code} className="hover:bg-canvas">
+                    <td className="px-5 py-3 font-bold text-navy-900">{m.code} · {m.name}</td>
                     <td className="px-5 py-3 font-mono text-[11px] text-slate-700">{m.rulesetVersion}</td>
                     <td className="px-5 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${m.status === "LIVE_CORE" ? "bg-emerald-100 text-emerald-800" : m.status === "PARTNER_ADAPTER" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"}`}>
@@ -298,7 +402,7 @@ export default function SuperAdminPage() {
                     <td className="px-5 py-3 font-mono text-slate-600">{m.effectiveDate}</td>
                     <td className="px-5 py-3 font-mono text-[11px]">{m.confidence}</td>
                     <td className="px-5 py-3 text-right">
-                      <a href={m.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline">
+                      <a href={m.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-accent-700 hover:underline">
                         Official <ExternalLink className="h-3 w-3" />
                       </a>
                     </td>
@@ -317,7 +421,7 @@ export default function SuperAdminPage() {
           ) : (
             <div className="-mx-6 -my-6 overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-500">
+                <thead className="bg-canvas uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-2.5 text-left font-semibold">Time</th>
                     <th className="px-5 py-2.5 text-left font-semibold">Org</th>
@@ -352,29 +456,29 @@ export default function SuperAdminPage() {
       )}
 
       {tab === "audit" && (
-        <Card title="Privileged Platform Staff Audit Log" description="Every plan override and tenant suspension is permanently recorded with actor & reason code.">
+        <Card title="Immutable Privileged Operator Audit Log">
           {data.adminAudit.length === 0 ? (
-            <p className="text-xs text-slate-500">No privileged staff actions recorded yet.</p>
+            <p className="text-xs text-slate-500">No privileged staff actions logged yet.</p>
           ) : (
             <div className="-mx-6 -my-6 overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-500">
+                <thead className="bg-canvas uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-2.5 text-left font-semibold">Time</th>
                     <th className="px-5 py-2.5 text-left font-semibold">Staff Actor</th>
                     <th className="px-5 py-2.5 text-left font-semibold">Action</th>
                     <th className="px-5 py-2.5 text-left font-semibold">Target Org</th>
-                    <th className="px-5 py-2.5 text-left font-semibold">Reason Code</th>
+                    <th className="px-5 py-2.5 text-left font-semibold">Reason</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.adminAudit.map((a) => (
                     <tr key={a.id}>
                       <td className="px-5 py-2.5 font-mono text-[11px] text-slate-500">{a.createdAt.slice(0, 19).replace("T", " ")}</td>
-                      <td className="px-5 py-2.5 font-semibold text-slate-800">{a.actorEmail}</td>
-                      <td className="px-5 py-2.5 font-mono font-bold text-brand-700">{a.action}</td>
-                      <td className="px-5 py-2.5 font-mono text-[11px]">{a.targetOrgId || "—"}</td>
-                      <td className="px-5 py-2.5 text-slate-700">{a.reason}</td>
+                      <td className="px-5 py-2.5 font-semibold text-navy-900">{a.actorEmail}</td>
+                      <td className="px-5 py-2.5 font-mono font-bold text-navy-900">{a.action}</td>
+                      <td className="px-5 py-2.5 font-mono text-[11px] text-slate-600">{a.targetOrgId || "—"}</td>
+                      <td className="px-5 py-2.5 text-slate-600">{a.reason}</td>
                     </tr>
                   ))}
                 </tbody>

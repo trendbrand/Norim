@@ -288,11 +288,30 @@ export interface ApiKeyPublicRecord {
 
 export interface SubscriptionRecord {
   orgId: string;
-  planTier: "free" | "solo" | "business" | "agency";
+  planTier: "free" | "trial" | "solo" | "business" | "agency";
   status: string;
   monthlyQuota: number;
   billingEmail: string;
+  currency: string;
+  trialStartedAt: string | null;
+  trialEndsAt: string | null;
+  trialActive: boolean;
+  trialDaysRemaining: number;
+  cancelAtPeriodEnd: boolean;
   updatedAt: string;
+}
+
+export interface ContactInquiryRecord {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  country: string;
+  topic: string;
+  message: string;
+  marketingOptIn: boolean;
+  status: "OPEN" | "IN_REVIEW" | "RESOLVED";
+  createdAt: string;
 }
 
 export interface AuditEventRecord {
@@ -738,6 +757,31 @@ function getDb(): DatabaseSync {
       reason TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS auth_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      purpose TEXT NOT NULL,
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_authtok_hash ON auth_tokens(token_hash);
+
+    CREATE TABLE IF NOT EXISTS contact_inquiries (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      company TEXT NOT NULL DEFAULT '',
+      country TEXT NOT NULL DEFAULT '',
+      topic TEXT NOT NULL DEFAULT 'general',
+      message TEXT NOT NULL,
+      marketing_opt_in INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'OPEN',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_inquiries(created_at DESC);
   `);
 
   // Safe idempotent column migrations for existing SQLite databases
@@ -783,6 +827,25 @@ function getDb(): DatabaseSync {
   const userCols = db.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
   if (!userCols.some((c) => c.name === "session_version")) {
     db.exec("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!userCols.some((c) => c.name === "email_verified")) {
+    db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!userCols.some((c) => c.name === "marketing_opt_in")) {
+    db.exec("ALTER TABLE users ADD COLUMN marketing_opt_in INTEGER NOT NULL DEFAULT 0;");
+  }
+  const subCols = db.prepare("PRAGMA table_info(subscriptions)").all() as Array<{ name: string }>;
+  if (!subCols.some((c) => c.name === "trial_started_at")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN trial_started_at TEXT;");
+  }
+  if (!subCols.some((c) => c.name === "trial_ends_at")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN trial_ends_at TEXT;");
+  }
+  if (!subCols.some((c) => c.name === "cancel_at_period_end")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN cancel_at_period_end INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!subCols.some((c) => c.name === "currency")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD';");
   }
 
   globalSqlite.__normInvoiceSqlite = db;
@@ -943,11 +1006,11 @@ function seedDemoWorkspaceIfEmpty(db: DatabaseSync) {
 // Organization, User & Team Operations
 // ============================================================================
 
-export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean; sessionVersion: number }) | null {
+export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean; sessionVersion: number; emailVerified: boolean }) | null {
   const db = getDb();
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at, u.session_version,
+      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at, u.session_version, u.email_verified,
               m.org_id, m.role, o.name as org_name, o.onboarding_completed
        FROM users u
        JOIN memberships m ON m.user_id = u.id
@@ -969,6 +1032,7 @@ export function findUserByEmailDb(email: string): (UserRecord & { orgId: string;
     role: row.role,
     onboardingCompleted: Boolean(row.onboarding_completed),
     sessionVersion: Number(row.session_version) || 0,
+    emailVerified: Boolean(row.email_verified),
   };
 }
 
@@ -987,6 +1051,8 @@ export function createNewAccountWithOrg(params: {
   fullName: string;
   orgName: string;
   countryCode?: string;
+  marketingOptIn?: boolean;
+  startPlan?: "trial" | "free";
 }) {
   const db = getDb();
   const normEmail = params.email.trim().toLowerCase();
@@ -994,7 +1060,10 @@ export function createNewAccountWithOrg(params: {
     throw new Error("EMAIL_ALREADY_EXISTS");
   }
 
-  const now = new Date().toISOString();
+  const nowDate = new Date();
+  const now = nowDate.toISOString();
+  const trialEndsAt = new Date(nowDate.getTime() + 15 * 86_400_000).toISOString();
+  const isTrial = params.startPlan !== "free";
   const userId = `usr_${crypto.randomBytes(6).toString("hex")}`;
   const orgId = `org_${crypto.randomBytes(6).toString("hex")}`;
   const slug = `${params.orgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)}-${crypto.randomBytes(3).toString("hex")}`;
@@ -1009,8 +1078,9 @@ export function createNewAccountWithOrg(params: {
   ).run(orgId, params.orgName.trim(), slug, locale, retentionYears, now);
 
   db.prepare(
-    `INSERT INTO users (id, email, password_hash, full_name, created_at) VALUES (?, ?, ?, ?, ?)`
-  ).run(userId, normEmail, hashPasswordScrypt(params.password), params.fullName.trim(), now);
+    `INSERT INTO users (id, email, password_hash, full_name, email_verified, marketing_opt_in, created_at)
+     VALUES (?, ?, ?, ?, 0, ?, ?)`
+  ).run(userId, normEmail, hashPasswordScrypt(params.password), params.fullName.trim(), params.marketingOptIn ? 1 : 0, now);
 
   db.prepare(
     `INSERT INTO memberships (org_id, user_id, role, created_at) VALUES (?, ?, 'owner', ?)`
@@ -1035,9 +1105,20 @@ export function createNewAccountWithOrg(params: {
   );
 
   db.prepare(
-    `INSERT INTO subscriptions (org_id, plan_tier, status, monthly_quota, billing_email, updated_at)
-     VALUES (?, 'free', 'active', 3, ?, ?)`
-  ).run(orgId, normEmail, now);
+    `INSERT INTO subscriptions (
+       org_id, plan_tier, status, monthly_quota, billing_email, currency,
+       trial_started_at, trial_ends_at, cancel_at_period_end, updated_at
+     ) VALUES (?, ?, ?, ?, ?, 'USD', ?, ?, 0, ?)`
+  ).run(
+    orgId,
+    isTrial ? "trial" : "free",
+    isTrial ? "trialing" : "active",
+    isTrial ? 15 : 5,
+    normEmail,
+    isTrial ? now : null,
+    isTrial ? trialEndsAt : null,
+    now
+  );
 
   // Create fresh isolated integration secrets for this new tenant
   const freshWooSecret = `whsec_woo_${crypto.randomBytes(16).toString("hex")}`;
@@ -2222,28 +2303,99 @@ export function getSubscriptionForOrg(orgId: string): SubscriptionRecord {
       orgId,
       planTier: "free",
       status: "active",
-      monthlyQuota: 3,
+      monthlyQuota: 5,
       billingEmail: "",
+      currency: "USD",
+      trialStartedAt: null,
+      trialEndsAt: null,
+      trialActive: false,
+      trialDaysRemaining: 0,
+      cancelAtPeriodEnd: false,
       updatedAt: new Date().toISOString(),
     };
   }
+
+  let planTier = (r.plan_tier || "free") as SubscriptionRecord["planTier"];
+  let status = String(r.status || "active");
+  let monthlyQuota = Number(r.monthly_quota ?? 5);
+  const trialStartedAt: string | null = r.trial_started_at ?? null;
+  const trialEndsAt: string | null = r.trial_ends_at ?? null;
+  const nowMs = Date.now();
+  const endsMs = trialEndsAt ? Date.parse(trialEndsAt) : 0;
+
+  let trialActive = false;
+  let trialDaysRemaining = 0;
+
+  if (planTier === "trial" && trialEndsAt && Number.isFinite(endsMs)) {
+    const remainingMs = endsMs - nowMs;
+    if (remainingMs > 0) {
+      trialActive = true;
+      trialDaysRemaining = Math.max(1, Math.ceil(remainingMs / 86_400_000));
+    } else {
+      // Trial expired without card on file -> downgrade cleanly to Free (never silently bill)
+      planTier = "free";
+      status = "active";
+      monthlyQuota = 5;
+      db.prepare(
+        `UPDATE subscriptions SET plan_tier = 'free', status = 'active', monthly_quota = 5, updated_at = ? WHERE org_id = ?`
+      ).run(new Date().toISOString(), orgId);
+    }
+  }
+
   return {
     orgId: r.org_id,
-    planTier: r.plan_tier,
-    status: r.status,
-    monthlyQuota: Number(r.monthly_quota),
-    billingEmail: r.billing_email,
+    planTier,
+    status,
+    monthlyQuota,
+    billingEmail: r.billing_email || "",
+    currency: r.currency || "USD",
+    trialStartedAt,
+    trialEndsAt,
+    trialActive,
+    trialDaysRemaining,
+    cancelAtPeriodEnd: Boolean(r.cancel_at_period_end),
     updatedAt: r.updated_at,
   };
 }
 
 export function updateSubscriptionForOrg(orgId: string, tier: SubscriptionRecord["planTier"], quota: number) {
   const db = getDb();
-  const now = new Date().toISOString();
+  const nowDate = new Date();
+  const now = nowDate.toISOString();
+  const existing = db.prepare("SELECT trial_started_at, trial_ends_at FROM subscriptions WHERE org_id = ?").get(orgId) as
+    | { trial_started_at: string | null; trial_ends_at: string | null }
+    | undefined;
+
+  const isTrial = tier === "trial";
+  const trialStart = isTrial ? existing?.trial_started_at || now : existing?.trial_started_at || null;
+  const trialEnd = isTrial
+    ? existing?.trial_ends_at || new Date(nowDate.getTime() + 15 * 86_400_000).toISOString()
+    : existing?.trial_ends_at || null;
+  const status = isTrial ? "trialing" : "active";
+
   db.prepare(
-    `INSERT INTO subscriptions (org_id, plan_tier, status, monthly_quota, updated_at) VALUES (?, ?, 'active', ?, ?)
-     ON CONFLICT (org_id) DO UPDATE SET plan_tier = excluded.plan_tier, status = 'active', monthly_quota = excluded.monthly_quota, updated_at = excluded.updated_at`
-  ).run(orgId, tier, quota, now);
+    `INSERT INTO subscriptions (
+       org_id, plan_tier, status, monthly_quota, currency, trial_started_at, trial_ends_at, cancel_at_period_end, updated_at
+     ) VALUES (?, ?, ?, ?, 'USD', ?, ?, 0, ?)
+     ON CONFLICT (org_id) DO UPDATE SET
+       plan_tier = excluded.plan_tier,
+       status = excluded.status,
+       monthly_quota = excluded.monthly_quota,
+       trial_started_at = excluded.trial_started_at,
+       trial_ends_at = excluded.trial_ends_at,
+       cancel_at_period_end = 0,
+       updated_at = excluded.updated_at`
+  ).run(orgId, tier, status, quota, trialStart, trialEnd, now);
+  return getSubscriptionForOrg(orgId);
+}
+
+export function cancelSubscriptionRenewalForOrg(orgId: string, actorEmail: string): SubscriptionRecord {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare("UPDATE subscriptions SET cancel_at_period_end = 1, updated_at = ? WHERE org_id = ?").run(now, orgId);
+  appendOrgAuditEvent(orgId, null, "BILLING", "SUBSCRIPTION_RENEWAL_CANCELLED", actorEmail, {
+    cancelAtPeriodEnd: true,
+  });
   return getSubscriptionForOrg(orgId);
 }
 
@@ -2558,7 +2710,7 @@ export function setIncomingInvoicePaymentStatus(
   return mapIncomingRow(db.prepare("SELECT * FROM incoming_invoices WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any>);
 }
 
-const TIER_PRICE_EUR: Record<string, number> = { free: 0, solo: 19, business: 49, agency: 129 };
+const TIER_PRICE_EUR: Record<string, number> = { free: 0, trial: 0, solo: 39, business: 49, agency: 129 };
 
 export function getPlatformAdminOverview() {
   const db = getDb();
@@ -2586,6 +2738,7 @@ export function getPlatformAdminOverview() {
   const adminAudit = db
     .prepare("SELECT * FROM platform_admin_audit ORDER BY id DESC LIMIT 30")
     .all() as Array<Record<string, any>>;
+  const contactInquiries = listContactInquiries();
 
   const estimatedMrrEur = orgs.reduce((sum, o) => sum + (TIER_PRICE_EUR[o.plan_tier || "free"] ?? 0), 0);
 
@@ -2596,6 +2749,7 @@ export function getPlatformAdminOverview() {
       totalOutgoingInvoices: totalInvoices,
       totalIncomingInvoices: totalIncoming,
       estimatedMrrEur,
+      openInquiries: contactInquiries.filter((i) => i.status === "OPEN").length,
     },
     organizations: orgs.map((o) => ({
       id: o.id,
@@ -2605,7 +2759,7 @@ export function getPlatformAdminOverview() {
       ownerEmail: o.owner_email || "—",
       onboardingCompleted: Boolean(o.onboarding_completed),
       planTier: o.plan_tier || "free",
-      monthlyQuota: Number(o.monthly_quota ?? 3),
+      monthlyQuota: Number(o.monthly_quota ?? 5),
       monthlyUsed: countMonthlyInvoicesForOrg(o.id),
       invoiceCount: Number(o.invoice_count),
       incomingCount: Number(o.incoming_count),
@@ -2631,6 +2785,7 @@ export function getPlatformAdminOverview() {
       reason: a.reason,
       createdAt: a.created_at,
     })),
+    contactInquiries,
   };
 }
 
@@ -3429,5 +3584,373 @@ export function getDelegatedClientReview(
     gobdVerified: verifyOrgAuditHashChain(clientOrgId).verified,
     outgoing,
     incoming,
+  };
+}
+
+// ============================================================================
+// Phase 9: Password Reset / Email Verification Tokens, Contact Inquiries & Dashboard Snapshot
+// ============================================================================
+
+export function createAuthTokenForEmail(
+  email: string,
+  purpose: "RESET_PASSWORD" | "VERIFY_EMAIL"
+): { token: string; userId: string; email: string; fullName: string; expiresAt: string } | null {
+  const db = getDb();
+  const user = db
+    .prepare("SELECT id, email, full_name FROM users WHERE lower(email) = lower(?) LIMIT 1")
+    .get(email.trim()) as { id: string; email: string; full_name: string } | undefined;
+  if (!user) return null;
+
+  const token = crypto.randomBytes(24).toString("hex");
+  const tokenHash = sha256(token);
+  const id = `atok_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date();
+  const ttlMs = purpose === "RESET_PASSWORD" ? 60 * 60_000 : 24 * 60 * 60_000;
+  const expiresAt = new Date(now.getTime() + ttlMs).toISOString();
+
+  // Invalidate older unused tokens of the same purpose for this user
+  db.prepare("UPDATE auth_tokens SET used_at = ? WHERE user_id = ? AND purpose = ? AND used_at IS NULL").run(
+    now.toISOString(),
+    user.id,
+    purpose
+  );
+
+  db.prepare(
+    `INSERT INTO auth_tokens (id, user_id, purpose, token_hash, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(id, user.id, purpose, tokenHash, expiresAt, now.toISOString());
+
+  return { token, userId: user.id, email: user.email, fullName: user.full_name, expiresAt };
+}
+
+export function consumePasswordResetToken(
+  token: string,
+  newPassword: string
+): { ok: boolean; error?: string; email?: string } {
+  const db = getDb();
+  if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+    return { ok: false, error: "New password must be at least 8 characters and include letters and numbers." };
+  }
+
+  const row = db
+    .prepare(
+      `SELECT t.id, t.user_id, t.expires_at, t.used_at, u.email
+       FROM auth_tokens t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.token_hash = ? AND t.purpose = 'RESET_PASSWORD'
+       LIMIT 1`
+    )
+    .get(sha256(token)) as Record<string, any> | undefined;
+
+  if (!row || row.used_at || Date.parse(row.expires_at) <= Date.now()) {
+    return { ok: false, error: "This password reset link is invalid or has expired." };
+  }
+
+  const now = new Date().toISOString();
+  db.prepare("UPDATE auth_tokens SET used_at = ? WHERE id = ?").run(now, row.id);
+  db.prepare("UPDATE users SET password_hash = ?, session_version = session_version + 1 WHERE id = ?").run(
+    hashPasswordScrypt(newPassword),
+    row.user_id
+  );
+
+  return { ok: true, email: row.email };
+}
+
+export function consumeEmailVerificationToken(token: string): { ok: boolean; error?: string; email?: string } {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT t.id, t.user_id, t.expires_at, t.used_at, u.email
+       FROM auth_tokens t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.token_hash = ? AND t.purpose = 'VERIFY_EMAIL'
+       LIMIT 1`
+    )
+    .get(sha256(token)) as Record<string, any> | undefined;
+
+  if (!row || row.used_at || Date.parse(row.expires_at) <= Date.now()) {
+    return { ok: false, error: "This email verification link is invalid or has expired." };
+  }
+
+  const now = new Date().toISOString();
+  db.prepare("UPDATE auth_tokens SET used_at = ? WHERE id = ?").run(now, row.id);
+  db.prepare("UPDATE users SET email_verified = 1 WHERE id = ?").run(row.user_id);
+
+  return { ok: true, email: row.email };
+}
+
+export function createContactInquiry(input: {
+  name: string;
+  email: string;
+  company?: string;
+  country?: string;
+  topic?: string;
+  message: string;
+  marketingOptIn?: boolean;
+}): ContactInquiryRecord {
+  const db = getDb();
+  const id = `inq_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO contact_inquiries (id, name, email, company, country, topic, message, marketing_opt_in, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?)`
+  ).run(
+    id,
+    input.name.trim(),
+    input.email.trim().toLowerCase(),
+    (input.company || "").trim(),
+    (input.country || "").trim(),
+    (input.topic || "general").trim().toLowerCase(),
+    input.message.trim(),
+    input.marketingOptIn ? 1 : 0,
+    now
+  );
+
+  return {
+    id,
+    name: input.name.trim(),
+    email: input.email.trim().toLowerCase(),
+    company: (input.company || "").trim(),
+    country: (input.country || "").trim(),
+    topic: (input.topic || "general").trim().toLowerCase(),
+    message: input.message.trim(),
+    marketingOptIn: Boolean(input.marketingOptIn),
+    status: "OPEN",
+    createdAt: now,
+  };
+}
+
+export function listContactInquiries(): ContactInquiryRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM contact_inquiries ORDER BY created_at DESC LIMIT 100")
+    .all() as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    company: r.company || "",
+    country: r.country || "",
+    topic: r.topic || "general",
+    message: r.message,
+    marketingOptIn: Boolean(r.marketing_opt_in),
+    status: r.status === "RESOLVED" ? "RESOLVED" : r.status === "IN_REVIEW" ? "IN_REVIEW" : "OPEN",
+    createdAt: r.created_at,
+  }));
+}
+
+export function updateContactInquiryStatus(
+  id: string,
+  status: "OPEN" | "IN_REVIEW" | "RESOLVED",
+  actorEmail: string
+): boolean {
+  const db = getDb();
+  const res = db.prepare("UPDATE contact_inquiries SET status = ? WHERE id = ?").run(status, id);
+  if (Number(res.changes) > 0) {
+    recordPlatformAdminAudit(actorEmail, `INQUIRY_${status}`, null, `Inquiry ${id} marked ${status}`);
+    return true;
+  }
+  return false;
+}
+
+export function getOrgDashboardSnapshot(orgId: string, days = 30) {
+  const invoices = listInvoicesForOrg(orgId);
+  const incoming = listIncomingInvoicesForOrg(orgId);
+  const customers = listCustomersForOrg(orgId);
+  const products = listProductsForOrg(orgId);
+  const seller = getSellerSettings(orgId);
+  const subscription = getSubscriptionForOrg(orgId);
+  const recentAudit = listOrgAuditEvents(orgId).slice(0, 8);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const ym = today.slice(0, 7);
+
+  let sentCount = 0;
+  let paidCount = 0;
+  let overdueCount = 0;
+  let draftCount = 0;
+  let actionRequiredCount = 0;
+  let invoicedThisMonth = 0;
+
+  const classified = invoices.map((inv) => {
+    const isOverdue =
+      inv.status !== "DRAFT" &&
+      inv.typeCode === 380 &&
+      inv.paymentStatus !== "PAID" &&
+      Boolean(inv.dueDate && inv.dueDate < today);
+
+    let displayStatus: "PAID" | "OVERDUE" | "SENT" | "DRAFT" | "ACTION_REQUIRED" | "VALIDATED" = "VALIDATED";
+    if (inv.status === "DRAFT") {
+      draftCount++;
+      displayStatus = "DRAFT";
+    } else if (inv.status === "ACTION_REQUIRED") {
+      actionRequiredCount++;
+      displayStatus = "ACTION_REQUIRED";
+    } else if (inv.paymentStatus === "PAID") {
+      paidCount++;
+      sentCount++;
+      displayStatus = "PAID";
+    } else if (isOverdue) {
+      overdueCount++;
+      sentCount++;
+      displayStatus = "OVERDUE";
+    } else if (inv.status === "DELIVERED" || inv.status === "VALIDATED") {
+      sentCount++;
+      displayStatus = inv.status === "DELIVERED" ? "SENT" : "VALIDATED";
+    }
+
+    if (inv.status !== "DRAFT" && inv.status !== "ACTION_REQUIRED" && inv.issueDate.startsWith(ym)) {
+      invoicedThisMonth += inv.typeCode === 381 ? -Math.abs(inv.grossAmount) : inv.grossAmount;
+    }
+
+    return {
+      id: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      typeCode: inv.typeCode,
+      issueDate: inv.issueDate,
+      dueDate: inv.dueDate,
+      buyerName: inv.buyerName,
+      buyerCountry: inv.buyerCountry,
+      grossAmount: inv.grossAmount,
+      currency: inv.currency,
+      targetFormat: inv.targetFormat,
+      status: inv.status,
+      paymentStatus: inv.paymentStatus,
+      displayStatus,
+      diagnostics: inv.diagnostics,
+      createdAt: inv.createdAt,
+    };
+  });
+
+  // Build real time-bucketed cumulative trend over the selected window (8 evenly spaced checkpoints)
+  const buckets = 8;
+  const nowMs = Date.now();
+  const windowMs = days * 86_400_000;
+  const startMs = nowMs - windowMs;
+  const stepMs = windowMs / (buckets - 1);
+
+  const trendSeries = Array.from({ length: buckets }, (_, idx) => {
+    const pointDate = new Date(startMs + idx * stepMs);
+    const iso = pointDate.toISOString().slice(0, 10);
+    const label = pointDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    let created = 0;
+    let sent = 0;
+    let paid = 0;
+    for (const inv of invoices) {
+      const invDay = (inv.createdAt || inv.issueDate).slice(0, 10);
+      if (invDay <= iso) {
+        created++;
+        if (inv.status === "DELIVERED" || inv.status === "VALIDATED") sent++;
+        if (inv.paymentStatus === "PAID") paid++;
+      }
+    }
+    return { date: iso, label, created, sent, paid };
+  });
+
+  const total = invoices.length;
+  const sentOnlyCount = Math.max(0, sentCount - paidCount - overdueCount);
+  const statusBreakdown = {
+    total,
+    paid: paidCount,
+    sent: sentOnlyCount,
+    draft: draftCount + actionRequiredCount,
+    overdue: overdueCount,
+  };
+
+  const getStarted = [
+    { id: "account", label: "Create your account", done: true, href: "/settings" },
+    {
+      id: "business",
+      label: "Add your business details",
+      done: Boolean(seller && (seller.vatId || seller.iban || seller.street)),
+      href: "/settings?tab=company",
+    },
+    {
+      id: "first_invoice",
+      label: "Create your first invoice",
+      done: invoices.length > 0,
+      href: "/invoices/new",
+    },
+    {
+      id: "upgrade",
+      label: "Upgrade to Solo (Optional)",
+      done: ["solo", "business", "agency"].includes(subscription.planTier),
+      href: "/settings?tab=billing",
+    },
+  ];
+
+  // Real actionable notifications
+  const notifications: Array<{ id: string; kind: "warning" | "info" | "success"; title: string; detail: string; href: string; createdAt: string }> = [];
+  if (subscription.trialActive) {
+    notifications.push({
+      id: "notif_trial",
+      kind: subscription.trialDaysRemaining <= 3 ? "warning" : "info",
+      title: `Free Trial Active — ${subscription.trialDaysRemaining} day${subscription.trialDaysRemaining === 1 ? "" : "s"} left`,
+      detail: "Upgrade to Solo ($39/month) anytime or continue on the Free plan when trial ends.",
+      href: "/settings?tab=billing",
+      createdAt: subscription.updatedAt,
+    });
+  }
+  if (actionRequiredCount > 0) {
+    notifications.push({
+      id: "notif_action_req",
+      kind: "warning",
+      title: `${actionRequiredCount} invoice${actionRequiredCount === 1 ? "" : "s"} need EN 16931 repair`,
+      detail: "Mandatory fields (such as Leitweg-ID) must be completed before delivery.",
+      href: "/invoices",
+      createdAt: new Date().toISOString(),
+    });
+  }
+  if (overdueCount > 0) {
+    notifications.push({
+      id: "notif_overdue",
+      kind: "warning",
+      title: `${overdueCount} overdue receivable${overdueCount === 1 ? "" : "s"}`,
+      detail: "Review unpaid past-due invoices in Payments & AR.",
+      href: "/payments",
+      createdAt: new Date().toISOString(),
+    });
+  }
+  const pendingAp = incoming.filter((i) => i.approvalStatus === "PENDING_REVIEW").length;
+  if (pendingAp > 0) {
+    notifications.push({
+      id: "notif_ap",
+      kind: "info",
+      title: `${pendingAp} incoming supplier bill${pendingAp === 1 ? "" : "s"} awaiting review`,
+      detail: "Inspect and approve supplier invoices in your Incoming Inbox.",
+      href: "/inbox",
+      createdAt: new Date().toISOString(),
+    });
+  }
+  for (const ev of recentAudit.slice(0, 4)) {
+    notifications.push({
+      id: `audit_${ev.id}`,
+      kind: "success",
+      title: ev.eventType.replace(/_/g, " "),
+      detail: `${ev.invoiceNumber} · by ${ev.actorEmail}`,
+      href: ev.invoiceId ? `/invoices/${ev.invoiceId}` : "/settings?tab=security",
+      createdAt: ev.createdAt,
+    });
+  }
+
+  return {
+    days,
+    kpis: {
+      totalInvoices: total,
+      sentCount,
+      paidCount,
+      overdueCount,
+      draftCount,
+      actionRequiredCount,
+      totalCustomers: customers.length,
+      totalProducts: products.length,
+      invoicedThisMonth: Number(invoicedThisMonth.toFixed(2)),
+    },
+    trendSeries,
+    statusBreakdown,
+    recentInvoices: classified.slice(0, 8),
+    actionRequired: classified.filter((i) => i.status === "ACTION_REQUIRED").slice(0, 6),
+    getStarted,
+    notifications: notifications.slice(0, 8),
   };
 }

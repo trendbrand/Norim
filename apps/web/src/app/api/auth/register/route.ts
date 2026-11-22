@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, signSessionToken } from "@/lib/auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { createNewAccountWithOrg, findUserByEmailDb } from "@/lib/db-store";
+import {
+  createAuthTokenForEmail,
+  createNewAccountWithOrg,
+  findUserByEmailDb,
+  getSubscriptionForOrg,
+} from "@/lib/db-store";
 import { persistUserAndOrgToPostgres } from "@/lib/pg-persistence";
+import { dispatchTransactionalEmail } from "@/lib/email-dispatcher";
+import { escapeHtml } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +28,8 @@ export async function POST(req: NextRequest) {
       fullName?: string;
       orgName?: string;
       countryCode?: string;
+      marketingOptIn?: boolean;
+      startPlan?: "trial" | "free";
     };
 
     const emailOk = Boolean(body.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()));
@@ -40,6 +49,8 @@ export async function POST(req: NextRequest) {
       fullName: body.fullName?.trim() || "Founder",
       orgName: body.orgName?.trim() || "My EU Business GmbH",
       countryCode: body.countryCode || "DE",
+      marketingOptIn: Boolean(body.marketingOptIn),
+      startPlan: body.startPlan === "free" ? "free" : "trial",
     });
 
     const dbUser = findUserByEmailDb(created.email);
@@ -51,6 +62,20 @@ export async function POST(req: NextRequest) {
         orgName: dbUser.orgName,
       });
     }
+
+    // Issue real email-verification token (best-effort transactional email)
+    const verifyTok = createAuthTokenForEmail(created.email, "VERIFY_EMAIL");
+    if (verifyTok) {
+      const origin = req.nextUrl.origin;
+      const verifyUrl = `${origin}/verify-email?token=${encodeURIComponent(verifyTok.token)}`;
+      await dispatchTransactionalEmail({
+        to: created.email,
+        subject: "Verify your NormInvoice account email",
+        html: `<p>Hello ${escapeHtml(created.fullName)},</p><p>Welcome to NormInvoice (Product of Trend&amp;Brand). Please verify your email address:</p><p><a href="${verifyUrl}">Verify Email Address</a></p>`,
+      }).catch(() => {});
+    }
+
+    const subscription = getSubscriptionForOrg(created.orgId);
 
     const token = signSessionToken({
       userId: created.id,
@@ -73,6 +98,7 @@ export async function POST(req: NextRequest) {
         orgName: created.orgName,
         role: created.role,
       },
+      subscription,
     });
 
     res.cookies.set(SESSION_COOKIE_NAME, token, {

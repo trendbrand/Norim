@@ -22,7 +22,6 @@ export const APP_ROUTE_PREFIXES = [
   "/settings",
   "/onboarding",
   "/create",
-  "/admin",
 ];
 
 export function isAppRoute(pathname: string): boolean {
@@ -30,11 +29,27 @@ export function isAppRoute(pathname: string): boolean {
 }
 
 /**
- * Chooses between the public marketing chrome (Navbar + footer) and the
- * authenticated SaaS AppShell (sidebar), so there is never a double header.
+ * Chooses the chrome for a route. The platform control plane (/admin) is a
+ * SEPARATE realm: it never uses the customer AppShell (which depends on a
+ * customer session) nor the public marketing nav — so a customer session can
+ * neither render nor be required by the admin surface.
  */
 export function SiteChrome({ children, footer }: { children: React.ReactNode; footer: React.ReactNode }) {
   const pathname = usePathname() || "/";
+
+  // Staff sign-in: full-screen, standalone.
+  if (pathname === "/admin/login") {
+    return <main className="flex-1">{children}</main>;
+  }
+  // Staff control plane: standalone shell, padded container, no customer AppShell.
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    return (
+      <div className="min-h-screen bg-canvas">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      </div>
+    );
+  }
+
   if (isAppRoute(pathname)) {
     return <AppShell>{children}</AppShell>;
   }

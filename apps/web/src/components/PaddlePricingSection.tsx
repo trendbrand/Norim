@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Check, CheckCircle2 } from "lucide-react";
-import { useLocale } from "./LocaleProvider";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Check, CheckCircle2, Crown, Gift, ShieldCheck } from "lucide-react";
 
 declare global {
   interface Window {
@@ -17,8 +17,79 @@ declare global {
   }
 }
 
+export const PRICING_PLANS = [
+  {
+    tier: "free",
+    name: "Free",
+    price: "$0",
+    period: "/ forever",
+    badge: "Always Free",
+    desc: "Ideal for testing EN 16931 validation, inspecting supplier invoices, and occasional invoicing.",
+    features: [
+      "Unlimited zero-retention dual validator & viewer",
+      "Up to 5 finalized e-invoices / month",
+      "ZUGFeRD 2.3, Factur-X 1.07 & XRechnung XML",
+      "Plain-language EN, DE & FR rule explanations",
+      "Instant EPC SEPA GiroCode QR preview",
+    ],
+    cta: "Sign Up Free",
+    highlighted: false,
+  },
+  {
+    tier: "solo",
+    name: "Solo",
+    price: "$39",
+    period: "/ month",
+    badge: "Most Popular",
+    desc: "Main plan for solo founders, consultants, and growing businesses automating European e-invoicing.",
+    features: [
+      "15-day free trial — no credit card required",
+      "Up to 150 finalized e-invoices / month",
+      "Recurring schedules, incoming inbox & automations",
+      "VIES VAT verification, reports & DATEV / FEC exports",
+      "Tamper-evident GoBD SHA-256 audit hash-chain",
+    ],
+    cta: "Start 15-Day Free Trial",
+    highlighted: true,
+  },
+  {
+    tier: "business",
+    name: "Business",
+    price: "$49",
+    period: "/ month",
+    badge: "Teams & Bridges",
+    desc: "Complete Stripe & WooCommerce automation with multi-user approvals and EU archival.",
+    features: [
+      "Up to 500 finalized e-invoices / month",
+      "Stripe & WooCommerce signed webhook bridges",
+      "Action-Required queue + 1-click Leitweg-ID repair",
+      "Multi-member RBAC & delegated accountant portal",
+      "8-yr (DE BEG IV) / 10-yr (FR) archive exports",
+    ],
+    cta: "Choose Business",
+    highlighted: false,
+  },
+  {
+    tier: "agency",
+    name: "Agency & API",
+    price: "$129",
+    period: "/ month",
+    badge: "High Volume",
+    desc: "Built for accounting firms, high-volume merchants, and ERP / SaaS developer teams.",
+    features: [
+      "Up to 2,500 finalized e-invoices / month",
+      "Tenant-scoped Bearer API keys & TypeScript SDK",
+      "Batch CSV to PDF/A-3 + XML ZIP converter",
+      "Multi-client accountant review dashboard",
+      "GDPR Art. 28 DPA & priority email support",
+    ],
+    cta: "Choose Agency",
+    highlighted: false,
+  },
+] as const;
+
 export function PaddlePricingSection() {
-  const { t } = useLocale();
+  const router = useRouter();
   const [busyTier, setBusyTier] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
 
@@ -31,6 +102,12 @@ export function PaddlePricingSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planTier: tier }),
       });
+
+      if (res.status === 401) {
+        router.push(`/login?mode=register&plan=${encodeURIComponent(tier)}`);
+        return;
+      }
+
       const data = await res.json();
 
       if (data.mode === "paddle_overlay" && process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
@@ -52,7 +129,7 @@ export function PaddlePricingSection() {
           });
         }
       } else {
-        setBanner(data.message || `Activated ${tier.toUpperCase()} sandbox plan!`);
+        setBanner(data.message || `Activated ${tier.toUpperCase()} plan.`);
       }
     } finally {
       setBusyTier(null);
@@ -63,8 +140,16 @@ export function PaddlePricingSection() {
     <section id="pricing" className="border-t border-slate-200 bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">{t.pricingHeading}</h2>
-          <p className="mt-2.5 text-base leading-relaxed text-slate-600">{t.pricingSubtitle}</p>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-200 bg-accent-50 px-3.5 py-1 text-xs font-bold text-accent-700">
+            <Gift className="h-3.5 w-3.5" /> Free plan available · 15-day free trial · No credit card required
+          </span>
+          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-navy-900">
+            Transparent Plans for Every Stage of E-Invoicing
+          </h2>
+          <p className="mt-2.5 text-sm leading-relaxed text-slate-600 sm:text-base">
+            Start free or evaluate full automation with a real 15-day free trial. Upgrade to Solo ($39/month) or higher
+            tiers whenever your volume grows — cancel renewal anytime.
+          </p>
         </div>
 
         {banner && (
@@ -78,27 +163,33 @@ export function PaddlePricingSection() {
         )}
 
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {t.plans.map((plan) => (
+          {PRICING_PLANS.map((plan) => (
             <div
               key={plan.tier}
-              className={`flex flex-col justify-between rounded-2xl border p-6 transition ${
+              className={`flex flex-col justify-between rounded-2xl border p-6 transition-all duration-200 ${
                 plan.highlighted
-                  ? "border-brand-600 bg-brand-50/30 ring-2 ring-brand-600/20 shadow-md"
-                  : "border-slate-200 bg-white shadow-sm hover:border-slate-300"
+                  ? "border-accent-500 bg-gradient-to-b from-accent-50/50 to-white ring-2 ring-accent-500/20 shadow-card-hover"
+                  : "border-slate-200 bg-white shadow-card hover:border-navy-200 hover:shadow-card-hover"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-base font-bold text-slate-900">{plan.name}</h3>
-                  {plan.badge && (
-                    <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                      {plan.badge}
-                    </span>
-                  )}
+                  <h3 className="text-base font-extrabold text-navy-900">{plan.name}</h3>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-bold ${
+                      plan.highlighted
+                        ? "bg-accent-500 text-white"
+                        : "bg-navy-50 text-navy-800"
+                    }`}
+                  >
+                    {plan.badge}
+                  </span>
                 </div>
-                <p className="mt-3.5 flex items-baseline gap-1">
-                  <span className="tabular-money text-3xl font-extrabold tracking-tight text-slate-900">{plan.price}</span>
-                  <span className="text-xs font-medium text-slate-500">{plan.period}</span>
+                <p className="mt-4 flex items-baseline gap-1">
+                  <span className="tabular-money text-3xl font-extrabold tracking-tight text-navy-900">
+                    {plan.price}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">{plan.period}</span>
                 </p>
                 <p className="mt-2 text-xs leading-relaxed text-slate-600">{plan.desc}</p>
                 <ul className="mt-5 space-y-2.5 text-xs leading-relaxed text-slate-700">
@@ -113,8 +204,8 @@ export function PaddlePricingSection() {
 
               {plan.tier === "free" ? (
                 <Link
-                  href="/create"
-                  className="mt-6 block rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                  href="/login?mode=register"
+                  className="mt-6 block rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-center text-xs font-bold text-navy-900 transition hover:bg-navy-50"
                 >
                   {plan.cta}
                 </Link>
@@ -123,18 +214,51 @@ export function PaddlePricingSection() {
                   type="button"
                   disabled={busyTier === plan.tier}
                   onClick={() => void launchCheckout(plan.tier)}
-                  className={`mt-6 block w-full rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition ${
+                  className={`mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition ${
                     plan.highlighted
-                      ? "bg-brand-600 text-white hover:bg-brand-700"
-                      : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                      ? "bg-accent-500 text-white shadow-sm hover:bg-accent-600"
+                      : "bg-navy-900 text-white hover:bg-navy-800"
                   }`}
                 >
-                  {busyTier === plan.tier ? "Opening Checkout..." : plan.cta}
+                  {plan.highlighted && <Crown className="h-3.5 w-3.5" />}
+                  {busyTier === plan.tier ? "Processing…" : plan.cta}
                 </button>
               )}
             </div>
           ))}
         </div>
+
+        {/* Enterprise Strip + Pre-Checkout Transparency */}
+        <div className="mt-8 flex flex-col justify-between gap-4 rounded-2xl border border-navy-800 bg-navy-900 p-6 text-white sm:flex-row sm:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-accent-400">Enterprise &amp; Custom Volume</p>
+            <h3 className="mt-1 text-lg font-extrabold">Need dedicated onboarding, custom SLA, or ERP integration?</h3>
+            <p className="mt-1 text-xs text-navy-200">
+              Custom document volumes, multi-entity architecture, DPA execution, and tailored compliance routing.
+            </p>
+          </div>
+          <Link
+            href="/contact?topic=sales"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-accent-500 px-5 py-3 text-xs font-bold text-white shadow-sm hover:bg-accent-600"
+          >
+            Contact Sales <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-[11px] text-slate-500">
+          <span className="inline-flex items-center gap-1">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            15-day trials never silently charge without authorization
+          </span>
+          <span>·</span>
+          <Link href="/subscription-billing" className="underline hover:text-navy-900">
+            Subscription &amp; Billing Policy
+          </Link>
+          <span>·</span>
+          <Link href="/cancellation-refunds" className="underline hover:text-navy-900">
+            Cancellation &amp; Refund Policy
+          </Link>
+        </p>
       </div>
     </section>
   );

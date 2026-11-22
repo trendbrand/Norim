@@ -72,24 +72,72 @@ async function run() {
     assert(rb.status === 200 && (await rb.text()).includes("Sitemap:"), "Invalid robots.txt");
   });
 
-  // 2. Public Pages Return HTTP 200
+  // 2. Public Pages Return HTTP 200 (Complete 37-Page Website + 13 Country Pages + Preserved Legacy Routes)
   const publicRoutes = [
     "/",
-    "/login",
+    "/about",
+    "/contact",
+    "/features",
+    "/pricing",
+    "/integrations",
+    "/integrations/stripe",
+    "/integrations/woocommerce",
+    "/countries",
+    "/countries/germany",
+    "/countries/belgium",
+    "/countries/france",
+    "/countries/poland",
+    "/countries/italy",
+    "/countries/spain",
+    "/countries/romania",
+    "/countries/croatia",
+    "/countries/greece",
+    "/countries/netherlands",
+    "/countries/austria",
+    "/countries/portugal",
+    "/countries/united-kingdom",
+    "/solutions/small-business",
+    "/solutions/finance-teams",
+    "/solutions/accountants",
+    "/security",
+    "/trust",
+    "/help",
+    "/faq",
+    "/partners",
     "/docs",
     "/errors",
     "/errors/BR-DE-15",
     "/errors/BR-FR-05",
     "/tools/zugferd-vs-xrechnung",
-    "/integrations/stripe",
-    "/integrations/woocommerce",
-    "/trust",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+    "/legal-notice",
+    "/terms",
+    "/subscription-billing",
+    "/billing-policy",
+    "/cancellation-refunds",
+    "/refund-policy",
+    "/privacy",
+    "/cookies",
+    "/dpa",
+    "/subprocessors",
+    "/acceptable-use",
+    "/service-availability",
+    "/data-retention",
+    "/ai-transparency",
+    "/ai-disclosure",
+    "/accessibility",
+    "/third-party-services",
+    "/complaints",
+    "/intellectual-property",
     "/legal/impressum",
     "/legal/privacy",
     "/legal/dpa",
     "/legal/terms",
   ];
-  await check(`All ${publicRoutes.length} public pages return HTTP 200`, async () => {
+  await check(`All ${publicRoutes.length} public, country & legal pages return HTTP 200 (zero 404s)`, async () => {
     for (const r of publicRoutes) {
       const res = await fetch(`${BASE}${r}`, { redirect: "manual" });
       assert(res.status === 200, `Public route ${r} returned HTTP ${res.status}`);
@@ -147,6 +195,7 @@ async function run() {
     ["GET", "/api/v1/payments"],
     ["GET", "/api/v1/accountant/delegations"],
     ["GET", "/api/v1/search?q=test"],
+    ["GET", "/api/v1/dashboard"],
     ["GET", "/api/v1/admin/overview"],
     ["POST", "/api/v1/validate"],
   ];
@@ -493,6 +542,83 @@ async function run() {
     });
     const copJson = await cop.json();
     assert(cop.status === 200 && copJson.grounded === true && copJson.answer.includes("BR-DE-15"), "Copilot BR-DE-15 check failed");
+  });
+
+  await check("Phase 9: Real 15-Day DB Trial + $39 Solo + Cancel Renewal + Dashboard Analytics + Contact Form + Password Reset", async () => {
+    // 1. Fresh userB started automatically on real DB 15-day Free Trial
+    const meB = await (await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: userB.cookie } })).json();
+    assert(
+      meB.subscription.planTier === "trial" &&
+        meB.subscription.trialActive === true &&
+        meB.subscription.trialDaysRemaining >= 14 &&
+        meB.subscription.trialDaysRemaining <= 15 &&
+        Boolean(meB.subscription.trialEndsAt),
+      `Expected active 15-day DB trial for User B, got ${JSON.stringify(meB.subscription)}`
+    );
+
+    // 2. Upgrade User B to $39 Solo plan and cancel renewal (audited)
+    const soloRes = await fetch(`${BASE}/api/v1/billing/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userB.cookie },
+      body: JSON.stringify({ planTier: "solo" }),
+    });
+    const soloJson = await soloRes.json();
+    assert(soloRes.status === 200 && soloJson.activePlan.planTier === "solo" && soloJson.activePlan.monthlyQuota === 150, "Solo $39 upgrade failed");
+
+    const cancelRes = await fetch(`${BASE}/api/v1/billing/checkout`, {
+      method: "DELETE",
+      headers: { Cookie: userB.cookie },
+    });
+    const cancelJson = await cancelRes.json();
+    assert(cancelRes.status === 200 && cancelJson.activePlan.cancelAtPeriodEnd === true, "Cancel renewal failed");
+
+    // 3. Real Dashboard Analytics snapshot for Tenant A (trendSeries + statusBreakdown + getStarted + notifications)
+    const dash = await (await fetch(`${BASE}/api/v1/dashboard?days=30`, { headers: { Cookie: userA.cookie } })).json();
+    assert(
+      dash.kpis.totalInvoices >= 3 &&
+        Array.isArray(dash.trendSeries) &&
+        dash.trendSeries.length === 8 &&
+        dash.statusBreakdown.total === dash.kpis.totalInvoices &&
+        Array.isArray(dash.getStarted) &&
+        dash.getStarted.length === 4,
+      "Dashboard snapshot analytics invalid"
+    );
+
+    // 4. Real Contact Form persistence + anti-spam honeypot rejection
+    const spamRes = await fetch(`${BASE}/api/v1/public/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Spam Bot",
+        email: "bot@spam.example",
+        message: "This should be blocked by the honeypot field.",
+        website: "https://spam.example",
+      }),
+    });
+    assert(spamRes.status === 400, `Honeypot expected 400, got ${spamRes.status}`);
+
+    const contactRes = await fetch(`${BASE}/api/v1/public/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Elena Bauer",
+        email: "elena.bauer@example-eu.de",
+        company: "Bauer Logistics GmbH",
+        country: "Germany",
+        topic: "sales",
+        message: "Evaluating NormInvoice Solo and Business plans for our German and Belgian B2B billing.",
+      }),
+    });
+    const contactJson = await contactRes.json();
+    assert(contactRes.status === 201 && contactJson.submitted === true && contactJson.inquiryId?.startsWith("inq_"), "Contact form persistence failed");
+
+    // 5. Forgot Password returns non-enumerating 200 for unknown email
+    const fpRes = await fetch(`${BASE}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "nobody-here-999@example-eu.de" }),
+    });
+    assert(fpRes.status === 200 && (await fpRes.json()).accepted === true, "Forgot password failed");
   });
 
   await check("API Key Lifecycle (Create -> Bearer Validate 200 -> Revoke -> 401) & Team RBAC Invite", async () => {

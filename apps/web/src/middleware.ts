@@ -18,8 +18,12 @@ const PROTECTED_PAGE_PREFIXES = [
   "/settings",
   "/onboarding",
   "/create",
-  "/admin",
 ];
+
+// The platform control plane is a SEPARATE realm: it is gated by the staff
+// session cookie below, never by the customer session.
+const STAFF_SESSION_COOKIE = "ni_staff_session";
+const DEV_STAFF_SECRET_FALLBACK = "norminvoice_dev_staff_fallback_secret_change_in_prod_32c";
 
 function base64UrlToUint8Array(str: string): Uint8Array {
   const padded = str.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (str.length % 4)) % 4);
@@ -71,6 +75,27 @@ async function verifyEdgeSessionCookie(token: string | undefined): Promise<boole
   }
 }
 
+async function verifyEdgeStaffCookie(token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [encoded, sigB64] = parts;
+  if (!encoded || !sigB64) return false;
+
+  const secret = process.env.STAFF_AUTH_SECRET || DEV_STAFF_SECRET_FALLBACK;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  const sigBytes = base64UrlToUint8Array(sigB64);
+  const validSig = await crypto.subtle.verify("HMAC", key, sigBytes as BufferSource, enc.encode(encoded));
+  if (!validSig) return false;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlToUint8Array(encoded))) as { exp?: number };
+    return Boolean(payload.exp && payload.exp > Math.floor(Date.now() / 1000));
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -99,6 +124,15 @@ export async function middleware(req: NextRequest) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("next", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 1b. Separate staff realm gate: /admin pages require the staff cookie, NOT the
+  //     customer session. Unauthenticated staff are sent to the staff sign-in.
+  if ((pathname === "/admin" || pathname.startsWith("/admin/")) && pathname !== "/admin/login") {
+    const staffToken = req.cookies.get(STAFF_SESSION_COOKIE)?.value;
+    if (!(await verifyEdgeStaffCookie(staffToken))) {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
   }
 

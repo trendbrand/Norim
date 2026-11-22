@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
-import { getOrgById, getSubscriptionForOrg } from "@/lib/db-store";
+import { findUserByEmailDb, getOrgById, getSubscriptionForOrg } from "@/lib/db-store";
 import { getOrgMonthlyQuotaStatus } from "@/lib/quota";
 import { isSuperAdminEmail } from "@/lib/security";
 
@@ -15,6 +15,7 @@ export async function GET() {
     return NextResponse.json({ authenticated: false, user: null });
   }
 
+  const dbUser = findUserByEmailDb(session.email);
   const subscription = getSubscriptionForOrg(session.orgId);
   const quota = getOrgMonthlyQuotaStatus(session.orgId);
 
@@ -29,6 +30,7 @@ export async function GET() {
       fullName: session.fullName,
       orgName: org.name,
       role: session.role,
+      emailVerified: Boolean(dbUser?.emailVerified),
     },
     subscription,
     quota,

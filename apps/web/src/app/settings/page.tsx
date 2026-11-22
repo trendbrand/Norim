@@ -824,11 +824,49 @@ function SettingsInner() {
       {/* TAB 6: Billing & Quota */}
       {tab === "billing" && billing && (
         <div className="space-y-6">
-          <Card title="Current Monthly Usage">
+          <Card
+            title="Current Subscription & Monthly Usage"
+            actions={
+              billing.activePlan.tier !== "free" && !billing.activePlan.cancelAtPeriodEnd ? (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={async () => {
+                    if (!confirm("Cancel upcoming subscription renewal? Your current access remains active through the end of the period.")) return;
+                    setSaving(true);
+                    try {
+                      const r = await apiJson<{ message: string }>("/api/v1/billing/checkout", { method: "DELETE" });
+                      setToast({ kind: "success", text: r.message });
+                      await Promise.all([loadAll(), reload()]);
+                    } catch (err) {
+                      setToast({ kind: "error", text: err instanceof Error ? err.message : "Cancellation failed" });
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  className={btnDanger}
+                >
+                  Cancel Renewal
+                </button>
+              ) : null
+            }
+          >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-500">Active Plan (Paddle MoR)</p>
-                <p className="mt-1 text-2xl font-extrabold uppercase text-brand-700">{billing.activePlan.tier}</p>
+                <p className="text-xs font-semibold uppercase text-slate-500">Active Plan</p>
+                <p className="mt-1 text-2xl font-extrabold uppercase text-navy-900">
+                  {billing.activePlan.trialActive ? "15-Day Free Trial" : billing.activePlan.tier}
+                </p>
+                {billing.activePlan.trialActive && (
+                  <p className="mt-1 text-xs font-bold text-accent-700">
+                    {billing.activePlan.trialDaysRemaining} day{billing.activePlan.trialDaysRemaining === 1 ? "" : "s"} left · No credit card required
+                  </p>
+                )}
+                {billing.activePlan.cancelAtPeriodEnd && (
+                  <p className="mt-1 text-xs font-bold text-amber-700">
+                    Renewal cancelled — access continues until end of current billing cycle.
+                  </p>
+                )}
               </div>
               <div className="w-full max-w-sm">
                 <div className="flex justify-between text-xs font-semibold text-slate-700">
@@ -837,7 +875,7 @@ function SettingsInner() {
                 </div>
                 <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200">
                   <div
-                    className="h-full rounded-full bg-brand-600"
+                    className="h-full rounded-full bg-accent-500"
                     style={{
                       width: `${Math.min(100, Math.round((billing.activePlan.usedThisMonth / Math.max(1, billing.activePlan.monthlyQuota)) * 100))}%`,
                     }}
@@ -849,25 +887,36 @@ function SettingsInner() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { id: "free", name: "Free", price: "€0", quota: "3 invoices / mo", desc: "Testing & occasional invoices" },
-              { id: "solo", name: "Solo", price: "€19", quota: "100 invoices / mo", desc: "Freelancers & solo GmbH" },
-              { id: "business", name: "Business", price: "€49", quota: "500 invoices / mo", desc: "Stripe, WooCommerce & DATEV" },
-              { id: "agency", name: "Agency", price: "€129", quota: "2,500 invoices / mo", desc: "High-volume & multi-member teams" },
+              { id: "free", name: "Free", price: "$0", quota: "5 invoices / mo", desc: "Ongoing free validation & occasional invoices" },
+              { id: "solo", name: "Solo", price: "$39", quota: "150 invoices / mo", desc: "Main plan: recurring, inbox, automations & DATEV/FEC", featured: true },
+              { id: "business", name: "Business", price: "$49", quota: "500 invoices / mo", desc: "Stripe, WooCommerce, multi-user RBAC & GoBD" },
+              { id: "agency", name: "Agency", price: "$129", quota: "2,500 invoices / mo", desc: "High-volume, multi-client & REST API teams" },
             ].map((p) => {
               const current = billing.activePlan.tier === p.id;
               return (
                 <div
                   key={p.id}
-                  className={`flex flex-col justify-between rounded-2xl border p-5 shadow-sm ${
-                    current ? "border-brand-500 bg-brand-50/40" : "border-slate-200 bg-white"
+                  className={`flex flex-col justify-between rounded-2xl border p-5 shadow-card ${
+                    current
+                      ? "border-accent-500 bg-accent-50/40"
+                      : p.featured
+                        ? "border-navy-300 bg-white ring-1 ring-accent-500/20"
+                        : "border-slate-200 bg-white"
                   }`}
                 >
                   <div>
-                    <p className="text-xs font-bold uppercase text-slate-500">{p.name}</p>
-                    <p className="mt-2 text-2xl font-extrabold text-slate-900">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-extrabold uppercase text-navy-800">{p.name}</p>
+                      {p.featured && (
+                        <span className="rounded-full bg-accent-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-2xl font-extrabold text-navy-900">
                       {p.price}<span className="text-xs font-medium text-slate-500">/mo</span>
                     </p>
-                    <p className="mt-1 font-mono text-xs font-semibold text-brand-700">{p.quota}</p>
+                    <p className="mt-1 font-mono text-xs font-bold text-accent-700">{p.quota}</p>
                     <p className="mt-2 text-xs text-slate-600">{p.desc}</p>
                   </div>
                   <button

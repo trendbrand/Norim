@@ -4,12 +4,18 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ArrowRight,
   BarChart3,
+  Bell,
   Briefcase,
+  ChevronDown,
   CreditCard,
+  Crown,
   FileArchive,
   FileText,
+  Gift,
   Globe2,
+  HelpCircle,
   Inbox,
   LayoutDashboard,
   Loader2,
@@ -19,6 +25,7 @@ import {
   Repeat,
   Search,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   UploadCloud,
@@ -28,13 +35,40 @@ import {
 } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
 import { CopilotPanel } from "./CopilotPanel";
+import { BrandLogo } from "./BrandLogo";
 
 export interface AppSession {
-  user: { id: string; orgId: string; email: string; fullName: string; orgName: string; role: string };
+  user: {
+    id: string;
+    orgId: string;
+    email: string;
+    fullName: string;
+    orgName: string;
+    role: string;
+    emailVerified?: boolean;
+  };
   onboardingCompleted: boolean;
   isSuperAdmin?: boolean;
-  subscription: { planTier: string; monthlyQuota: number; status: string };
+  subscription: {
+    planTier: string;
+    monthlyQuota: number;
+    status: string;
+    currency?: string;
+    trialActive?: boolean;
+    trialDaysRemaining?: number;
+    trialEndsAt?: string | null;
+    cancelAtPeriodEnd?: boolean;
+  };
   quota: { tier: string; monthlyLimit: number; usedThisMonth: number; remaining: number; exceeded: boolean };
+}
+
+interface NotificationItem {
+  id: string;
+  kind: "warning" | "info" | "success";
+  title: string;
+  detail: string;
+  href: string;
+  createdAt: string;
 }
 
 const SessionCtx = createContext<{ session: AppSession | null; reload: () => Promise<void> }>({
@@ -46,23 +80,6 @@ export function useAppSession() {
   return useContext(SessionCtx);
 }
 
-const NAV = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/invoices", label: "Outgoing Invoices", icon: FileText },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/inbox", label: "Incoming Inbox", icon: Inbox },
-  { href: "/payments", label: "Payments & AR", icon: CreditCard },
-  { href: "/compliance", label: "EU Compliance (13)", icon: Globe2 },
-  { href: "/reports", label: "Reports & VAT", icon: BarChart3 },
-  { href: "/automations", label: "Automations", icon: Zap },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/catalog", label: "Products & Rates", icon: Package },
-  { href: "/accountant", label: "Accountant Portal", icon: Briefcase },
-  { href: "/batch", label: "Batch CSV", icon: UploadCloud },
-  { href: "/exports", label: "Exports & Audit", icon: FileArchive },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -71,6 +88,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [invoicesExpanded, setInvoicesExpanded] = useState(true);
+  const [reportsExpanded, setReportsExpanded] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
   const isOnboarding = pathname.startsWith("/onboarding");
 
   useEffect(() => {
@@ -99,8 +122,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMobileOpen(false);
+    setNotifOpen(false);
+    setUserMenuOpen(false);
     void reload().finally(() => setLoading(false));
   }, [reload]);
+
+  useEffect(() => {
+    if (!session || isOnboarding) return;
+    void fetch("/api/v1/dashboard?days=30", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.notifications) setNotifications(d.notifications);
+      })
+      .catch(() => {});
+  }, [session, isOnboarding, pathname]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -110,9 +145,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (loading || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading secure workspace…
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="flex items-center gap-2.5 text-sm font-bold text-navy-800">
+          <Loader2 className="h-4 w-4 animate-spin text-accent-500" /> Loading secure workspace…
         </div>
       </div>
     );
@@ -121,14 +156,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isOnboarding) {
     return (
       <SessionCtx.Provider value={{ session, reload }}>
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-canvas">
           <header className="border-b border-slate-200 bg-white">
             <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-xs font-bold text-white">NI</div>
-                <span className="text-sm font-bold text-slate-900">NormInvoice</span>
-              </div>
-              <button type="button" onClick={() => void logout()} className="text-xs font-semibold text-slate-500 hover:text-red-600">
+              <BrandLogo variant="light" />
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="text-xs font-bold text-slate-500 hover:text-red-600"
+              >
                 Sign out
               </button>
             </div>
@@ -140,87 +176,193 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const q = session.quota;
+  const sub = session.subscription;
   const pct = Math.min(100, Math.round((q.usedThisMonth / Math.max(1, q.monthlyLimit)) * 100));
+  const isPaidTier = ["solo", "business", "agency"].includes(sub.planTier);
+  const firstName = session.user.fullName.split(" ")[0] || "there";
+  const initials = session.user.fullName
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const navItemCls = (active: boolean) =>
+    `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-all duration-150 ${
+      active
+        ? "bg-accent-500 text-white shadow-sm"
+        : "text-navy-100 hover:bg-navy-800 hover:text-white"
+    }`;
+
+  const subItemCls = (active: boolean) =>
+    `flex items-center gap-2.5 rounded-lg py-2 pl-10 pr-3 text-xs font-medium transition-colors ${
+      active
+        ? "bg-navy-800 text-accent-400 font-bold"
+        : "text-navy-200 hover:bg-navy-800/70 hover:text-white"
+    }`;
 
   const sidebar = (
-    <div className="flex h-full flex-col">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">NI</div>
-        <div>
-          <span className="block text-sm font-bold tracking-tight text-white">NormInvoice</span>
-          <span className="block max-w-[150px] truncate text-[11px] text-slate-400">{session.user.orgName}</span>
-        </div>
-      </Link>
+    <div className="flex h-full flex-col bg-navy-900 text-white">
+      <div className="px-5 pt-5 pb-3">
+        <Link href="/dashboard" className="inline-block">
+          <BrandLogo variant="dark" />
+        </Link>
+        <p className="mt-2 truncate text-[11px] font-medium text-navy-300">{session.user.orgName}</p>
+      </div>
 
-      <div className="space-y-1.5 px-3 pb-3">
+      {/* Quick Search & Copilot */}
+      <div className="space-y-1.5 px-3.5 pb-3">
         <button
           type="button"
           onClick={() => setCmdOpen(true)}
-          className="flex w-full items-center justify-between rounded-lg border border-slate-700/80 bg-slate-800/70 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+          className="flex w-full items-center justify-between rounded-xl border border-navy-700 bg-navy-800/80 px-3 py-2 text-xs text-navy-200 transition hover:border-navy-500 hover:text-white"
         >
-          <span className="flex items-center gap-2"><Search className="h-3.5 w-3.5" /> Search…</span>
-          <kbd className="rounded bg-slate-700 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">Ctrl K</kbd>
+          <span className="flex items-center gap-2"><Search className="h-3.5 w-3.5 text-accent-400" /> Search…</span>
+          <kbd className="rounded bg-navy-700 px-1.5 py-0.5 font-mono text-[10px] text-navy-200">Ctrl K</kbd>
         </button>
         <button
           type="button"
           onClick={() => setCopilotOpen(true)}
-          className="flex w-full items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-600/20 px-3 py-2 text-xs font-semibold text-brand-200 hover:bg-brand-600/30 hover:text-white"
+          className="flex w-full items-center gap-2 rounded-xl border border-accent-500/35 bg-accent-500/15 px-3 py-2 text-xs font-bold text-accent-200 transition hover:bg-accent-500/25 hover:text-white"
         >
-          <Sparkles className="h-3.5 w-3.5 text-brand-300" /> Ask Compliance Copilot
+          <Sparkles className="h-3.5 w-3.5 text-accent-400" /> Compliance Copilot
         </button>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
-        {NAV.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="space-y-3 px-4 pb-5">
-        <Link href="/settings?tab=billing" className="block rounded-xl bg-slate-800/70 p-3.5 hover:bg-slate-800">
-          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-            <span>{q.tier} plan</span>
-            <span className={q.exceeded ? "text-amber-400" : "text-slate-300"}>
-              {q.usedThisMonth}/{q.monthlyLimit}
-            </span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-700">
-            <div className={`h-full rounded-full ${pct >= 90 ? "bg-amber-400" : "bg-brand-500"}`} style={{ width: `${pct}%` }} />
-          </div>
-          <p className="mt-1.5 text-[11px] text-slate-400">E-invoices this month</p>
+      {/* Primary Navigation */}
+      <nav aria-label="Workspace navigation" className="flex-1 space-y-1 overflow-y-auto px-3.5 pb-3">
+        <Link href="/dashboard" className={navItemCls(pathname === "/dashboard")}>
+          <LayoutDashboard className="h-4 w-4 shrink-0" /> Dashboard
         </Link>
 
-        <div className="flex items-center justify-between rounded-xl border border-slate-800 p-3">
-          <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-white">{session.user.fullName}</p>
-            <p className="truncate text-[11px] text-slate-400">
-              {session.user.email} · {session.user.role}
-            </p>
-          </div>
+        {/* Collapsible Invoices Group (Matches Approved Design) */}
+        <div>
           <button
             type="button"
-            title="Sign out"
-            onClick={() => void logout()}
-            className="ml-2 rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
+            onClick={() => setInvoicesExpanded((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-navy-100 hover:bg-navy-800 hover:text-white"
           >
-            <LogOut className="h-4 w-4" />
+            <span className="flex items-center gap-3">
+              <FileText className="h-4 w-4 shrink-0" /> Invoices
+            </span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${invoicesExpanded ? "rotate-180" : ""}`} />
           </button>
+          {invoicesExpanded && (
+            <div className="mt-0.5 space-y-0.5">
+              <Link href="/invoices" className={subItemCls(pathname === "/invoices")}>
+                All Invoices
+              </Link>
+              <Link href="/invoices/new" className={subItemCls(pathname === "/invoices/new")}>
+                Create Invoice
+              </Link>
+              <Link href="/recurring" className={subItemCls(pathname.startsWith("/recurring"))}>
+                <Repeat className="h-3.5 w-3.5" /> Recurring Invoices
+              </Link>
+              <Link href="/inbox" className={subItemCls(pathname.startsWith("/inbox"))}>
+                <Inbox className="h-3.5 w-3.5" /> Incoming Inbox
+              </Link>
+              <Link href="/batch" className={subItemCls(pathname.startsWith("/batch"))}>
+                <UploadCloud className="h-3.5 w-3.5" /> Batch CSV
+              </Link>
+            </div>
+          )}
         </div>
-        <p className="flex items-center gap-1.5 px-1 text-[10px] text-slate-500">
-          <ShieldCheck className="h-3 w-3 text-emerald-500" /> EU-hosted · GoBD hash-chained
+
+        <Link href="/customers" className={navItemCls(pathname.startsWith("/customers"))}>
+          <Users className="h-4 w-4 shrink-0" /> Customers
+        </Link>
+
+        <Link href="/catalog" className={navItemCls(pathname.startsWith("/catalog"))}>
+          <Package className="h-4 w-4 shrink-0" /> Products &amp; Services
+        </Link>
+
+        <Link href="/payments" className={navItemCls(pathname.startsWith("/payments"))}>
+          <CreditCard className="h-4 w-4 shrink-0" /> Payments
+        </Link>
+
+        {/* Collapsible Reports Group */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setReportsExpanded((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-navy-100 hover:bg-navy-800 hover:text-white"
+          >
+            <span className="flex items-center gap-3">
+              <BarChart3 className="h-4 w-4 shrink-0" /> Reports
+            </span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${reportsExpanded ? "rotate-180" : ""}`} />
+          </button>
+          {reportsExpanded && (
+            <div className="mt-0.5 space-y-0.5">
+              <Link href="/reports" className={subItemCls(pathname.startsWith("/reports"))}>
+                Analytics &amp; VAT
+              </Link>
+              <Link href="/exports" className={subItemCls(pathname.startsWith("/exports"))}>
+                <FileArchive className="h-3.5 w-3.5" /> Exports &amp; GoBD Audit
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <Link href="/compliance" className={navItemCls(pathname.startsWith("/compliance"))}>
+          <Globe2 className="h-4 w-4 shrink-0" /> Compliance (13 EU)
+        </Link>
+
+        <Link href="/automations" className={navItemCls(pathname.startsWith("/automations"))}>
+          <Zap className="h-4 w-4 shrink-0" /> Automations
+        </Link>
+
+        <Link href="/accountant" className={navItemCls(pathname.startsWith("/accountant"))}>
+          <Briefcase className="h-4 w-4 shrink-0" /> Accountant Portal
+        </Link>
+
+        <Link href="/settings" className={navItemCls(pathname.startsWith("/settings"))}>
+          <Settings className="h-4 w-4 shrink-0" /> Settings
+        </Link>
+
+        {session.isSuperAdmin && (
+          <Link href="/admin" className={navItemCls(pathname.startsWith("/admin"))}>
+            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-300" /> Super Admin
+          </Link>
+        )}
+      </nav>
+
+      {/* Bottom Sidebar Plan / Upgrade Card (Matches Approved Design) */}
+      <div className="space-y-3 border-t border-navy-800 px-3.5 py-4">
+        {!isPaidTier ? (
+          <div className="rounded-2xl border border-navy-700 bg-navy-800/90 p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-extrabold text-white">
+              <Crown className="h-4 w-4 text-accent-500" /> Upgrade to <span className="text-accent-400">Solo</span>
+            </p>
+            <ul className="mt-2 space-y-1 text-[11px] text-navy-200">
+              <li>✓ 150 e-invoices / month</li>
+              <li>✓ Recurring &amp; DATEV / FEC</li>
+              <li>✓ $39/month · Cancel anytime</li>
+            </ul>
+            <Link
+              href="/settings?tab=billing"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-accent-500 px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-600"
+            >
+              Upgrade Now <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        ) : (
+          <Link href="/settings?tab=billing" className="block rounded-2xl border border-navy-700 bg-navy-800/80 p-3.5 hover:bg-navy-800">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wide text-navy-200">
+              <span>{q.tier} plan</span>
+              <span className={q.exceeded ? "text-amber-400" : "text-accent-400"}>
+                {q.usedThisMonth}/{q.monthlyLimit}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-700">
+              <div className={`h-full rounded-full ${pct >= 90 ? "bg-amber-400" : "bg-accent-500"}`} style={{ width: `${pct}%` }} />
+            </div>
+            <p className="mt-1.5 text-[10.5px] text-navy-300">Finalized e-invoices this month</p>
+          </Link>
+        )}
+
+        <p className="flex items-center gap-1.5 px-1 text-[10px] text-navy-300">
+          <ShieldCheck className="h-3 w-3 text-emerald-400" /> GoBD SHA-256 hash-chained
         </p>
       </div>
     </div>
@@ -228,26 +370,174 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionCtx.Provider value={{ session, reload }}>
-      <div className="min-h-screen bg-slate-50">
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-slate-900 lg:block">{sidebar}</aside>
+      <div className="min-h-screen bg-canvas">
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-navy-900 lg:block">{sidebar}</aside>
 
         {mobileOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
-            <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileOpen(false)} />
-            <aside className="absolute inset-y-0 left-0 w-64 bg-slate-900">{sidebar}</aside>
+            <div className="absolute inset-0 bg-navy-950/60 backdrop-blur-xs" onClick={() => setMobileOpen(false)} />
+            <aside className="absolute inset-y-0 left-0 w-64 bg-navy-900 shadow-2xl">{sidebar}</aside>
           </div>
         )}
 
         <div className="lg:pl-64">
-          <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
-            <button type="button" aria-label="Open menu" onClick={() => setMobileOpen(true)} className="rounded-lg border border-slate-200 p-2">
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-            <span className="text-sm font-bold text-slate-900">NormInvoice</span>
-            <span className="w-9" />
+          {/* Approved Desktop + Mobile Top Header Bar */}
+          <header className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8">
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  type="button"
+                  aria-label="Open menu"
+                  onClick={() => setMobileOpen(true)}
+                  className="rounded-xl border border-slate-200 p-2 text-navy-900 hover:bg-slate-50 lg:hidden"
+                >
+                  {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-extrabold text-navy-900 sm:text-base">
+                    Welcome back, {firstName}
+                  </p>
+                  <p className="hidden truncate text-xs text-slate-500 sm:block">
+                    {session.user.orgName} · Here&apos;s what&apos;s happening with your business today.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                {/* Real DB-Computed Trial Countdown Pill */}
+                {sub.trialActive && (
+                  <Link
+                    href="/settings?tab=billing"
+                    className="hidden items-center gap-1.5 rounded-xl border border-accent-200 bg-accent-50 px-3 py-1.5 text-xs font-bold text-navy-900 hover:bg-accent-100 md:inline-flex"
+                  >
+                    <Gift className="h-3.5 w-3.5 text-accent-500" />
+                    <span>Free Trial Active</span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-accent-700">
+                      {sub.trialDaysRemaining} day{sub.trialDaysRemaining === 1 ? "" : "s"} left
+                    </span>
+                  </Link>
+                )}
+
+                {/* Upgrade CTA when on Free or Trial */}
+                {!isPaidTier && (
+                  <Link
+                    href="/settings?tab=billing"
+                    className="hidden items-center gap-1.5 rounded-xl border border-accent-400 bg-white px-3.5 py-1.5 text-xs font-extrabold text-accent-700 transition hover:bg-accent-50 sm:inline-flex"
+                  >
+                    <Crown className="h-3.5 w-3.5 text-accent-500" /> Upgrade to Solo
+                  </Link>
+                )}
+
+                {/* Live Notifications Popover */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="Notifications"
+                    onClick={() => {
+                      setNotifOpen((v) => !v);
+                      setUserMenuOpen(false);
+                    }}
+                    className="relative rounded-xl border border-slate-200 p-2 text-navy-800 hover:bg-slate-50"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {notifications.some((n) => n.kind === "warning") && (
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent-500" />
+                    )}
+                  </button>
+                  {notifOpen && (
+                    <div className="animate-scale-in absolute right-0 top-full mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="text-xs font-extrabold text-navy-900">Workspace Activity</span>
+                        <span className="text-[10px] font-semibold text-slate-400">{notifications.length} items</span>
+                      </div>
+                      <div className="mt-2 max-h-72 space-y-1.5 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <p className="py-6 text-center text-xs text-slate-400">All clear — no pending alerts.</p>
+                        ) : (
+                          notifications.map((n) => (
+                            <Link
+                              key={n.id}
+                              href={n.href}
+                              onClick={() => setNotifOpen(false)}
+                              className="block rounded-xl p-2.5 text-xs hover:bg-canvas"
+                            >
+                              <p className={`font-bold ${n.kind === "warning" ? "text-amber-800" : "text-navy-900"}`}>
+                                {n.title}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">{n.detail}</p>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Help Link */}
+                <Link
+                  href="/help"
+                  title="Help Center"
+                  aria-label="Help Center"
+                  className="hidden rounded-xl border border-slate-200 p-2 text-navy-800 hover:bg-slate-50 sm:inline-flex"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Link>
+
+                {/* User Avatar Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen((v) => !v);
+                      setNotifOpen(false);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 pr-2.5 text-xs font-bold text-navy-900 hover:bg-slate-50"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy-900 text-[11px] font-extrabold text-white">
+                      {initials || "U"}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="animate-scale-in absolute right-0 top-full mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+                      <div className="border-b border-slate-100 px-3 py-2">
+                        <p className="truncate text-xs font-extrabold text-navy-900">{session.user.fullName}</p>
+                        <p className="truncate text-[11px] text-slate-500">{session.user.email}</p>
+                        <span className="mt-1 inline-block rounded-full bg-navy-50 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-navy-800">
+                          {session.user.role} · {sub.planTier}
+                        </span>
+                      </div>
+                      <div className="mt-1 space-y-0.5 text-xs font-semibold">
+                        <Link href="/settings" className="block rounded-xl px-3 py-2 text-navy-800 hover:bg-canvas">
+                          Workspace Settings
+                        </Link>
+                        <Link href="/settings?tab=billing" className="block rounded-xl px-3 py-2 text-navy-800 hover:bg-canvas">
+                          Plan &amp; Billing
+                        </Link>
+                        {session.isSuperAdmin && (
+                          <Link href="/admin" className="block rounded-xl px-3 py-2 text-amber-800 hover:bg-amber-50">
+                            Super Admin Panel
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void logout()}
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 hover:bg-red-50"
+                        >
+                          <LogOut className="h-3.5 w-3.5" /> Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </header>
-          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+
+          <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">{children}</main>
         </div>
+
         <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
         <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
       </div>

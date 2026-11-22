@@ -3,9 +3,17 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, Settings, ShieldCheck, UserCircle2, X } from "lucide-react";
+import {
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { useLocale } from "./LocaleProvider";
 import type { AppLocale } from "@/lib/i18n";
+import { BrandLogo } from "./BrandLogo";
 
 interface ActiveUser {
   email: string;
@@ -13,15 +21,41 @@ interface ActiveUser {
   orgName: string;
 }
 
+const PRODUCT_ITEMS = [
+  { href: "/features", label: "Features Overview", desc: "End-to-end e-invoicing workspace" },
+  { href: "/#validator", label: "Free Dual Validator", desc: "Zero-retention ZUGFeRD, Factur-X & XRechnung check" },
+  { href: "/tools/zugferd-vs-xrechnung", label: "Format Finder", desc: "Find the right EU format for any customer" },
+  { href: "/security", label: "Security & Trust", desc: "Encryption, audit chain & privacy controls" },
+  { href: "/docs", label: "API Documentation", desc: "REST API, webhooks & TypeScript SDK" },
+  { href: "/errors", label: "EN 16931 Error Reference", desc: "45+ plain-language validation rule guides" },
+];
+
+const SOLUTION_ITEMS = [
+  { href: "/solutions/small-business", label: "Small Businesses", desc: "Simple daily invoicing & EU readiness" },
+  { href: "/solutions/finance-teams", label: "Finance Teams", desc: "Approvals, AR/AP, and audit visibility" },
+  { href: "/solutions/accountants", label: "Accountants & Advisors", desc: "Clean DATEV/FEC handoffs & delegated access" },
+  { href: "/partners", label: "Partners & Developers", desc: "ERP, Peppol & compliance connectivity" },
+];
+
+const COUNTRY_ITEMS = [
+  { href: "/countries/germany", label: "Germany", desc: "XRechnung 3.0.2 & ZUGFeRD 2.3" },
+  { href: "/countries/belgium", label: "Belgium", desc: "Peppol BIS Billing 3.0 (B2B Live)" },
+  { href: "/countries/france", label: "France", desc: "Factur-X 1.07 & Approved Platforms" },
+  { href: "/countries/poland", label: "Poland", desc: "KSeF FA(3) & UPO Tracking" },
+  { href: "/countries", label: "All 13 European Markets →", desc: "Full compliance scope & status matrix" },
+];
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { locale, setLocale, t } = useLocale();
+  const { locale, setLocale } = useLocale();
   const [user, setUser] = useState<ActiveUser | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<"product" | "solutions" | "countries" | null>(null);
 
   useEffect(() => {
     setMobileOpen(false);
+    setOpenMenu(null);
     void fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => setUser(d.authenticated ? d.user : null))
@@ -35,48 +69,135 @@ export function Navbar() {
     router.refresh();
   }
 
-  const navLinks = [
-    { href: "/", label: t.navValidator },
-    { href: "/tools/zugferd-vs-xrechnung", label: "Format Finder" },
-    { href: "/integrations/stripe", label: "Stripe" },
-    { href: "/integrations/woocommerce", label: "WooCommerce" },
-    { href: "/docs", label: t.navDocs },
-    { href: "/errors", label: t.navErrors },
-    { href: "/trust", label: "Trust" },
-  ];
-
   return (
-    <header className="print:hidden sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="bg-slate-900 px-4 py-1.5 text-center text-xs font-medium tracking-wide text-slate-200">
-        <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          {t.badgeEu}
+    <header className="print:hidden sticky top-0 z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
+      {/* Top Navy Trust Strip */}
+      <div className="bg-navy-900 px-4 py-1.5 text-center text-[11px] font-medium tracking-wide text-navy-100">
+        <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-accent-500" />
+            NormInvoice — Product of Trend&amp;Brand
+          </span>
+          <span className="hidden text-navy-400 sm:inline">·</span>
+          <span className="hidden text-navy-200 sm:inline">
+            Free plan available · 15-day free trial · Zero-retention public validator
+          </span>
         </span>
       </div>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold tracking-tight text-white shadow-sm">
-            NI
-          </div>
-          <div>
-            <span className="block text-base font-bold tracking-tight text-slate-900">NormInvoice</span>
-            <span className="hidden text-[11px] font-medium text-slate-500 sm:block">
-              EN 16931 · ZUGFeRD · Factur-X · XRechnung
-            </span>
-          </div>
+
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <Link href="/" className="shrink-0">
+          <BrandLogo variant="light" />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => {
-            const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+        {/* Desktop Navigation */}
+        <nav aria-label="Main navigation" className="hidden items-center gap-0.5 lg:flex">
+          {/* Product dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setOpenMenu("product")}
+            onMouseLeave={() => setOpenMenu(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenMenu((m) => (m === "product" ? null : "product"))}
+              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
+            >
+              Product <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+            {openMenu === "product" && (
+              <div className="animate-scale-in absolute left-0 top-full w-80 pt-1.5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  {PRODUCT_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
+                    >
+                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
+                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Solutions dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setOpenMenu("solutions")}
+            onMouseLeave={() => setOpenMenu(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenMenu((m) => (m === "solutions" ? null : "solutions"))}
+              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
+            >
+              Solutions <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+            {openMenu === "solutions" && (
+              <div className="animate-scale-in absolute left-0 top-full w-72 pt-1.5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  {SOLUTION_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
+                    >
+                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
+                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Countries dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setOpenMenu("countries")}
+            onMouseLeave={() => setOpenMenu(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenMenu((m) => (m === "countries" ? null : "countries"))}
+              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
+            >
+              Countries <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+            {openMenu === "countries" && (
+              <div className="animate-scale-in absolute left-0 top-full w-72 pt-1.5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  {COUNTRY_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
+                    >
+                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
+                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {[
+            { href: "/integrations", label: "Integrations" },
+            { href: "/pricing", label: "Pricing" },
+            { href: "/about", label: "About" },
+            { href: "/contact", label: "Contact" },
+          ].map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-brand-50 text-brand-700"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  active ? "bg-accent-50 text-accent-700" : "text-navy-800 hover:bg-navy-50 hover:text-navy-900"
                 }`}
               >
                 {link.label}
@@ -85,15 +206,16 @@ export function Navbar() {
           })}
         </nav>
 
+        {/* Right Actions */}
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-semibold">
+          <div className="hidden rounded-lg border border-slate-200 bg-canvas p-0.5 text-[11px] font-bold sm:flex">
             {(["en", "de", "fr"] as AppLocale[]).map((l) => (
               <button
                 key={l}
                 type="button"
                 onClick={() => setLocale(l)}
                 className={`rounded-md px-2 py-1 uppercase transition-colors ${
-                  locale === l ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                  locale === l ? "bg-navy-900 text-white shadow-sm" : "text-slate-500 hover:text-navy-900"
                 }`}
               >
                 {l}
@@ -105,27 +227,36 @@ export function Navbar() {
             <div className="hidden items-center gap-2 sm:flex">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-accent-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-600"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <LayoutDashboard className="h-3.5 w-3.5" />
                 Open Dashboard →
               </Link>
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700"
+                className="inline-flex items-center rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-red-50 hover:text-red-700"
                 title="Sign out"
+                aria-label="Sign out"
               >
                 <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="hidden items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 sm:inline-flex"
-            >
-              <UserCircle2 className="h-4 w-4" /> {t.navSignIn}
-            </Link>
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/login"
+                className="rounded-xl px-3 py-2 text-xs font-bold text-navy-900 hover:bg-navy-50"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/login?mode=register"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-accent-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-600"
+              >
+                Sign Up Free
+              </Link>
+            </div>
           )}
 
           {/* Mobile Drawer Trigger */}
@@ -133,7 +264,7 @@ export function Navbar() {
             type="button"
             aria-label="Toggle navigation menu"
             onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-100 lg:hidden"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 text-navy-900 hover:bg-navy-50 lg:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -142,44 +273,65 @@ export function Navbar() {
 
       {/* Responsive Mobile Navigation Drawer */}
       {mobileOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 pb-5 pt-3 shadow-lg lg:hidden">
-          <div className="space-y-1">
-            {navLinks.map((link) => {
-              const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`block rounded-xl px-3.5 py-2.5 text-sm font-semibold ${
-                    active ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+        <div className="animate-fade-in-up border-t border-slate-200 bg-white px-4 pb-6 pt-4 shadow-xl lg:hidden">
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { href: "/features", label: "Features" },
+              { href: "/countries", label: "Countries (13)" },
+              { href: "/integrations", label: "Integrations" },
+              { href: "/pricing", label: "Pricing" },
+              { href: "/solutions/small-business", label: "Small Business" },
+              { href: "/solutions/finance-teams", label: "Finance Teams" },
+              { href: "/solutions/accountants", label: "Accountants" },
+              { href: "/security", label: "Security" },
+              { href: "/about", label: "About" },
+              { href: "/contact", label: "Contact" },
+              { href: "/help", label: "Help Center" },
+              { href: "/faq", label: "FAQ" },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-xl px-3 py-2 text-xs font-bold ${
+                  pathname === link.href ? "bg-accent-50 text-accent-700" : "text-navy-800 hover:bg-navy-50"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
-          <div className="mt-4 border-t border-slate-200 pt-4">
+          <div className="mt-4 flex flex-col gap-2 border-t border-slate-200 pt-4">
             {user ? (
               <div className="flex items-center justify-between gap-2">
-                <Link href="/dashboard" className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white">
+                <Link
+                  href="/dashboard"
+                  className="flex-1 rounded-xl bg-accent-500 px-4 py-2.5 text-center text-xs font-bold text-white"
+                >
                   Open Dashboard →
                 </Link>
                 <button
                   type="button"
                   onClick={() => void handleLogout()}
-                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700"
+                  className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-bold text-red-700"
                 >
                   <LogOut className="h-3.5 w-3.5" /> Sign Out
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white"
-              >
-                <UserCircle2 className="h-4 w-4" /> {t.navSignIn}
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-center text-xs font-bold text-navy-900"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/login?mode=register"
+                  className="rounded-xl bg-accent-500 px-4 py-2.5 text-center text-xs font-bold text-white"
+                >
+                  Sign Up Free
+                </Link>
+              </div>
             )}
           </div>
         </div>

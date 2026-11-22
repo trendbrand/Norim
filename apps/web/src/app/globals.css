@@ -7,12 +7,14 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Inter legibility: single-story a/g, tighter default tracking */
     font-feature-settings: "cv11", "ss01";
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 selection:bg-brand-100 selection:text-brand-900;
+    background-color: #F7F9FC;
+    color: #011D42;
+    @apply selection:bg-accent-100 selection:text-navy-900;
     line-height: 1.55;
   }
 
@@ -20,12 +22,72 @@
   h2,
   h3,
   h4 {
-    /* Avoid orphans without splitting short titles across balanced lines */
     text-wrap: pretty;
-    letter-spacing: -0.011em;
+    letter-spacing: -0.015em;
+  }
+
+  :focus-visible {
+    outline: 2px solid #FD7C05;
+    outline-offset: 2px;
   }
 }
 
 .tabular-money {
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
