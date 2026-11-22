@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  Clock,
   Code2,
   Download,
   FileCheck2,
@@ -15,9 +16,11 @@ import {
   Loader2,
   Mail,
   RotateCcw,
+  Send,
   ShieldCheck,
   Trash2,
   Wrench,
+  XCircle,
 } from "lucide-react";
 import type { CanonicalInvoice, ValidationDiagnostic } from "@norminvoice/einvoice-core";
 import {
@@ -76,6 +79,21 @@ interface AuditEvent {
   createdAt: string;
 }
 
+interface TransmissionJob {
+  id: string;
+  channel: string;
+  recipient: string;
+  status: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "DEAD";
+  attempts: number;
+  maxAttempts: number;
+  nextAttemptAt: string | null;
+  provider: string | null;
+  providerRef: string | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -83,6 +101,7 @@ export default function InvoiceDetailPage() {
 
   const [inv, setInv] = useState<InvoiceDetail | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [transmissions, setTransmissions] = useState<TransmissionJob[]>([]);
   const [epcQrDataUrl, setEpcQrDataUrl] = useState<string | null>(null);
   const [xmlPreview, setXmlPreview] = useState("");
   const [showXml, setShowXml] = useState(false);
@@ -111,7 +130,7 @@ export default function InvoiceDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [data, cmtData] = await Promise.all([
+      const [data, cmtData, txData] = await Promise.all([
         apiJson<{
           invoice: InvoiceDetail;
           auditEvents: AuditEvent[];
@@ -121,12 +140,14 @@ export default function InvoiceDetailPage() {
         apiJson<{ comments: Array<{ id: string; authorEmail: string; body: string; createdAt: string }> }>(
           `/api/v1/invoices/${id}/comments`
         ),
+        apiJson<{ transmissions: TransmissionJob[] }>(`/api/v1/invoices/${id}/transmissions`),
       ]);
       setInv(data.invoice);
       setAuditEvents(data.auditEvents);
       setEpcQrDataUrl(data.epcQrDataUrl);
       setXmlPreview(data.xmlPreview);
       setComments(cmtData.comments);
+      setTransmissions(txData.transmissions);
       setRepairRef(data.invoice.canonical.buyerReference || "04011000-1234512345-06");
       setRepairVat(data.invoice.canonical.buyer.vatId || "");
       setRepairContactName(data.invoice.canonical.seller.contact?.name || "Accounting");
@@ -205,14 +226,34 @@ export default function InvoiceDetailPage() {
     setBusy("email");
     setToast(null);
     try {
-      const r = await apiJson<{ to: string; cc: string | null }>(`/api/v1/invoices/${inv.id}/send`, {
+      const r = await apiJson<{
+        delivered: boolean;
+        queued?: boolean;
+        alreadySent?: boolean;
+        to?: string;
+        cc?: string | null;
+        status?: string;
+        nextAttemptAt?: string;
+        note?: string;
+      }>(`/api/v1/invoices/${inv.id}/send`, {
         method: "POST",
         body: JSON.stringify({ recipientEmail }),
       });
-      setToast({
-        kind: "success",
-        text: `E-invoice delivered to ${r.to}${r.cc ? ` (CC: ${r.cc})` : ""} and logged in GoBD audit chain.`,
-      });
+      if (r.delivered) {
+        setToast({
+          kind: "success",
+          text: r.alreadySent
+            ? `Already delivered to ${r.to} — no duplicate sent (idempotent).`
+            : `E-invoice delivered to ${r.to}${r.cc ? ` (CC: ${r.cc})` : ""} and logged in GoBD audit chain.`,
+        });
+      } else {
+        setToast({
+          kind: "success",
+          text:
+            r.note ||
+            `Delivery safely queued (${r.status}) — it will be retried automatically${r.nextAttemptAt ? ` (next ~${r.nextAttemptAt.slice(11, 16)} UTC)` : ""}.`,
+        });
+      }
       await load();
     } catch (err) {
       setToast({ kind: "error", text: err instanceof Error ? err.message : "Email dispatch failed" });
@@ -607,6 +648,50 @@ export default function InvoiceDetailPage() {
                   </p>
                 )}
               </form>
+            </Card>
+          )}
+
+          {transmissions.length > 0 && (
+            <Card
+              title="Transmission Outbox"
+              description="Durable, idempotent delivery jobs (ADR-004) — retried automatically, never double-sent."
+            >
+              <ol className="space-y-2.5">
+                {transmissions.map((t) => {
+                  const style =
+                    t.status === "SENT"
+                      ? { cls: "text-emerald-700", Icon: CheckCircle2 }
+                      : t.status === "DEAD"
+                        ? { cls: "text-red-700", Icon: XCircle }
+                        : t.status === "SENDING"
+                          ? { cls: "text-sky-700", Icon: Send }
+                          : { cls: "text-amber-700", Icon: Clock };
+                  const Icon = style.Icon;
+                  return (
+                    <li key={t.id} className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`inline-flex items-center gap-1.5 font-bold ${style.cls}`}>
+                          <Icon className="h-3.5 w-3.5" /> {t.status}
+                        </span>
+                        <span className="font-mono text-[10px] uppercase text-slate-400">{t.channel}</span>
+                      </div>
+                      <p className="mt-1 truncate text-slate-700">→ {t.recipient}</p>
+                      <p className="mt-0.5 text-[10px] text-slate-500">
+                        Attempt {t.attempts}/{t.maxAttempts}
+                        {(t.status === "QUEUED" || t.status === "FAILED") && t.nextAttemptAt
+                          ? ` · next retry ${t.nextAttemptAt.slice(0, 16).replace("T", " ")} UTC`
+                          : ""}
+                        {t.status === "SENT" && t.providerRef ? ` · ref ${t.providerRef}` : ""}
+                      </p>
+                      {t.lastError && t.status !== "SENT" && (
+                        <p className="mt-1 rounded border border-red-100 bg-red-50/70 px-2 py-1 font-mono text-[10px] text-red-700">
+                          {t.lastError}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
             </Card>
           )}
 
