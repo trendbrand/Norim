@@ -4,6 +4,7 @@ import {
   ensureOutboxDrainerStarted,
   processTransmissionJobOnce,
 } from "@/lib/transmission-outbox";
+import { peppolRecipientId } from "@/lib/peppol-adapter";
 import { requireTenantAuth } from "@/lib/security";
 
 /**
@@ -35,31 +36,48 @@ export async function POST(
     }
 
     let customRecipient = "";
+    let channel: "email" | "peppol" = "email";
     try {
-      const body = (await req.json()) as { recipientEmail?: string };
+      const body = (await req.json()) as { recipientEmail?: string; channel?: "email" | "peppol" };
       customRecipient = body.recipientEmail?.trim() || "";
+      if (body.channel === "peppol") channel = "peppol";
     } catch {
       // optional body
     }
 
-    const recipient = customRecipient || record.canonical.buyer.electronicAddress;
-    if (!recipient || !recipient.includes("@")) {
-      return NextResponse.json(
-        { error: "Buyer electronic email address (BT-49) is missing or not an email." },
-        { status: 422 }
-      );
-    }
-
     const settings = getSellerSettings(access.ctx.orgId);
+
+    // Resolve the recipient for the chosen channel.
+    let recipient: string;
+    let cc: string | null = null;
+    if (channel === "peppol") {
+      const participantId = peppolRecipientId(record.canonical);
+      if (!participantId) {
+        return NextResponse.json(
+          { error: "Buyer has no Peppol electronic address (BT-49 with a non-email EAS scheme like 0208 or 9925)." },
+          { status: 422 }
+        );
+      }
+      recipient = participantId;
+    } else {
+      recipient = customRecipient || record.canonical.buyer.electronicAddress || "";
+      if (!recipient || !recipient.includes("@")) {
+        return NextResponse.json(
+          { error: "Buyer electronic email address (BT-49) is missing or not an email." },
+          { status: 422 }
+        );
+      }
+      cc = settings?.accountantCcEmail || null;
+    }
 
     // 1. Durably enqueue (idempotent on invoice + channel + recipient).
     const { job, created } = enqueueTransmissionJob({
       orgId: access.ctx.orgId,
       invoiceId: record.id,
       invoiceNumber: record.invoiceNumber,
-      channel: "email",
+      channel,
       recipient,
-      cc: settings?.accountantCcEmail || null,
+      cc,
       actorEmail: access.ctx.actorEmail,
     });
 
@@ -69,7 +87,8 @@ export async function POST(
         delivered: true,
         alreadySent: true,
         to: recipient,
-        cc: settings?.accountantCcEmail || null,
+        channel,
+        cc,
         jobId: job.id,
         status: "SENT",
         providerRef: job.providerRef,
@@ -84,7 +103,8 @@ export async function POST(
       return NextResponse.json({
         delivered: true,
         to: recipient,
-        cc: settings?.accountantCcEmail || null,
+        channel,
+        cc,
         jobId: job.id,
         status: "SENT",
         providerRef: outcome.providerRef,

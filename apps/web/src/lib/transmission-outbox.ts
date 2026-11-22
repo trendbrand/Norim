@@ -20,6 +20,7 @@ import {
   serializeToUblXml,
 } from "@norminvoice/einvoice-core";
 import { dispatchEInvoiceEmail } from "./email-dispatcher";
+import { peppolSenderId, resolvePeppolAccessPoint } from "./peppol-adapter";
 import {
   claimTransmissionJob,
   getInvoiceForOrg,
@@ -86,6 +87,37 @@ export async function processTransmissionJobOnce(jobId: string): Promise<Process
       return { status: "DEAD", error: "Invoice failed EN 16931 validation" };
     }
 
+    // ── Peppol channel: deliver via a certified Access Point (partner). ──
+    if (existing.channel === "peppol") {
+      const ublXml = serializeToUblXml(record.canonical);
+      const ap = resolvePeppolAccessPoint();
+      const result = await ap.transmit({
+        invoice: record.canonical,
+        ublXml,
+        senderParticipantId: peppolSenderId(record.canonical),
+        recipientParticipantId: existing.recipient,
+      });
+      if (result.ok) {
+        markTransmissionSent(jobId, result.provider, result.providerRef);
+        const audit = markInvoiceDelivered(
+          existing.orgId,
+          existing.invoiceId,
+          existing.recipient,
+          existing.actorEmail
+        );
+        return { status: "SENT", providerRef: result.providerRef, auditHash: audit?.eventHash ?? null };
+      }
+      const claimed = getTransmissionJob(jobId);
+      const nextAttemptAt = backoffIso(claimed?.attempts ?? 1);
+      const updated = markTransmissionFailed(jobId, result.error, {
+        permanent: result.permanent,
+        nextAttemptAt: result.permanent ? null : nextAttemptAt,
+      });
+      if (updated?.status === "DEAD") return { status: "DEAD", error: result.error };
+      return { status: "RETRY", error: result.error, nextAttemptAt: updated?.nextAttemptAt ?? nextAttemptAt };
+    }
+
+    // ── Email channel (default). ──
     const settings = getSellerSettings(existing.orgId);
     const isUbl =
       record.canonical.profile === "XRECHNUNG_UBL" || record.canonical.profile === "PEPPOL_BIS_3";

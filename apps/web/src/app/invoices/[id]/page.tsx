@@ -15,6 +15,7 @@ import {
   FileText,
   Loader2,
   Mail,
+  Network,
   RotateCcw,
   Send,
   ShieldCheck,
@@ -258,6 +259,30 @@ export default function InvoiceDetailPage() {
     } catch (err) {
       setToast({ kind: "error", text: err instanceof Error ? err.message : "Email dispatch failed" });
     } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleSendPeppol() {
+    if (!inv) return;
+    setBusy("peppol");
+    setToast(null);
+    try {
+      const r = await apiJson<{ delivered: boolean; status?: string; to?: string }>(
+        `/api/v1/invoices/${inv.id}/send`,
+        { method: "POST", body: JSON.stringify({ channel: "peppol" }) }
+      );
+      setToast({
+        kind: "success",
+        text: r.delivered
+          ? `Transmitted via Peppol to ${r.to}.`
+          : `Queued for Peppol delivery (${r.status}).`,
+      });
+    } catch (err) {
+      // Honest failure (e.g. no certified Access Point configured) — surfaced, not hidden.
+      setToast({ kind: "error", text: err instanceof Error ? err.message : "Peppol delivery failed" });
+    } finally {
+      await load();
       setBusy(null);
     }
   }
@@ -650,6 +675,40 @@ export default function InvoiceDetailPage() {
               </form>
             </Card>
           )}
+
+          {inv.validationPassed &&
+            inv.status !== "DRAFT" &&
+            inv.canonical.buyer.electronicAddressScheme &&
+            inv.canonical.buyer.electronicAddressScheme.toUpperCase() !== "EM" &&
+            inv.canonical.buyer.electronicAddress && (
+              <Card
+                title={
+                  <span className="flex items-center gap-2">
+                    <Network className="h-4 w-4 text-brand-600" /> Peppol Network Delivery
+                  </span>
+                }
+                description="Send over the OpenPeppol four-corner network via a certified Access Point."
+              >
+                <p className="text-xs text-slate-600">
+                  Recipient participant:{" "}
+                  <span className="font-mono font-semibold text-slate-800">
+                    {inv.canonical.buyer.electronicAddressScheme}::{inv.canonical.buyer.electronicAddress}
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void handleSendPeppol()}
+                  className={`${btnSecondary} mt-3 w-full`}
+                >
+                  {busy === "peppol" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Network className="h-4 w-4" />} Send via
+                  Peppol
+                </button>
+                <p className="mt-2 text-[11px] text-slate-400">
+                  Requires a connected certified Access Point. Delivery status appears in the Transmission Outbox below.
+                </p>
+              </Card>
+            )}
 
           {transmissions.length > 0 && (
             <Card
