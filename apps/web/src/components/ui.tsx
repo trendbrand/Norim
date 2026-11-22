@@ -47,15 +47,15 @@ export function PageHeader({
   subtitle,
   actions,
 }: {
-  title: string;
-  subtitle?: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-1 max-w-3xl text-sm text-slate-600">{subtitle}</p>}
+      <div className="min-w-0">
+        <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

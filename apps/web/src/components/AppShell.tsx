@@ -19,7 +19,6 @@ import {
   Repeat,
   Search,
   Settings,
-  ShieldAlert,
   ShieldCheck,
   Sparkles,
   UploadCloud,
@@ -180,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -188,19 +187,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
-        {session.isSuperAdmin && (
-          <Link
-            href="/admin"
-            className={`mt-3 flex items-center gap-3 rounded-lg border border-amber-500/30 px-3 py-2.5 text-sm font-semibold transition-colors ${
-              pathname.startsWith("/admin")
-                ? "bg-amber-500/20 text-amber-300"
-                : "text-amber-300/80 hover:bg-amber-500/10 hover:text-amber-200"
-            }`}
-          >
-            <ShieldAlert className="h-4 w-4" />
-            Super-Admin Panel
-          </Link>
-        )}
       </nav>
 
       <div className="space-y-3 px-4 pb-5">

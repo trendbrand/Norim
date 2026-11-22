@@ -390,7 +390,12 @@ export default function InvoiceDetailPage() {
       </div>
 
       <PageHeader
-        title={`${inv.typeCode === 381 ? "Credit Note" : "Invoice"} ${inv.invoiceNumber}`}
+        title={
+          <>
+            {inv.typeCode === 381 ? "Credit Note" : "Invoice"}{" "}
+            <span className="whitespace-nowrap">{inv.invoiceNumber}</span>
+          </>
+        }
         subtitle={`${FORMAT_LABELS[inv.targetFormat] ?? inv.targetFormat} · Issued ${inv.issueDate}${inv.precedingInvoiceNumber ? ` · References ${inv.precedingInvoiceNumber}` : ""}`}
         actions={
           <>
