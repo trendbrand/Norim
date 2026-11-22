@@ -3028,6 +3028,18 @@ export function runRecurringScheduleNow(orgId: string, id: string, actorEmail: s
   return { invoice, schedule: updatedSched };
 }
 
+/** Active schedules whose next run date has arrived (for the automatic scheduler). */
+export function listDueRecurringSchedules(): Array<{ id: string; orgId: string }> {
+  const db = getDb();
+  const today = new Date().toISOString().slice(0, 10);
+  const rows = db
+    .prepare(
+      "SELECT id, org_id FROM recurring_schedules WHERE active = 1 AND next_run_date <= ? ORDER BY next_run_date ASC LIMIT 100"
+    )
+    .all(today) as Array<{ id: string; org_id: string }>;
+  return rows.map((r) => ({ id: r.id, orgId: r.org_id }));
+}
+
 const DEFAULT_AUTOMATIONS = [
   {
     ruleKey: "auto_validate_halt",

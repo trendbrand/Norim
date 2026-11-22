@@ -3,11 +3,15 @@ import {
   createRecurringScheduleForOrg,
   listRecurringSchedulesForOrg,
 } from "@/lib/db-store";
+import { ensureRecurringSchedulerStarted } from "@/lib/recurring-scheduler";
 import { requireTenantAuth } from "@/lib/security";
 
 export async function GET(req: NextRequest) {
   const access = await requireTenantAuth(req);
   if (!access.ok) return access.response;
+
+  // Ensure the automatic due-schedule runner is active (idempotent).
+  ensureRecurringSchedulerStarted();
 
   return NextResponse.json({
     schedules: listRecurringSchedulesForOrg(access.ctx.orgId),
