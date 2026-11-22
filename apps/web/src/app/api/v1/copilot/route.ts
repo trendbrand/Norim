@@ -5,9 +5,11 @@ import {
 } from "@norminvoice/einvoice-core";
 import {
   getOrgAnalyticsReport,
+  getSubscriptionForOrg,
   listIncomingInvoicesForOrg,
   listInvoicesForOrg,
 } from "@/lib/db-store";
+import { getOrgMonthlyQuotaStatus } from "@/lib/quota";
 import { requireTenantAuth } from "@/lib/security";
 
 /**
@@ -96,7 +98,9 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Unpaid / Overdue / Receivables / VAT summary
-  if (lower.includes("unpaid") || lower.includes("overdue") || lower.includes("paid") || lower.includes("receivable") || lower.includes("vat") || lower.includes("revenue") || lower.includes("money")) {
+  //    (defer "which/list/show overdue" to the specific-list intent below)
+  const wantsList = (lower.includes("which") || lower.includes("list") || lower.includes("show")) && (lower.includes("overdue") || lower.includes("unpaid"));
+  if (!wantsList && (lower.includes("unpaid") || lower.includes("overdue") || lower.includes("paid") || lower.includes("receivable") || lower.includes("vat") || lower.includes("revenue") || lower.includes("money"))) {
     const rep = getOrgAnalyticsReport(orgId);
     const overdue = rep.ageing.days1to30 + rep.ageing.days31to60 + rep.ageing.days60plus;
     return NextResponse.json({
@@ -111,7 +115,60 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 5. Default helpful grounded overview
+  // 5. Specific invoice lookup by number (e.g. "status of EU-2026-0301")
+  const invMatch = q.match(/\b([A-Z]{1,5}-?\d{2,4}-\d{2,6})\b/i);
+  if (invMatch) {
+    const token = invMatch[1]!.toUpperCase();
+    const hit = listInvoicesForOrg(orgId).find((i) => i.invoiceNumber.toUpperCase() === token);
+    if (hit) {
+      const balance = Math.max(0, hit.grossAmount - hit.paidAmount);
+      return NextResponse.json({
+        grounded: true,
+        disclaimer: "Live record from your organization's ledger (permission-scoped).",
+        answer: `${hit.invoiceNumber} — ${hit.buyerName}. Validation: ${hit.validationPassed ? "EN 16931 passed" : "blocked (" + (hit.diagnostics.map((d) => d.ruleId).join(", ") || "issues") + ")"}. Delivery: ${hit.deliveredTo ? "delivered to " + hit.deliveredTo : hit.status === "DRAFT" ? "draft" : "not sent"}. Payment: ${hit.paymentStatus}${balance > 0 ? " (balance €" + balance.toFixed(2) + ")" : ""}. Gross €${hit.grossAmount.toFixed(2)} ${hit.currency}, due ${hit.dueDate || hit.issueDate}.`,
+        citations: ["Live org ledger"],
+        actions: [{ label: `Open ${hit.invoiceNumber}`, href: `/invoices/${hit.id}` }],
+      });
+    }
+  }
+
+  // 6. Plan / trial / quota / usage
+  if (lower.includes("plan") || lower.includes("trial") || lower.includes("subscription") || lower.includes("quota") || lower.includes("limit") || lower.includes("upgrade") || lower.includes("days left") || lower.includes("usage")) {
+    const sub = getSubscriptionForOrg(orgId);
+    const quota = getOrgMonthlyQuotaStatus(orgId);
+    const trialTxt = sub.trialActive
+      ? `Trial active — ${sub.trialDaysRemaining} day(s) left (ends ${sub.trialEndsAt?.slice(0, 10)}).`
+      : sub.planTier === "free"
+        ? "On the Free plan (no active trial)."
+        : `On the ${sub.planTier} plan.`;
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: "Computed live from your subscription and this month's usage.",
+      answer: `${trialTxt} This month you've used ${quota.usedThisMonth} of ${quota.monthlyLimit} invoice(s) (${quota.remaining} remaining)${quota.exceeded ? " — quota reached." : "."}`,
+      citations: ["Subscription & usage records"],
+      actions: [{ label: "Manage plan & billing", href: "/settings?tab=billing" }],
+    });
+  }
+
+  // 7. Which invoices are overdue / unpaid (specific list)
+  if ((lower.includes("which") || lower.includes("list") || lower.includes("show")) && (lower.includes("overdue") || lower.includes("unpaid"))) {
+    const today = new Date().toISOString().slice(0, 10);
+    const overdue = listInvoicesForOrg(orgId).filter(
+      (i) => i.typeCode === 380 && i.status !== "DRAFT" && i.paymentStatus !== "PAID" && i.dueDate && i.dueDate < today
+    );
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: "Live record from your organization's ledger.",
+      answer:
+        overdue.length === 0
+          ? "You have no overdue unpaid invoices right now."
+          : `${overdue.length} overdue unpaid invoice(s): ${overdue.slice(0, 5).map((i) => `${i.invoiceNumber} (${i.buyerName}, €${Math.max(0, i.grossAmount - i.paidAmount).toFixed(2)}, due ${i.dueDate})`).join("; ")}.`,
+      citations: ["Live org ledger"],
+      actions: [{ label: "Open Payments & Receivables", href: "/payments" }],
+    });
+  }
+
+  // 8. Default helpful grounded overview
   const rep = getOrgAnalyticsReport(orgId);
   return NextResponse.json({
     grounded: true,
