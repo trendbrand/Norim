@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Clock, CreditCard, Loader2, Plus } from "lucide-react";
+import { Banknote, CheckCircle2, Clock, CreditCard, Loader2, Plus, Upload } from "lucide-react";
 import {
   Alert,
   Card,
@@ -40,6 +40,21 @@ interface PaymentEntry {
   recordedBy: string;
 }
 
+interface ReconcileMatch {
+  txn: { date: string; amount: number; reference: string };
+  invoiceNumber: string;
+  buyerName: string;
+  appliedAmount: number;
+  confidence: "reference" | "amount";
+}
+
+interface ReconcilePreview {
+  committed: boolean;
+  parsed: number;
+  matched: ReconcileMatch[];
+  unmatched: Array<{ date: string; amount: number; reference: string }>;
+}
+
 export default function PaymentsPage() {
   const [invoices, setInvoices] = useState<ReceivableRow[]>([]);
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
@@ -52,6 +67,64 @@ export default function PaymentsPage() {
   const [method, setMethod] = useState("SEPA_TRANSFER");
   const [reference, setReference] = useState("");
   const [valueDate, setValueDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // Bank reconciliation
+  const [csvText, setCsvText] = useState("");
+  const [recon, setRecon] = useState<ReconcilePreview | null>(null);
+  const [reconBusy, setReconBusy] = useState<"preview" | "commit" | null>(null);
+
+  async function previewReconcile() {
+    if (!csvText.trim()) return;
+    setReconBusy("preview");
+    setToast(null);
+    try {
+      const data = await apiJson<ReconcilePreview>("/api/v1/payments/reconcile", {
+        method: "POST",
+        body: JSON.stringify({ csv: csvText, commit: false }),
+      });
+      setRecon(data);
+    } catch (err) {
+      setToast({ kind: "error", text: err instanceof Error ? err.message : "Could not parse CSV" });
+    } finally {
+      setReconBusy(null);
+    }
+  }
+
+  async function commitReconcile() {
+    if (!csvText.trim()) return;
+    setReconBusy("commit");
+    setToast(null);
+    try {
+      const data = await apiJson<{ recordedCount: number; skippedCount: number }>(
+        "/api/v1/payments/reconcile",
+        { method: "POST", body: JSON.stringify({ csv: csvText, commit: true }) }
+      );
+      setToast({
+        kind: "success",
+        text: `Recorded ${data.recordedCount} matched payment(s)${data.skippedCount ? `, skipped ${data.skippedCount} already-reconciled` : ""}.`,
+      });
+      setRecon(null);
+      setCsvText("");
+      await load();
+    } catch (err) {
+      setToast({ kind: "error", text: err instanceof Error ? err.message : "Reconciliation failed" });
+    } finally {
+      setReconBusy(null);
+    }
+  }
+
+  const today = new Date();
+  const ageing = { current: 0, d30: 0, d60: 0, d90: 0, d90plus: 0 };
+  for (const i of invoices) {
+    if (i.balanceDue <= 0) continue;
+    const due = new Date(i.dueDate || i.issueDate);
+    const days = Math.floor((today.getTime() - due.getTime()) / 86400000);
+    if (days <= 0) ageing.current += i.balanceDue;
+    else if (days <= 30) ageing.d30 += i.balanceDue;
+    else if (days <= 60) ageing.d60 += i.balanceDue;
+    else if (days <= 90) ageing.d90 += i.balanceDue;
+    else ageing.d90plus += i.balanceDue;
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -127,6 +200,23 @@ export default function PaymentsPage() {
         </div>
       </div>
 
+      <Card title="Receivables Ageing" description="Open balance by days overdue (relative to each invoice's due date).">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {[
+            { label: "Current / not due", value: ageing.current, tone: "text-emerald-700" },
+            { label: "1–30 days", value: ageing.d30, tone: "text-amber-600" },
+            { label: "31–60 days", value: ageing.d60, tone: "text-orange-600" },
+            { label: "61–90 days", value: ageing.d90, tone: "text-red-600" },
+            { label: "90+ days", value: ageing.d90plus, tone: "text-red-700" },
+          ].map((b) => (
+            <div key={b.label} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center">
+              <p className="text-[10px] font-semibold uppercase text-slate-400">{b.label}</p>
+              <p className={`mt-1 font-mono text-sm font-extrabold ${b.tone}`}>{formatMoney(b.value)}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       {openInvoices.length > 0 && (
         <Card title="Record Full or Partial Payment" description="Automatically updates invoice payment status (UNPAID -> PARTIAL -> PAID).">
           <form onSubmit={recordPayment} className="grid grid-cols-1 gap-3 sm:grid-cols-5 sm:items-end">
@@ -175,6 +265,67 @@ export default function PaymentsPage() {
           </form>
         </Card>
       )}
+
+      <Card
+        title={
+          <span className="flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-brand-600" /> Bank Statement Reconciliation
+          </span>
+        }
+        description="Paste bank CSV (date, amount, reference). Matches credits to open invoices by remittance reference or unique amount — preview before recording."
+      >
+        <textarea
+          className={`${inputCls} h-28 font-mono text-[11px]`}
+          value={csvText}
+          onChange={(e) => {
+            setCsvText(e.target.value);
+            setRecon(null);
+          }}
+          placeholder={"date,amount,reference\n2026-11-20,1250.00,Payment EU-2026-0301\n2026-11-21,540.00,Rechnung EU-2026-0302"}
+        />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" onClick={() => void previewReconcile()} disabled={reconBusy !== null || !csvText.trim()} className={btnPrimary}>
+            {reconBusy === "preview" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Preview matches
+          </button>
+          {recon && recon.matched.length > 0 && (
+            <button
+              type="button"
+              onClick={() => void commitReconcile()}
+              disabled={reconBusy !== null}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {reconBusy === "commit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Record {recon.matched.length} matched payment{recon.matched.length === 1 ? "" : "s"}
+            </button>
+          )}
+        </div>
+
+        {recon && (
+          <div className="mt-4 space-y-3">
+            <p className="text-[11px] text-slate-500">
+              Parsed {recon.parsed} transaction(s) · {recon.matched.length} matched · {recon.unmatched.length} unmatched
+            </p>
+            {recon.matched.map((m, idx) => (
+              <div key={idx} className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs">
+                <div>
+                  <span className="font-mono font-bold text-slate-900">{m.invoiceNumber}</span>
+                  <span className="text-slate-500"> · {m.buyerName} · {m.txn.date}</span>
+                  <span className="ml-2 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                    {m.confidence === "reference" ? "reference match" : "amount match"}
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-emerald-700">{formatMoney(m.appliedAmount)}</span>
+              </div>
+            ))}
+            {recon.unmatched.map((u, idx) => (
+              <div key={`u${idx}`} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                <span className="truncate text-slate-500">Unmatched · {u.reference || "(no reference)"} · {u.date}</span>
+                <span className="font-mono font-bold text-slate-600">{formatMoney(u.amount)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card title="Receivables Ledger">
         {loading ? (
