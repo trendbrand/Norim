@@ -1,0 +1,126 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  EU_COUNTRY_MODULES,
+  getRuleKnowledge,
+} from "@norminvoice/einvoice-core";
+import {
+  getOrgAnalyticsReport,
+  listIncomingInvoicesForOrg,
+  listInvoicesForOrg,
+} from "@/lib/db-store";
+import { requireTenantAuth } from "@/lib/security";
+
+/**
+ * Grounded AI Compliance Copilot (Master Plan Module F12 & ADR-006)
+ * - Strictly permission-checked to caller's orgId.
+ * - Never hallucinates: every answer is grounded in live workspace records,
+ *   deterministic EN 16931 rules, and versioned EU_COUNTRY_MODULES.
+ * - Never executes financial or external mutations without explicit user action.
+ */
+export async function POST(req: NextRequest) {
+  const access = await requireTenantAuth(req, { allowApiKey: false });
+  if (!access.ok) return access.response;
+
+  const body = (await req.json()) as { question?: string };
+  const q = (body.question || "").trim();
+  if (!q) {
+    return NextResponse.json({ error: "Ask a compliance or workspace question." }, { status: 400 });
+  }
+
+  const lower = q.toLowerCase();
+  const orgId = access.ctx.orgId;
+
+  // 1. Specific EN 16931 / XRechnung / Factur-X Rule ID lookup (e.g. BR-DE-15, BR-CO-15, BR-FR-05)
+  const ruleMatch = q.match(/\b(BR-[A-Z]{2,3}-\d+|BR-\d+|PDFA-3B-\d+|PEPPOL-[A-Z0-9-]+)\b/i);
+  if (ruleMatch) {
+    const ruleId = ruleMatch[1]!.toUpperCase();
+    const knowledge = getRuleKnowledge(ruleId);
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: "Deterministic EN 16931 rule reference — not legal advice.",
+      answer: `${knowledge.ruleId} (${knowledge.fieldBt}): ${knowledge.titleEn}. ${knowledge.messageEn} Remediation: ${knowledge.fixHintEn}`,
+      citations: [`Rule ${knowledge.ruleId}`, `Field ${knowledge.fieldBt}`],
+      actions: [{ label: `Open /errors/${knowledge.ruleId}`, href: `/errors/${knowledge.ruleId}` }],
+    });
+  }
+
+  // 2. Country compliance mandate lookup
+  const matchedCountry = EU_COUNTRY_MODULES.find(
+    (m) => lower.includes(m.name.toLowerCase()) || new RegExp(`\\b${m.code.toLowerCase()}\\b`).test(lower)
+  );
+  if (matchedCountry && (lower.includes("rule") || lower.includes("mandate") || lower.includes("require") || lower.includes("format") || lower.includes("peppol") || lower.includes("ksef") || lower.includes("factur") || lower.includes("country"))) {
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: `Grounded in versioned ruleset ${matchedCountry.rulesetVersion}. Verify local exceptions with qualified counsel.`,
+      answer: `${matchedCountry.name} (${matchedCountry.status}): ${matchedCountry.mandateTimeline}. Formats: ${matchedCountry.supportedFormats.join(", ")}. Network: ${matchedCountry.networkModel}. Retention: ${matchedCountry.retentionYears} years. Mandatory fields: ${matchedCountry.requiredFields.map((f) => `${f.bt} (${f.label})`).join("; ")}.`,
+      citations: [matchedCountry.rulesetVersion, matchedCountry.sourceUrl],
+      actions: [{ label: "Open EU Compliance Hub", href: "/compliance" }],
+    });
+  }
+
+  // 3. Attention / Blocked / Rejected invoices in user's workspace
+  if (lower.includes("attention") || lower.includes("blocked") || lower.includes("fail") || lower.includes("error") || lower.includes("fix") || lower.includes("reject")) {
+    const blocked = listInvoicesForOrg(orgId, { status: "ACTION_REQUIRED" });
+    const pendingIn = listIncomingInvoicesForOrg(orgId).filter((i) => i.approvalStatus === "PENDING_REVIEW" || i.isDuplicate);
+    if (blocked.length === 0 && pendingIn.length === 0) {
+      return NextResponse.json({
+        grounded: true,
+        disclaimer: "Checked live workspace records.",
+        answer: "Great news — you have 0 blocked outgoing invoices and 0 pending incoming supplier invoices needing attention right now.",
+        citations: ["Live org ledger"],
+        actions: [{ label: "View Outgoing Invoices", href: "/invoices" }],
+      });
+    }
+    const parts: string[] = [];
+    if (blocked.length > 0) {
+      parts.push(
+        `${blocked.length} outgoing invoice(s) halted before delivery: ${blocked
+          .slice(0, 4)
+          .map((i) => `${i.invoiceNumber} (${i.diagnostics.map((d) => d.ruleId).join(", ") || "validation error"})`)
+          .join("; ")}.`
+      );
+    }
+    if (pendingIn.length > 0) {
+      parts.push(`${pendingIn.length} incoming supplier invoice(s) awaiting review/approval.`);
+    }
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: "Checked live workspace records (permission-scoped to your organization).",
+      answer: parts.join(" "),
+      citations: ["Live org ledger", "Incoming AP inbox"],
+      actions: [
+        ...(blocked[0] ? [{ label: `Fix ${blocked[0].invoiceNumber} now`, href: `/invoices/${blocked[0].id}` }] : []),
+        ...(pendingIn.length > 0 ? [{ label: "Review Incoming Inbox", href: "/inbox" }] : []),
+      ],
+    });
+  }
+
+  // 4. Unpaid / Overdue / Receivables / VAT summary
+  if (lower.includes("unpaid") || lower.includes("overdue") || lower.includes("paid") || lower.includes("receivable") || lower.includes("vat") || lower.includes("revenue") || lower.includes("money")) {
+    const rep = getOrgAnalyticsReport(orgId);
+    const overdue = rep.ageing.days1to30 + rep.ageing.days31to60 + rep.ageing.days60plus;
+    return NextResponse.json({
+      grounded: true,
+      disclaimer: "Computed live from your organization's GoBD ledger.",
+      answer: `Total invoiced: €${rep.kpis.totalInvoiced.toFixed(2)} | Collected: €${rep.kpis.totalCollected.toFixed(2)} | Outstanding receivables: €${rep.kpis.totalOutstanding.toFixed(2)} (€${overdue.toFixed(2)} overdue) | Open incoming payables: €${rep.kpis.payablesUnpaid.toFixed(2)} | First-pass validation rate: ${rep.kpis.firstPassValidationRate}%.`,
+      citations: ["Live financial & VAT ledger"],
+      actions: [
+        { label: "Open Payments & Receivables", href: "/payments" },
+        { label: "Open VAT Reports", href: "/reports" },
+      ],
+    });
+  }
+
+  // 5. Default helpful grounded overview
+  const rep = getOrgAnalyticsReport(orgId);
+  return NextResponse.json({
+    grounded: true,
+    disclaimer: "Deterministic Compliance Copilot — ask about rule IDs (e.g. BR-DE-15), EU countries (Germany, Belgium, France, Poland), blocked invoices, or unpaid receivables.",
+    answer: `Your workspace currently has ${rep.kpis.outgoingCount} finalized outgoing invoice(s) (${rep.kpis.firstPassValidationRate}% first-pass EN 16931 valid), ${rep.kpis.incomingCount} archived supplier invoice(s), and €${rep.kpis.totalOutstanding.toFixed(2)} in outstanding receivables. Try asking: "Why did BR-DE-15 fail?", "Which invoices need attention?", or "What does Belgium require?"`,
+    citations: ["Live org summary"],
+    actions: [
+      { label: "EU Compliance Hub", href: "/compliance" },
+      { label: "Financial & VAT Reports", href: "/reports" },
+    ],
+  });
+}

@@ -12,4 +12,5 @@ export * from "./integrations/csv-batch-importer.js";
 export * from "./integrations/datev-exporter.js";
 export * from "./integrations/fec-exporter.js";
 export * from "./integrations/vies-client.js";
+export * from "./country-modules.js";
 export * from "./fixtures/golden-fixtures.js";

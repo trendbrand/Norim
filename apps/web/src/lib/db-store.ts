@@ -128,11 +128,50 @@ export interface InvoiceRecord {
   archiveLockedUntil: string;
   deliveredTo: string | null;
   deliveredAt: string | null;
-  paymentStatus: "UNPAID" | "PAID";
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID";
+  paidAmount: number;
   paidAt: string | null;
+  approvalStatus: "NONE" | "APPROVED" | "REJECTED";
+  accountingStatus: "UNPOSTED" | "EXPORTED";
   canonical: CanonicalInvoice;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface InvoicePaymentRecord {
+  id: string;
+  orgId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  method: string;
+  reference: string;
+  valueDate: string;
+  recordedBy: string;
+  createdAt: string;
+}
+
+export interface InvoiceCommentRecord {
+  id: string;
+  orgId: string;
+  invoiceId: string;
+  authorEmail: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface AccountantDelegationRecord {
+  id: string;
+  orgId: string;
+  orgName?: string;
+  accountantEmail: string;
+  accountantName: string;
+  scope: "READ_EXPORT" | "FULL_BOOKKEEPING";
+  expiresAt: string;
+  revokedAt: string | null;
+  grantedBy: string;
+  createdAt: string;
 }
 
 export interface ProductRecord {
@@ -168,10 +207,51 @@ export interface IncomingInvoiceRecord {
   diagnostics: ValidationDiagnostic[];
   paymentStatus: "UNPAID" | "PAID";
   paidAt: string | null;
+  approvalStatus: "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  approvedBy: string | null;
+  approvedAt: string | null;
+  poReference: string | null;
+  isDuplicate: boolean;
   sha256Xml: string;
   archiveLockedUntil: string;
   canonical: CanonicalInvoice;
   createdAt: string;
+}
+
+export interface RecurringScheduleRecord {
+  id: string;
+  orgId: string;
+  title: string;
+  customerId: string;
+  customerName: string;
+  frequency: "MONTHLY" | "QUARTERLY" | "YEARLY";
+  nextRunDate: string;
+  lastRunAt: string | null;
+  active: boolean;
+  profile: CanonicalInvoice["profile"];
+  currency: string;
+  lineName: string;
+  quantity: number;
+  unitCode: string;
+  unitPrice: number;
+  vatCategory: "S" | "AE" | "E" | "Z" | "G" | "K" | "O";
+  vatRate: number;
+  autoEmail: boolean;
+  runsCount: number;
+  createdAt: string;
+}
+
+export interface AutomationRuleRecord {
+  id: string;
+  orgId: string;
+  ruleKey: string;
+  name: string;
+  triggerEvent: string;
+  actionSummary: string;
+  enabled: boolean;
+  executionsCount: number;
+  lastRunAt: string | null;
+  updatedAt: string;
 }
 
 export interface IntegrationConfigRecord {
@@ -471,6 +551,30 @@ function getDb(): DatabaseSync {
     );
     CREATE INDEX IF NOT EXISTS idx_wlogs_org ON webhook_logs(org_id, id DESC);
 
+    CREATE TABLE IF NOT EXISTS transmission_jobs (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invoice_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      channel TEXT NOT NULL DEFAULT 'email',
+      idempotency_key TEXT NOT NULL,
+      recipient TEXT NOT NULL,
+      cc TEXT,
+      status TEXT NOT NULL DEFAULT 'QUEUED',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      max_attempts INTEGER NOT NULL DEFAULT 6,
+      next_attempt_at TEXT,
+      provider TEXT,
+      provider_ref TEXT,
+      last_error TEXT,
+      actor_email TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_txjobs_idem ON transmission_jobs(org_id, idempotency_key);
+    CREATE INDEX IF NOT EXISTS idx_txjobs_due ON transmission_jobs(status, next_attempt_at);
+    CREATE INDEX IF NOT EXISTS idx_txjobs_inv ON transmission_jobs(org_id, invoice_id, created_at DESC);
+
     CREATE TABLE IF NOT EXISTS api_keys (
       id TEXT PRIMARY KEY,
       org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -547,15 +651,130 @@ function getDb(): DatabaseSync {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_incoming_org ON incoming_invoices(org_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS recurring_schedules (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      customer_id TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      frequency TEXT NOT NULL DEFAULT 'MONTHLY',
+      next_run_date TEXT NOT NULL,
+      last_run_at TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      profile TEXT NOT NULL DEFAULT 'ZUGFERD_EN16931',
+      currency TEXT NOT NULL DEFAULT 'EUR',
+      line_name TEXT NOT NULL,
+      quantity REAL NOT NULL DEFAULT 1,
+      unit_code TEXT NOT NULL DEFAULT 'MON',
+      unit_price REAL NOT NULL DEFAULT 0,
+      vat_category TEXT NOT NULL DEFAULT 'S',
+      vat_rate REAL NOT NULL DEFAULT 19,
+      auto_email INTEGER NOT NULL DEFAULT 0,
+      runs_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_recurring_org ON recurring_schedules(org_id);
+
+    CREATE TABLE IF NOT EXISTS automation_rules (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      rule_key TEXT NOT NULL,
+      name TEXT NOT NULL,
+      trigger_event TEXT NOT NULL,
+      action_summary TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      executions_count INTEGER NOT NULL DEFAULT 0,
+      last_run_at TEXT,
+      updated_at TEXT NOT NULL,
+      UNIQUE (org_id, rule_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_auto_org ON automation_rules(org_id);
+
+    CREATE TABLE IF NOT EXISTS invoice_payments (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      invoice_number TEXT NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'EUR',
+      method TEXT NOT NULL DEFAULT 'SEPA_TRANSFER',
+      reference TEXT NOT NULL DEFAULT '',
+      value_date TEXT NOT NULL,
+      recorded_by TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_pay_org ON invoice_payments(org_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS invoice_comments (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      author_email TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_comm_inv ON invoice_comments(org_id, invoice_id, created_at ASC);
+
+    CREATE TABLE IF NOT EXISTS accountant_delegations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      accountant_email TEXT NOT NULL,
+      accountant_name TEXT NOT NULL DEFAULT '',
+      scope TEXT NOT NULL DEFAULT 'READ_EXPORT',
+      expires_at TEXT NOT NULL,
+      revoked_at TEXT,
+      granted_by TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_deleg_email ON accountant_delegations(lower(accountant_email));
+
+    CREATE TABLE IF NOT EXISTS platform_admin_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      actor_email TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target_org_id TEXT,
+      reason TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Safe idempotent column migrations for existing SQLite databases
+  const orgCols = db.prepare("PRAGMA table_info(organizations)").all() as Array<{ name: string }>;
+  if (!orgCols.some((c) => c.name === "org_status")) {
+    db.exec("ALTER TABLE organizations ADD COLUMN org_status TEXT NOT NULL DEFAULT 'ACTIVE';");
+  }
   const invCols = db.prepare("PRAGMA table_info(invoices)").all() as Array<{ name: string }>;
   if (!invCols.some((c) => c.name === "payment_status")) {
     db.exec("ALTER TABLE invoices ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'UNPAID';");
   }
   if (!invCols.some((c) => c.name === "paid_at")) {
     db.exec("ALTER TABLE invoices ADD COLUMN paid_at TEXT;");
+  }
+  if (!invCols.some((c) => c.name === "paid_amount")) {
+    db.exec("ALTER TABLE invoices ADD COLUMN paid_amount REAL NOT NULL DEFAULT 0;");
+  }
+  if (!invCols.some((c) => c.name === "approval_status")) {
+    db.exec("ALTER TABLE invoices ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'NONE';");
+  }
+  if (!invCols.some((c) => c.name === "accounting_status")) {
+    db.exec("ALTER TABLE invoices ADD COLUMN accounting_status TEXT NOT NULL DEFAULT 'UNPOSTED';");
+  }
+  const inCols = db.prepare("PRAGMA table_info(incoming_invoices)").all() as Array<{ name: string }>;
+  if (!inCols.some((c) => c.name === "approval_status")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'PENDING_REVIEW';");
+  }
+  if (!inCols.some((c) => c.name === "approved_by")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN approved_by TEXT;");
+  }
+  if (!inCols.some((c) => c.name === "approved_at")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN approved_at TEXT;");
+  }
+  if (!inCols.some((c) => c.name === "po_reference")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN po_reference TEXT;");
+  }
+  if (!inCols.some((c) => c.name === "is_duplicate")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN is_duplicate INTEGER NOT NULL DEFAULT 0;");
   }
   const userCols = db.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
   if (!userCols.some((c) => c.name === "session_version")) {
@@ -567,7 +786,8 @@ function getDb(): DatabaseSync {
   // database. The demo account (founder@nordcloud-gmbh.de / DemoPass2026!) is public and is
   // also the default super-admin — seeding it in prod is a credential backdoor.
   const demoSeedAllowed =
-    process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_LOGIN !== "false";
+    process.env.ENABLE_DEMO_LOGIN === "true" ||
+    (process.env.NODE_ENV !== "production" && process.env.ENABLE_DEMO_LOGIN !== "false");
   if (demoSeedAllowed) {
     seedDemoWorkspaceIfEmpty(db);
     ensureDemoCatalogAndInbox(db);
@@ -1107,12 +1327,12 @@ export function listCustomersForOrg(orgId: string, search?: string): CustomerRec
   const db = getDb();
   const rows = search?.trim()
     ? (db
-        .prepare(
-          `SELECT * FROM customers WHERE org_id = ?
+      .prepare(
+        `SELECT * FROM customers WHERE org_id = ?
            AND (lower(legal_name) LIKE lower(?) OR lower(vat_id) LIKE lower(?) OR lower(city) LIKE lower(?))
            ORDER BY updated_at DESC`
-        )
-        .all(orgId, `%${search.trim()}%`, `%${search.trim()}%`, `%${search.trim()}%`) as Array<Record<string, any>>)
+      )
+      .all(orgId, `%${search.trim()}%`, `%${search.trim()}%`, `%${search.trim()}%`) as Array<Record<string, any>>)
     : (db.prepare("SELECT * FROM customers WHERE org_id = ? ORDER BY updated_at DESC").all(orgId) as Array<Record<string, any>>);
 
   return rows.map(mapCustomerRow);
@@ -1242,8 +1462,11 @@ function mapInvoiceRow(r: Record<string, any>): InvoiceRecord {
     archiveLockedUntil: r.archive_locked_until,
     deliveredTo: r.delivered_to,
     deliveredAt: r.delivered_at,
-    paymentStatus: r.payment_status === "PAID" ? "PAID" : "UNPAID",
+    paymentStatus: r.payment_status === "PAID" ? "PAID" : r.payment_status === "PARTIAL" ? "PARTIAL" : "UNPAID",
+    paidAmount: Number(r.paid_amount ?? 0),
     paidAt: r.paid_at ?? null,
+    approvalStatus: r.approval_status === "APPROVED" ? "APPROVED" : r.approval_status === "REJECTED" ? "REJECTED" : "NONE",
+    accountingStatus: r.accounting_status === "EXPORTED" ? "EXPORTED" : "UNPOSTED",
     canonical: JSON.parse(r.canonical_json),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -1506,6 +1729,220 @@ export function markInvoiceDelivered(orgId: string, invoiceId: string, recipient
   return appendOrgAuditEvent(orgId, invoiceId, inv.invoiceNumber, "EMAILED_TO_BUYER_AND_CC", actorEmail, {
     deliveredTo: recipient,
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Durable transmission outbox (ADR-004): at-least-once delivery with idempotency.
+// Jobs are written in the same DB as the invoice (outbox pattern) and drained by
+// an idempotent worker/drainer. A UNIQUE (org_id, idempotency_key) guarantees no
+// duplicate legal submission even under double-click or retry.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type TransmissionStatus = "QUEUED" | "SENDING" | "SENT" | "FAILED" | "DEAD";
+
+export interface TransmissionJobRecord {
+  id: string;
+  orgId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  channel: string;
+  idempotencyKey: string;
+  recipient: string;
+  cc: string | null;
+  status: TransmissionStatus;
+  attempts: number;
+  maxAttempts: number;
+  nextAttemptAt: string | null;
+  provider: string | null;
+  providerRef: string | null;
+  lastError: string | null;
+  actorEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapTransmissionRow(r: Record<string, any>): TransmissionJobRecord {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    invoiceId: r.invoice_id,
+    invoiceNumber: r.invoice_number,
+    channel: r.channel,
+    idempotencyKey: r.idempotency_key,
+    recipient: r.recipient,
+    cc: r.cc ?? null,
+    status: r.status as TransmissionStatus,
+    attempts: Number(r.attempts),
+    maxAttempts: Number(r.max_attempts),
+    nextAttemptAt: r.next_attempt_at ?? null,
+    provider: r.provider ?? null,
+    providerRef: r.provider_ref ?? null,
+    lastError: r.last_error ?? null,
+    actorEmail: r.actor_email,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/**
+ * Idempotently enqueue a transmission job. The idempotency key binds
+ * invoice + channel + recipient (the "submission intent"), so repeat calls
+ * return the existing job instead of creating a duplicate. `created` is false
+ * when an identical job already existed.
+ */
+export function enqueueTransmissionJob(params: {
+  orgId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  channel?: string;
+  recipient: string;
+  cc?: string | null;
+  actorEmail: string;
+  maxAttempts?: number;
+}): { job: TransmissionJobRecord; created: boolean } {
+  const db = getDb();
+  const channel = (params.channel || "email").toLowerCase();
+  const idempotencyKey = `${params.invoiceId}:${channel}:${params.recipient.trim().toLowerCase()}`;
+  const now = new Date().toISOString();
+  const id = `tx_${crypto.randomBytes(6).toString("hex")}`;
+
+  const info = db
+    .prepare(
+      `INSERT OR IGNORE INTO transmission_jobs
+        (id, org_id, invoice_id, invoice_number, channel, idempotency_key, recipient, cc,
+         status, attempts, max_attempts, next_attempt_at, actor_email, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'QUEUED', 0, ?, NULL, ?, ?, ?)`
+    )
+    .run(
+      id,
+      params.orgId,
+      params.invoiceId,
+      params.invoiceNumber,
+      channel,
+      idempotencyKey,
+      params.recipient.trim(),
+      params.cc?.trim() || null,
+      params.maxAttempts ?? 6,
+      params.actorEmail,
+      now,
+      now
+    );
+
+  const row = db
+    .prepare("SELECT * FROM transmission_jobs WHERE org_id = ? AND idempotency_key = ?")
+    .get(params.orgId, idempotencyKey) as Record<string, any>;
+
+  return { job: mapTransmissionRow(row), created: Number(info.changes) === 1 };
+}
+
+export function getTransmissionJob(jobId: string): TransmissionJobRecord | null {
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM transmission_jobs WHERE id = ?").get(jobId) as
+    | Record<string, any>
+    | undefined;
+  return row ? mapTransmissionRow(row) : null;
+}
+
+/**
+ * Atomically claim a job for processing (QUEUED/FAILED -> SENDING) if it is due.
+ * Returns true only for the single caller that won the claim, so the external
+ * send runs at most once per attempt (no duplicate submission).
+ */
+export function claimTransmissionJob(jobId: string): boolean {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const info = db
+    .prepare(
+      `UPDATE transmission_jobs
+         SET status = 'SENDING', attempts = attempts + 1, updated_at = ?
+       WHERE id = ?
+         AND status IN ('QUEUED', 'FAILED')
+         AND attempts < max_attempts
+         AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`
+    )
+    .run(now, jobId, now);
+  return Number(info.changes) === 1;
+}
+
+export function markTransmissionSent(
+  jobId: string,
+  provider: string,
+  providerRef: string
+): void {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE transmission_jobs
+       SET status = 'SENT', provider = ?, provider_ref = ?, last_error = NULL,
+           next_attempt_at = NULL, updated_at = ?
+     WHERE id = ?`
+  ).run(provider, providerRef, now, jobId);
+}
+
+/**
+ * Record a failed attempt. Transient failures are re-queued with a future
+ * next_attempt_at (exponential backoff); when attempts reach max_attempts, or
+ * the failure is permanent, the job is dead-lettered (DEAD).
+ */
+export function markTransmissionFailed(
+  jobId: string,
+  errorMessage: string,
+  opts: { permanent?: boolean; nextAttemptAt?: string | null } = {}
+): TransmissionJobRecord | null {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const job = getTransmissionJob(jobId);
+  if (!job) return null;
+  const exhausted = job.attempts >= job.maxAttempts;
+  const dead = opts.permanent || exhausted || !opts.nextAttemptAt;
+  db.prepare(
+    `UPDATE transmission_jobs
+       SET status = ?, last_error = ?, next_attempt_at = ?, updated_at = ?
+     WHERE id = ?`
+  ).run(
+    dead ? "DEAD" : "FAILED",
+    errorMessage.slice(0, 500),
+    dead ? null : opts.nextAttemptAt ?? null,
+    now,
+    jobId
+  );
+  return getTransmissionJob(jobId);
+}
+
+/** List ids of jobs that are due for a (re)attempt, oldest first. */
+export function listDueTransmissionJobIds(limit = 25): string[] {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const rows = db
+    .prepare(
+      `SELECT id FROM transmission_jobs
+        WHERE status IN ('QUEUED', 'FAILED')
+          AND attempts < max_attempts
+          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+        ORDER BY created_at ASC
+        LIMIT ?`
+    )
+    .all(now, limit) as Array<{ id: string }>;
+  return rows.map((r) => r.id);
+}
+
+export function listTransmissionJobsForOrg(
+  orgId: string,
+  invoiceId?: string
+): TransmissionJobRecord[] {
+  const db = getDb();
+  const rows = invoiceId
+    ? (db
+        .prepare(
+          "SELECT * FROM transmission_jobs WHERE org_id = ? AND invoice_id = ? ORDER BY created_at DESC LIMIT 100"
+        )
+        .all(orgId, invoiceId) as Array<Record<string, any>>)
+    : (db
+        .prepare(
+          "SELECT * FROM transmission_jobs WHERE org_id = ? ORDER BY created_at DESC LIMIT 100"
+        )
+        .all(orgId) as Array<Record<string, any>>);
+  return rows.map(mapTransmissionRow);
 }
 
 export function deleteDraftInvoiceForOrg(
@@ -1986,6 +2423,11 @@ function mapIncomingRow(r: Record<string, any>): IncomingInvoiceRecord {
     diagnostics: JSON.parse(r.diagnostics_json || "[]"),
     paymentStatus: r.payment_status === "PAID" ? "PAID" : "UNPAID",
     paidAt: r.paid_at ?? null,
+    approvalStatus: r.approval_status === "APPROVED" ? "APPROVED" : r.approval_status === "REJECTED" ? "REJECTED" : "PENDING_REVIEW",
+    approvedBy: r.approved_by ?? null,
+    approvedAt: r.approved_at ?? null,
+    poReference: r.po_reference ?? null,
+    isDuplicate: Boolean(r.is_duplicate),
     sha256Xml: r.sha256_xml,
     archiveLockedUntil: r.archive_locked_until,
     canonical: JSON.parse(r.canonical_json),
@@ -2017,12 +2459,18 @@ export function saveIncomingInvoiceForOrg(
   const id = `in_${crypto.randomBytes(6).toString("hex")}`;
   const now = new Date().toISOString();
 
+  // Automatic Duplicate Detection (same supplier + invoice number in org's incoming inbox)
+  const dup = db
+    .prepare("SELECT id FROM incoming_invoices WHERE org_id = ? AND lower(seller_name) = lower(?) AND lower(invoice_number) = lower(?) LIMIT 1")
+    .get(orgId, normalized.seller.name, normalized.invoiceNumber);
+  const isDuplicate = Boolean(dup);
+
   db.prepare(
     `INSERT INTO incoming_invoices (
        id, org_id, filename, invoice_number, issue_date, due_date, seller_name, seller_vat_id, seller_country,
        currency, net_amount, tax_amount, gross_amount, detected_standard, validation_passed, diagnostics_json,
-       payment_status, paid_at, sha256_xml, archive_locked_until, canonical_json, created_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNPAID', NULL, ?, ?, ?, ?)`
+       payment_status, paid_at, approval_status, po_reference, is_duplicate, sha256_xml, archive_locked_until, canonical_json, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNPAID', NULL, 'PENDING_REVIEW', ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     orgId,
@@ -2040,6 +2488,8 @@ export function saveIncomingInvoiceForOrg(
     meta.detectedStandard,
     report.valid ? 1 : 0,
     JSON.stringify(report.diagnostics),
+    normalized.purchaseOrderReference ?? null,
+    isDuplicate ? 1 : 0,
     xmlHash,
     lockDate,
     JSON.stringify(normalized),
@@ -2084,7 +2534,7 @@ export function getPlatformAdminOverview() {
   const db = getDb();
   const orgs = db
     .prepare(
-      `SELECT o.id, o.name, o.slug, o.onboarding_completed, o.retention_years, o.created_at,
+      `SELECT o.id, o.name, o.slug, o.org_status, o.onboarding_completed, o.retention_years, o.created_at,
               s.plan_tier, s.monthly_quota, s.status as sub_status,
               (SELECT u.email FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.org_id = o.id AND m.role = 'owner' LIMIT 1) as owner_email,
               (SELECT COUNT(*) FROM invoices i WHERE i.org_id = o.id) as invoice_count,
@@ -2103,6 +2553,9 @@ export function getPlatformAdminOverview() {
   const recentWebhooks = db
     .prepare("SELECT * FROM webhook_logs ORDER BY id DESC LIMIT 25")
     .all() as Array<Record<string, any>>;
+  const adminAudit = db
+    .prepare("SELECT * FROM platform_admin_audit ORDER BY id DESC LIMIT 30")
+    .all() as Array<Record<string, any>>;
 
   const estimatedMrrEur = orgs.reduce((sum, o) => sum + (TIER_PRICE_EUR[o.plan_tier || "free"] ?? 0), 0);
 
@@ -2118,6 +2571,7 @@ export function getPlatformAdminOverview() {
       id: o.id,
       name: o.name,
       slug: o.slug,
+      orgStatus: o.org_status === "SUSPENDED" ? "SUSPENDED" : "ACTIVE",
       ownerEmail: o.owner_email || "—",
       onboardingCompleted: Boolean(o.onboarding_completed),
       planTier: o.plan_tier || "free",
@@ -2139,5 +2593,682 @@ export function getPlatformAdminOverview() {
       summary: w.summary,
       createdAt: w.created_at,
     })),
+    adminAudit: adminAudit.map((a) => ({
+      id: Number(a.id),
+      actorEmail: a.actor_email,
+      action: a.action,
+      targetOrgId: a.target_org_id,
+      reason: a.reason,
+      createdAt: a.created_at,
+    })),
   };
+}
+
+export function adminSetOrgStatus(
+  orgId: string,
+  status: "ACTIVE" | "SUSPENDED",
+  reason: string,
+  actorEmail: string
+): boolean {
+  const db = getDb();
+  const res = db.prepare("UPDATE organizations SET org_status = ? WHERE id = ?").run(status, orgId);
+  if (Number(res.changes) === 0) return false;
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO platform_admin_audit (actor_email, action, target_org_id, reason, created_at) VALUES (?, ?, ?, ?, ?)"
+  ).run(actorEmail, status === "SUSPENDED" ? "TENANT_SUSPENDED" : "TENANT_REACTIVATED", orgId, reason.trim() || "Operator action", now);
+  return true;
+}
+
+export function recordPlatformAdminAudit(actorEmail: string, action: string, targetOrgId: string | null, reason: string) {
+  const db = getDb();
+  db.prepare(
+    "INSERT INTO platform_admin_audit (actor_email, action, target_org_id, reason, created_at) VALUES (?, ?, ?, ?, ?)"
+  ).run(actorEmail, action, targetOrgId, reason.trim() || "Operator action", new Date().toISOString());
+}
+
+// ============================================================================
+// Phase 7: Incoming Approvals, Recurring Billing, Automations, Reports & Search
+// ============================================================================
+
+export function setIncomingInvoiceApproval(
+  orgId: string,
+  id: string,
+  approvalStatus: "APPROVED" | "REJECTED" | "PENDING_REVIEW",
+  actorEmail: string,
+  poReference?: string
+): IncomingInvoiceRecord | null {
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM incoming_invoices WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any> | undefined;
+  if (!row) return null;
+  const now = new Date().toISOString();
+  db.prepare(
+    `UPDATE incoming_invoices SET approval_status = ?, approved_by = ?, approved_at = ?, po_reference = COALESCE(?, po_reference)
+     WHERE id = ? AND org_id = ?`
+  ).run(approvalStatus, actorEmail, now, poReference ?? null, id, orgId);
+
+  appendOrgAuditEvent(orgId, id, row.invoice_number, `INCOMING_${approvalStatus}`, actorEmail, {
+    approvalStatus,
+    poReference: poReference ?? row.po_reference ?? null,
+  });
+
+  return mapIncomingRow(db.prepare("SELECT * FROM incoming_invoices WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any>);
+}
+
+function mapRecurringRow(r: Record<string, any>): RecurringScheduleRecord {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    title: r.title,
+    customerId: r.customer_id,
+    customerName: r.customer_name,
+    frequency: r.frequency,
+    nextRunDate: r.next_run_date,
+    lastRunAt: r.last_run_at ?? null,
+    active: Boolean(r.active),
+    profile: r.profile,
+    currency: r.currency,
+    lineName: r.line_name,
+    quantity: Number(r.quantity),
+    unitCode: r.unit_code,
+    unitPrice: Number(r.unit_price),
+    vatCategory: r.vat_category,
+    vatRate: Number(r.vat_rate),
+    autoEmail: Boolean(r.auto_email),
+    runsCount: Number(r.runs_count),
+    createdAt: r.created_at,
+  };
+}
+
+export function listRecurringSchedulesForOrg(orgId: string): RecurringScheduleRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM recurring_schedules WHERE org_id = ? ORDER BY created_at DESC")
+    .all(orgId) as Array<Record<string, any>>;
+  return rows.map(mapRecurringRow);
+}
+
+export function createRecurringScheduleForOrg(
+  orgId: string,
+  input: {
+    title: string;
+    customerId: string;
+    frequency: "MONTHLY" | "QUARTERLY" | "YEARLY";
+    nextRunDate: string;
+    profile?: CanonicalInvoice["profile"];
+    currency?: string;
+    lineName: string;
+    quantity?: number;
+    unitCode?: string;
+    unitPrice: number;
+    vatCategory?: RecurringScheduleRecord["vatCategory"];
+    vatRate?: number;
+    autoEmail?: boolean;
+  }
+): RecurringScheduleRecord {
+  const db = getDb();
+  const customer = getCustomerForOrg(orgId, input.customerId);
+  if (!customer) throw new Error("Selected customer not found in your organization.");
+  const id = `rec_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date().toISOString();
+
+  db.prepare(
+    `INSERT INTO recurring_schedules (
+       id, org_id, title, customer_id, customer_name, frequency, next_run_date, active,
+       profile, currency, line_name, quantity, unit_code, unit_price, vat_category, vat_rate, auto_email, runs_count, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`
+  ).run(
+    id,
+    orgId,
+    input.title.trim(),
+    customer.id,
+    customer.legalName,
+    input.frequency,
+    input.nextRunDate,
+    input.profile || customer.defaultFormat || "ZUGFERD_EN16931",
+    (input.currency || "EUR").toUpperCase(),
+    input.lineName.trim(),
+    Number(input.quantity) || 1,
+    input.unitCode || "MON",
+    Number(input.unitPrice) || 0,
+    input.vatCategory || "S",
+    Number(input.vatRate ?? 19),
+    input.autoEmail ? 1 : 0,
+    now
+  );
+
+  return mapRecurringRow(db.prepare("SELECT * FROM recurring_schedules WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any>);
+}
+
+export function toggleRecurringScheduleForOrg(orgId: string, id: string, active: boolean): RecurringScheduleRecord | null {
+  const db = getDb();
+  const res = db.prepare("UPDATE recurring_schedules SET active = ? WHERE id = ? AND org_id = ?").run(active ? 1 : 0, id, orgId);
+  if (Number(res.changes) === 0) return null;
+  return mapRecurringRow(db.prepare("SELECT * FROM recurring_schedules WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any>);
+}
+
+export function deleteRecurringScheduleForOrg(orgId: string, id: string): boolean {
+  const db = getDb();
+  const res = db.prepare("DELETE FROM recurring_schedules WHERE id = ? AND org_id = ?").run(id, orgId);
+  return Number(res.changes) > 0;
+}
+
+function advanceDateByFrequency(isoDate: string, freq: "MONTHLY" | "QUARTERLY" | "YEARLY"): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  if (freq === "YEARLY") d.setUTCFullYear(d.getUTCFullYear() + 1);
+  else if (freq === "QUARTERLY") d.setUTCMonth(d.getUTCMonth() + 3);
+  else d.setUTCMonth(d.getUTCMonth() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+export function runRecurringScheduleNow(orgId: string, id: string, actorEmail: string): { invoice: InvoiceRecord; schedule: RecurringScheduleRecord } | null {
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM recurring_schedules WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any> | undefined;
+  if (!row) return null;
+  const sched = mapRecurringRow(row);
+  const seller = getSellerSettings(orgId);
+  const customer = getCustomerForOrg(orgId, sched.customerId);
+  if (!seller || !customer) throw new Error("Seller settings or customer missing.");
+
+  const today = new Date().toISOString().slice(0, 10);
+  const due = new Date(`${today}T00:00:00Z`);
+  due.setUTCDate(due.getUTCDate() + (seller.defaultDueDays || 14));
+  const invNum = consumeNextInvoiceNumber(orgId, 380);
+
+  const canonical: CanonicalInvoice = {
+    invoiceNumber: invNum,
+    issueDate: today,
+    typeCode: 380,
+    currency: sched.currency,
+    buyerReference: customer.leitwegId || undefined,
+    notes: [`Recurring schedule: ${sched.title}`],
+    locale: seller.defaultLocale,
+    profile: sched.profile,
+    seller: sellerSettingsToCanonicalParty(seller),
+    buyer: {
+      name: customer.legalName,
+      vatId: customer.vatId || undefined,
+      electronicAddress: customer.electronicAddress || undefined,
+      electronicAddressScheme: "EM",
+      address: {
+        street: customer.street || "Business Street 1",
+        postalCode: customer.postalCode || "10115",
+        city: customer.city || "Berlin",
+        countryCode: customer.countryCode || "DE",
+      },
+    },
+    payment: {
+      meansCode: "58",
+      paymentTerms: seller.defaultPaymentTerms || undefined,
+      dueDate: due.toISOString().slice(0, 10),
+      iban: seller.iban || undefined,
+      bic: seller.bic || undefined,
+      accountName: seller.accountHolder || seller.legalName,
+    },
+    lines: [
+      {
+        id: "1",
+        name: sched.lineName,
+        quantity: sched.quantity,
+        unitCode: sched.unitCode,
+        unitPrice: sched.unitPrice,
+        lineAllowance: 0,
+        lineCharge: 0,
+        vatCategory: sched.vatCategory,
+        vatRate: sched.vatRate,
+      },
+    ],
+    allowancesTotal: 0,
+    chargesTotal: 0,
+    prepaidAmount: 0,
+    roundingAmount: 0,
+  };
+
+  const invoice = saveInvoiceForOrg(orgId, canonical, {
+    customerId: customer.id,
+    source: "manual",
+    sourceRef: `RECURRING_${sched.id}`,
+    actorEmail,
+  });
+
+  const nextDate = advanceDateByFrequency(sched.nextRunDate >= today ? sched.nextRunDate : today, sched.frequency);
+  db.prepare("UPDATE recurring_schedules SET next_run_date = ?, last_run_at = ?, runs_count = runs_count + 1 WHERE id = ? AND org_id = ?").run(
+    nextDate,
+    new Date().toISOString(),
+    sched.id,
+    orgId
+  );
+
+  const updatedSched = mapRecurringRow(db.prepare("SELECT * FROM recurring_schedules WHERE id = ? AND org_id = ?").get(id, orgId) as Record<string, any>);
+  return { invoice, schedule: updatedSched };
+}
+
+const DEFAULT_AUTOMATIONS = [
+  {
+    ruleKey: "auto_validate_halt",
+    name: "Pre-Send EN 16931 Compliance Gate",
+    triggerEvent: "On Invoice Created / Webhook Received",
+    actionSummary: "Run deterministic EN 16931 & BR-DE-* checks; halt invalid invoices in Action-Required queue before delivery.",
+    enabled: 1,
+  },
+  {
+    ruleKey: "auto_email_validated",
+    name: "Auto-Dispatch Validated Invoices + Accountant CC",
+    triggerEvent: "On Invoice Validated",
+    actionSummary: "Email Hybrid PDF/A-3 + XML to buyer BT-49 and CC your configured Steuerberater / Expert-comptable.",
+    enabled: 1,
+  },
+  {
+    ruleKey: "incoming_approval_gate",
+    name: "Incoming Supplier Invoice Approval Gate",
+    triggerEvent: "On Incoming E-Invoice Received",
+    actionSummary: "Run duplicate detection, verify EN 16931 math, and hold in Pending Review until approved by Owner/Admin.",
+    enabled: 1,
+  },
+  {
+    ruleKey: "overdue_payment_reminder",
+    name: "Overdue Receivable Reminder Queue",
+    triggerEvent: "On Invoice Past Due Date (BT-9)",
+    actionSummary: "Flag unpaid invoices in Receivables Ageing report and prepare reminder notice for owner approval.",
+    enabled: 0,
+  },
+];
+
+export function listAutomationRulesForOrg(orgId: string): AutomationRuleRecord[] {
+  const db = getDb();
+  const count = Number((db.prepare("SELECT COUNT(*) as c FROM automation_rules WHERE org_id = ?").get(orgId) as { c: number }).c);
+  if (count === 0) {
+    const now = new Date().toISOString();
+    const stmt = db.prepare(
+      `INSERT OR IGNORE INTO automation_rules (id, org_id, rule_key, name, trigger_event, action_summary, enabled, executions_count, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`
+    );
+    for (const d of DEFAULT_AUTOMATIONS) {
+      stmt.run(`auto_${crypto.randomBytes(5).toString("hex")}`, orgId, d.ruleKey, d.name, d.triggerEvent, d.actionSummary, d.enabled, now);
+    }
+  }
+  const rows = db.prepare("SELECT * FROM automation_rules WHERE org_id = ? ORDER BY rowid ASC").all(orgId) as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: r.org_id,
+    ruleKey: r.rule_key,
+    name: r.name,
+    triggerEvent: r.trigger_event,
+    actionSummary: r.action_summary,
+    enabled: Boolean(r.enabled),
+    executionsCount: Number(r.executions_count),
+    lastRunAt: r.last_run_at ?? null,
+    updatedAt: r.updated_at,
+  }));
+}
+
+export function toggleAutomationRuleForOrg(orgId: string, id: string, enabled: boolean, actorEmail: string): AutomationRuleRecord | null {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const res = db.prepare("UPDATE automation_rules SET enabled = ?, updated_at = ? WHERE id = ? AND org_id = ?").run(enabled ? 1 : 0, now, id, orgId);
+  if (Number(res.changes) === 0) return null;
+  appendOrgAuditEvent(orgId, null, id, "AUTOMATION_RULE_TOGGLED", actorEmail, { enabled });
+  return listAutomationRulesForOrg(orgId).find((r) => r.id === id) ?? null;
+}
+
+export function getOrgAnalyticsReport(orgId: string) {
+  const invoices = listInvoicesForOrg(orgId);
+  const incoming = listIncomingInvoicesForOrg(orgId);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const finalized = invoices.filter((i) => i.status !== "DRAFT");
+  const validFinalized = finalized.filter((i) => i.validationPassed);
+  const delivered = finalized.filter((i) => i.status === "DELIVERED");
+  const firstPassRate = finalized.length > 0 ? Math.round((validFinalized.length / finalized.length) * 100) : 100;
+
+  let totalInvoiced = 0;
+  let totalCollected = 0;
+  let totalOutstanding = 0;
+  const ageing = { current: 0, days1to30: 0, days31to60: 0, days60plus: 0 };
+  const vatMap = new Map<string, { category: string; rate: number; netTotal: number; taxTotal: number }>();
+  const countryMap = new Map<string, { country: string; count: number; grossTotal: number }>();
+
+  for (const inv of validFinalized) {
+    const sign = inv.typeCode === 381 ? -1 : 1;
+    const gross = sign * Math.abs(inv.grossAmount);
+    totalInvoiced += gross;
+
+    if (inv.paymentStatus === "PAID") {
+      totalCollected += gross;
+    } else if (inv.typeCode === 380) {
+      totalOutstanding += inv.grossAmount;
+      const due = inv.dueDate || inv.issueDate;
+      const diffDays = Math.floor((new Date(`${today}T00:00:00Z`).getTime() - new Date(`${due}T00:00:00Z`).getTime()) / 86400000);
+      if (diffDays <= 0) ageing.current += inv.grossAmount;
+      else if (diffDays <= 30) ageing.days1to30 += inv.grossAmount;
+      else if (diffDays <= 60) ageing.days31to60 += inv.grossAmount;
+      else ageing.days60plus += inv.grossAmount;
+    }
+
+    const cKey = inv.buyerCountry || "DE";
+    const cEntry = countryMap.get(cKey) ?? { country: cKey, count: 0, grossTotal: 0 };
+    cEntry.count += 1;
+    cEntry.grossTotal += gross;
+    countryMap.set(cKey, cEntry);
+
+    for (const line of inv.canonical.lines) {
+      const key = `${line.vatCategory}:${line.vatRate}`;
+      const lineNet = sign * Math.abs(line.lineNetAmount ?? line.quantity * line.unitPrice);
+      const lineTax = Number(((lineNet * line.vatRate) / 100).toFixed(2));
+      const vEntry = vatMap.get(key) ?? { category: line.vatCategory, rate: line.vatRate, netTotal: 0, taxTotal: 0 };
+      vEntry.netTotal += lineNet;
+      vEntry.taxTotal += lineTax;
+      vatMap.set(key, vEntry);
+    }
+  }
+
+  const payablesUnpaid = incoming.filter((i) => i.paymentStatus === "UNPAID").reduce((s, i) => s + i.grossAmount, 0);
+  const payablesPendingApproval = incoming.filter((i) => i.approvalStatus === "PENDING_REVIEW").length;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    kpis: {
+      totalInvoiced: Number(totalInvoiced.toFixed(2)),
+      totalCollected: Number(totalCollected.toFixed(2)),
+      totalOutstanding: Number(totalOutstanding.toFixed(2)),
+      firstPassValidationRate: firstPassRate,
+      deliveryRate: finalized.length > 0 ? Math.round((delivered.length / finalized.length) * 100) : 0,
+      outgoingCount: finalized.length,
+      incomingCount: incoming.length,
+      payablesUnpaid: Number(payablesUnpaid.toFixed(2)),
+      payablesPendingApproval,
+    },
+    ageing: {
+      current: Number(ageing.current.toFixed(2)),
+      days1to30: Number(ageing.days1to30.toFixed(2)),
+      days31to60: Number(ageing.days31to60.toFixed(2)),
+      days60plus: Number(ageing.days60plus.toFixed(2)),
+    },
+    vatSummary: Array.from(vatMap.values()).map((v) => ({
+      ...v,
+      netTotal: Number(v.netTotal.toFixed(2)),
+      taxTotal: Number(v.taxTotal.toFixed(2)),
+    })),
+    byCountry: Array.from(countryMap.values()).map((c) => ({
+      ...c,
+      grossTotal: Number(c.grossTotal.toFixed(2)),
+    })),
+  };
+}
+
+export function searchOrgWorkspace(orgId: string, query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return { invoices: [], incoming: [], customers: [], products: [] };
+
+  const invoices = listInvoicesForOrg(orgId, { search: q }).slice(0, 6).map((i) => ({
+    id: i.id,
+    title: i.invoiceNumber,
+    subtitle: `${i.buyerName} · ${i.status} · ${i.grossAmount.toFixed(2)} ${i.currency}`,
+    href: `/invoices/${i.id}`,
+  }));
+
+  const incoming = listIncomingInvoicesForOrg(orgId)
+    .filter((i) => i.invoiceNumber.toLowerCase().includes(q) || i.sellerName.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map((i) => ({
+      id: i.id,
+      title: i.invoiceNumber,
+      subtitle: `Supplier: ${i.sellerName} · ${i.approvalStatus}`,
+      href: `/inbox`,
+    }));
+
+  const customers = listCustomersForOrg(orgId, q).slice(0, 5).map((c) => ({
+    id: c.id,
+    title: c.legalName,
+    subtitle: `${c.countryCode}${c.vatId ? ` · ${c.vatId}` : ""} · ${c.city}`,
+    href: `/customers`,
+  }));
+
+  const products = listProductsForOrg(orgId)
+    .filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+    .slice(0, 5)
+    .map((p) => ({
+      id: p.id,
+      title: p.sku ? `[${p.sku}] ${p.name}` : p.name,
+      subtitle: `${p.unitPrice.toFixed(2)} EUR / ${p.unitCode}`,
+      href: `/catalog`,
+    }));
+
+  return { invoices, incoming, customers, products };
+}
+
+// ============================================================================
+// Phase 8: Partial Payments, Team Comments, Outgoing Approvals & Accountant Delegations
+// ============================================================================
+
+export function recordInvoicePayment(
+  orgId: string,
+  invoiceId: string,
+  input: { amount: number; method?: string; reference?: string; valueDate?: string },
+  actorEmail: string
+): { payment: InvoicePaymentRecord; invoice: InvoiceRecord } | null {
+  const db = getDb();
+  const inv = getInvoiceForOrg(orgId, invoiceId);
+  if (!inv) return null;
+  const amount = Number(input.amount);
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Payment amount must be greater than zero.");
+
+  const id = `pay_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date().toISOString();
+  const valueDate = input.valueDate || now.slice(0, 10);
+  const method = input.method || "SEPA_TRANSFER";
+  const reference = input.reference || inv.invoiceNumber;
+
+  db.prepare(
+    `INSERT INTO invoice_payments (id, org_id, invoice_id, invoice_number, amount, currency, method, reference, value_date, recorded_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, orgId, inv.id, inv.invoiceNumber, amount, inv.currency, method, reference, valueDate, actorEmail, now);
+
+  const sumRow = db
+    .prepare("SELECT COALESCE(SUM(amount), 0) as total FROM invoice_payments WHERE org_id = ? AND invoice_id = ?")
+    .get(orgId, inv.id) as { total: number };
+  const totalPaid = Number(Number(sumRow.total).toFixed(2));
+  const nextStatus: "UNPAID" | "PARTIAL" | "PAID" =
+    totalPaid >= inv.grossAmount - 0.005 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "UNPAID";
+
+  db.prepare("UPDATE invoices SET paid_amount = ?, payment_status = ?, paid_at = ?, updated_at = ? WHERE id = ? AND org_id = ?").run(
+    totalPaid,
+    nextStatus,
+    nextStatus === "PAID" ? now : inv.paidAt,
+    now,
+    inv.id,
+    orgId
+  );
+
+  appendOrgAuditEvent(orgId, inv.id, inv.invoiceNumber, "PAYMENT_RECORDED", actorEmail, {
+    amount,
+    totalPaid,
+    paymentStatus: nextStatus,
+    method,
+    reference,
+  });
+
+  const payment: InvoicePaymentRecord = {
+    id,
+    orgId,
+    invoiceId: inv.id,
+    invoiceNumber: inv.invoiceNumber,
+    amount,
+    currency: inv.currency,
+    method,
+    reference,
+    valueDate,
+    recordedBy: actorEmail,
+    createdAt: now,
+  };
+  return { payment, invoice: getInvoiceForOrg(orgId, inv.id)! };
+}
+
+export function listInvoicePaymentsForOrg(orgId: string): InvoicePaymentRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM invoice_payments WHERE org_id = ? ORDER BY created_at DESC LIMIT 100")
+    .all(orgId) as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: r.org_id,
+    invoiceId: r.invoice_id,
+    invoiceNumber: r.invoice_number,
+    amount: Number(r.amount),
+    currency: r.currency,
+    method: r.method,
+    reference: r.reference,
+    valueDate: r.value_date,
+    recordedBy: r.recorded_by,
+    createdAt: r.created_at,
+  }));
+}
+
+export function listInvoiceComments(orgId: string, invoiceId: string): InvoiceCommentRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM invoice_comments WHERE org_id = ? AND invoice_id = ? ORDER BY created_at ASC")
+    .all(orgId, invoiceId) as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: r.org_id,
+    invoiceId: r.invoice_id,
+    authorEmail: r.author_email,
+    body: r.body,
+    createdAt: r.created_at,
+  }));
+}
+
+export function addInvoiceComment(orgId: string, invoiceId: string, authorEmail: string, body: string): InvoiceCommentRecord | null {
+  const db = getDb();
+  const inv = getInvoiceForOrg(orgId, invoiceId);
+  if (!inv) return null;
+  const id = `cmt_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date().toISOString();
+  db.prepare("INSERT INTO invoice_comments (id, org_id, invoice_id, author_email, body, created_at) VALUES (?, ?, ?, ?, ?, ?)").run(
+    id,
+    orgId,
+    invoiceId,
+    authorEmail,
+    body.trim().slice(0, 1000),
+    now
+  );
+  appendOrgAuditEvent(orgId, invoiceId, inv.invoiceNumber, "COMMENT_ADDED", authorEmail, { preview: body.trim().slice(0, 80) });
+  return { id, orgId, invoiceId, authorEmail, body: body.trim().slice(0, 1000), createdAt: now };
+}
+
+export function setOutgoingInvoiceApproval(
+  orgId: string,
+  invoiceId: string,
+  approvalStatus: "APPROVED" | "REJECTED",
+  actorEmail: string
+): InvoiceRecord | null {
+  const db = getDb();
+  const inv = getInvoiceForOrg(orgId, invoiceId);
+  if (!inv) return null;
+  const now = new Date().toISOString();
+  db.prepare("UPDATE invoices SET approval_status = ?, updated_at = ? WHERE id = ? AND org_id = ?").run(
+    approvalStatus,
+    now,
+    invoiceId,
+    orgId
+  );
+  appendOrgAuditEvent(orgId, invoiceId, inv.invoiceNumber, `OUTGOING_${approvalStatus}`, actorEmail, { approvalStatus });
+  return getInvoiceForOrg(orgId, invoiceId);
+}
+
+export function listOrgDelegations(orgId: string): AccountantDelegationRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM accountant_delegations WHERE org_id = ? ORDER BY created_at DESC")
+    .all(orgId) as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: r.org_id,
+    accountantEmail: r.accountant_email,
+    accountantName: r.accountant_name,
+    scope: r.scope === "FULL_BOOKKEEPING" ? "FULL_BOOKKEEPING" : "READ_EXPORT",
+    expiresAt: r.expires_at,
+    revokedAt: r.revoked_at ?? null,
+    grantedBy: r.granted_by,
+    createdAt: r.created_at,
+  }));
+}
+
+export function createAccountantDelegation(
+  orgId: string,
+  input: { accountantEmail: string; accountantName?: string; scope?: "READ_EXPORT" | "FULL_BOOKKEEPING"; expiresDays?: number },
+  grantedBy: string
+): AccountantDelegationRecord {
+  const db = getDb();
+  const id = `del_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date();
+  const exp = new Date(now.getTime() + (Math.max(1, Number(input.expiresDays) || 365) * 86400000));
+  const scope = input.scope === "FULL_BOOKKEEPING" ? "FULL_BOOKKEEPING" : "READ_EXPORT";
+  db.prepare(
+    `INSERT INTO accountant_delegations (id, org_id, accountant_email, accountant_name, scope, expires_at, granted_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    orgId,
+    input.accountantEmail.trim().toLowerCase(),
+    (input.accountantName || "").trim(),
+    scope,
+    exp.toISOString().slice(0, 10),
+    grantedBy,
+    now.toISOString()
+  );
+  appendOrgAuditEvent(orgId, null, "ACCOUNTANT", "ACCOUNTANT_DELEGATION_GRANTED", grantedBy, {
+    accountantEmail: input.accountantEmail.trim().toLowerCase(),
+    scope,
+    expiresAt: exp.toISOString().slice(0, 10),
+  });
+  return listOrgDelegations(orgId).find((d) => d.id === id)!;
+}
+
+export function revokeAccountantDelegation(orgId: string, id: string, actorEmail: string): boolean {
+  const db = getDb();
+  const res = db
+    .prepare("UPDATE accountant_delegations SET revoked_at = ? WHERE id = ? AND org_id = ? AND revoked_at IS NULL")
+    .run(new Date().toISOString(), id, orgId);
+  if (Number(res.changes) > 0) {
+    appendOrgAuditEvent(orgId, null, "ACCOUNTANT", "ACCOUNTANT_DELEGATION_REVOKED", actorEmail, { delegationId: id });
+    return true;
+  }
+  return false;
+}
+
+export function listDelegatedClientsForAccountant(accountantEmail: string) {
+  const db = getDb();
+  const today = new Date().toISOString().slice(0, 10);
+  const rows = db
+    .prepare(
+      `SELECT d.*, o.name as org_name, sp.country_code, sp.vat_id
+       FROM accountant_delegations d
+       JOIN organizations o ON o.id = d.org_id
+       LEFT JOIN seller_profiles sp ON sp.org_id = d.org_id
+       WHERE lower(d.accountant_email) = lower(?) AND d.revoked_at IS NULL AND d.expires_at >= ?
+       ORDER BY d.created_at DESC`
+    )
+    .all(accountantEmail.trim(), today) as Array<Record<string, any>>;
+
+  return rows.map((r) => {
+    const analytics = getOrgAnalyticsReport(r.org_id);
+    const chain = verifyOrgAuditHashChain(r.org_id);
+    return {
+      delegationId: r.id,
+      orgId: r.org_id,
+      orgName: r.org_name,
+      countryCode: r.country_code || "DE",
+      vatId: r.vat_id || "",
+      scope: r.scope,
+      expiresAt: r.expires_at,
+      outgoingCount: analytics.kpis.outgoingCount,
+      incomingCount: analytics.kpis.incomingCount,
+      totalInvoiced: analytics.kpis.totalInvoiced,
+      totalOutstanding: analytics.kpis.totalOutstanding,
+      firstPassRate: analytics.kpis.firstPassValidationRate,
+      gobdVerified: chain.verified,
+    };
+  });
 }

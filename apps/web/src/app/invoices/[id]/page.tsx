@@ -57,8 +57,11 @@ interface InvoiceDetail {
   archiveLockedUntil: string;
   deliveredTo: string | null;
   deliveredAt: string | null;
-  paymentStatus: "UNPAID" | "PAID";
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID";
+  paidAmount: number;
   paidAt: string | null;
+  approvalStatus: "NONE" | "APPROVED" | "REJECTED";
+  accountingStatus: "UNPOSTED" | "EXPORTED";
   source: string;
   sourceRef: string;
   canonical: CanonicalInvoice;
@@ -101,19 +104,29 @@ export default function InvoiceDetailPage() {
   const [cnReason, setCnReason] = useState("");
   const [showCnBox, setShowCnBox] = useState(false);
 
+  // Team comments (Module F13)
+  const [comments, setComments] = useState<Array<{ id: string; authorEmail: string; body: string; createdAt: string }>>([]);
+  const [commentInput, setCommentInput] = useState("");
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiJson<{
-        invoice: InvoiceDetail;
-        auditEvents: AuditEvent[];
-        epcQrDataUrl: string | null;
-        xmlPreview: string;
-      }>(`/api/v1/invoices/${id}`);
+      const [data, cmtData] = await Promise.all([
+        apiJson<{
+          invoice: InvoiceDetail;
+          auditEvents: AuditEvent[];
+          epcQrDataUrl: string | null;
+          xmlPreview: string;
+        }>(`/api/v1/invoices/${id}`),
+        apiJson<{ comments: Array<{ id: string; authorEmail: string; body: string; createdAt: string }> }>(
+          `/api/v1/invoices/${id}/comments`
+        ),
+      ]);
       setInv(data.invoice);
       setAuditEvents(data.auditEvents);
       setEpcQrDataUrl(data.epcQrDataUrl);
       setXmlPreview(data.xmlPreview);
+      setComments(cmtData.comments);
       setRepairRef(data.invoice.canonical.buyerReference || "04011000-1234512345-06");
       setRepairVat(data.invoice.canonical.buyer.vatId || "");
       setRepairContactName(data.invoice.canonical.seller.contact?.name || "Accounting");
@@ -227,6 +240,39 @@ export default function InvoiceDetailPage() {
     }
   }
 
+  async function handleApproval(approvalStatus: "APPROVED" | "REJECTED") {
+    if (!inv) return;
+    setBusy("approve");
+    try {
+      await apiJson(`/api/v1/invoices/${inv.id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ approvalStatus }),
+      });
+      setToast({ kind: "success", text: `Invoice marked ${approvalStatus}.` });
+      await load();
+    } catch (err) {
+      setToast({ kind: "error", text: err instanceof Error ? err.message : "Approval failed" });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleAddComment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!inv || !commentInput.trim()) return;
+    setBusy("comment");
+    try {
+      await apiJson(`/api/v1/invoices/${inv.id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body: commentInput }),
+      });
+      setCommentInput("");
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleCreditNote() {
     if (!inv) return;
     setBusy("credit");
@@ -329,6 +375,41 @@ export default function InvoiceDetailPage() {
       />
 
       {toast && <Alert kind={toast.kind}>{toast.text}</Alert>}
+
+      {/* Multi-Dimensional Status Strip (Master Plan Section 3.3) */}
+      <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm sm:grid-cols-5">
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Validation</p>
+          <p className={`mt-0.5 font-bold ${inv.validationPassed ? "text-emerald-700" : "text-amber-700"}`}>
+            {inv.validationPassed ? "EN 16931 Passed" : "Blocked / Issues"}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Approval</p>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span className="font-bold text-slate-800">{inv.approvalStatus}</span>
+            {inv.approvalStatus !== "APPROVED" && inv.status !== "DRAFT" && (
+              <button type="button" onClick={() => void handleApproval("APPROVED")} className="text-[10px] font-bold text-brand-700 underline">
+                Approve
+              </button>
+            )}
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Delivery</p>
+          <p className="mt-0.5 font-bold text-slate-800">{inv.deliveredTo ? "Delivered" : inv.status === "DRAFT" ? "Not sent" : "Ready"}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Payment (Separate)</p>
+          <p className={`mt-0.5 font-bold ${inv.paymentStatus === "PAID" ? "text-emerald-700" : inv.paymentStatus === "PARTIAL" ? "text-sky-700" : "text-amber-700"}`}>
+            {inv.paymentStatus}{inv.paidAmount > 0 && inv.paymentStatus === "PARTIAL" ? ` (${formatMoney(inv.paidAmount, inv.currency)})` : ""}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase text-slate-400">Accounting</p>
+          <p className="mt-0.5 font-bold text-slate-800">{inv.accountingStatus}</p>
+        </div>
+      </div>
 
       {showCnBox && (
         <Card
@@ -538,6 +619,35 @@ export default function InvoiceDetailPage() {
               </div>
             </Card>
           )}
+
+          <Card title="Team Collaboration & Notes" description="Immutable internal review thread (Master Plan F13).">
+            <div className="space-y-2.5">
+              {comments.length === 0 ? (
+                <p className="text-xs text-slate-400">No internal comments yet.</p>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
+                    <div className="flex justify-between text-[10px] text-slate-400">
+                      <span className="font-bold text-slate-700">{c.authorEmail}</span>
+                      <span>{c.createdAt.slice(0, 16).replace("T", " ")}</span>
+                    </div>
+                    <p className="mt-1 text-slate-700">{c.body}</p>
+                  </div>
+                ))
+              )}
+              <form onSubmit={handleAddComment} className="flex gap-2 pt-1">
+                <input
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  placeholder="Add review note or @mention…"
+                  className={`${inputCls} mt-0 text-xs`}
+                />
+                <button type="submit" disabled={busy !== null || !commentInput.trim()} className={btnSecondary}>
+                  Post
+                </button>
+              </form>
+            </div>
+          </Card>
 
           <Card title="GoBD Audit Trail" description="Append-only SHA-256 hash-chained events for this document.">
             {auditEvents.length === 0 ? (

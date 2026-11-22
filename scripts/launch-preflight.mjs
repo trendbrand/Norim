@@ -102,6 +102,12 @@ async function run() {
     "/invoices",
     "/invoices/new",
     "/inbox",
+    "/compliance",
+    "/payments",
+    "/accountant",
+    "/recurring",
+    "/automations",
+    "/reports",
     "/customers",
     "/catalog",
     "/batch",
@@ -135,6 +141,12 @@ async function run() {
     ["GET", "/api/v1/audit/verify"],
     ["GET", "/api/v1/inbox"],
     ["GET", "/api/v1/catalog"],
+    ["GET", "/api/v1/recurring"],
+    ["GET", "/api/v1/automations"],
+    ["GET", "/api/v1/reports"],
+    ["GET", "/api/v1/payments"],
+    ["GET", "/api/v1/accountant/delegations"],
+    ["GET", "/api/v1/search?q=test"],
     ["GET", "/api/v1/admin/overview"],
     ["POST", "/api/v1/validate"],
   ];
@@ -371,9 +383,116 @@ async function run() {
     const markInPaid = await fetch(`${BASE}/api/v1/inbox/${inboxJson.incoming.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Cookie: userB.cookie },
-      body: JSON.stringify({ paymentStatus: "PAID" }),
+      body: JSON.stringify({ paymentStatus: "PAID", approvalStatus: "APPROVED" }),
     });
-    assert(markInPaid.status === 200 && (await markInPaid.json()).incoming.paymentStatus === "PAID", "Incoming mark paid failed");
+    const inPaidJson = await markInPaid.json();
+    assert(markInPaid.status === 200 && inPaidJson.incoming.paymentStatus === "PAID" && inPaidJson.incoming.approvalStatus === "APPROVED", "Incoming approve/pay failed");
+
+    // Duplicate detection test: upload same XML a second time -> isDuplicate === true
+    const dupRes = await fetch(`${BASE}/api/v1/inbox`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userB.cookie },
+      body: JSON.stringify({ rawXml: xmlText, filename: "TA-2026-0001-dup.xml" }),
+    });
+    const dupJson = await dupRes.json();
+    assert(dupRes.status === 201 && dupJson.incoming.isDuplicate === true, "Duplicate incoming detection failed!");
+  });
+
+  await check("Phase 7: Recurring Billing (Run Now), Automations Toggle, Live Financial/VAT Reports & Universal Search", async () => {
+    const recRes = await fetch(`${BASE}/api/v1/recurring`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({
+        title: "Monthly Cloud Retainer",
+        customerId: customerAId,
+        frequency: "MONTHLY",
+        nextRunDate: "2026-12-01",
+        lineName: "Managed E-Invoicing Retainer",
+        quantity: 1,
+        unitCode: "MON",
+        unitPrice: 199,
+        vatCategory: "S",
+        vatRate: 19,
+      }),
+    });
+    assert(recRes.status === 201, `Recurring POST HTTP ${recRes.status}`);
+    const { schedule } = await recRes.json();
+
+    const runRes = await fetch(`${BASE}/api/v1/recurring/${schedule.id}`, {
+      method: "POST",
+      headers: { Cookie: userA.cookie },
+    });
+    const runJson = await runRes.json();
+    assert(runRes.status === 201 && runJson.invoice.invoiceNumber.startsWith("TA-2026-"), "Recurring run-now failed");
+
+    const autoList = await (await fetch(`${BASE}/api/v1/automations`, { headers: { Cookie: userA.cookie } })).json();
+    assert(autoList.rules.length >= 4, "Default automations missing");
+    const tog = await fetch(`${BASE}/api/v1/automations`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ id: autoList.rules[0].id, enabled: false }),
+    });
+    assert(tog.status === 200 && (await tog.json()).rule.enabled === false, "Automation toggle failed");
+
+    const rep = await (await fetch(`${BASE}/api/v1/reports`, { headers: { Cookie: userA.cookie } })).json();
+    assert(rep.kpis.outgoingCount >= 3 && rep.vatSummary.length >= 1, "Reports analytics incomplete");
+
+    const srch = await (await fetch(`${BASE}/api/v1/search?q=TA-2026`, { headers: { Cookie: userA.cookie } })).json();
+    assert(srch.invoices.length >= 1, "Universal search did not return Tenant A invoice");
+  });
+
+  await check("Phase 8: Partial Payments, Team Comments, Outgoing Approval, Accountant Delegation & Grounded Copilot", async () => {
+    // Record partial payment on recurring invoice (runJson isn't in scope here; query Tenant A invoices)
+    const invList = await (await fetch(`${BASE}/api/v1/invoices`, { headers: { Cookie: userA.cookie } })).json();
+    const targetInv = invList.invoices.find((i) => i.typeCode === 380 && i.paymentStatus !== "PAID") || invList.invoices[0];
+    const payRes = await fetch(`${BASE}/api/v1/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ invoiceId: targetInv.id, amount: 50, method: "SEPA_TRANSFER", reference: "SEPA-PARTIAL-1" }),
+    });
+    assert(payRes.status === 201, `Partial payment HTTP ${payRes.status}`);
+
+    // Outgoing approval + team comment
+    const appRes = await fetch(`${BASE}/api/v1/invoices/${targetInv.id}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ approvalStatus: "APPROVED" }),
+    });
+    assert(appRes.status === 200 && (await appRes.json()).invoice.approvalStatus === "APPROVED", "Outgoing approval failed");
+
+    const cmtRes = await fetch(`${BASE}/api/v1/invoices/${targetInv.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ body: "Reviewed VAT rate and approved for DATEV." }),
+    });
+    assert(cmtRes.status === 201, `Comment POST HTTP ${cmtRes.status}`);
+
+    // Accountant delegation: Tenant A delegates to Tenant B's email -> Tenant B sees Tenant A in delegatedToMe -> revoke!
+    const delGrant = await fetch(`${BASE}/api/v1/accountant/delegations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ accountantEmail: userB.email, accountantName: "Kanzlei B", scope: "READ_EXPORT", expiresDays: 30 }),
+    });
+    assert(delGrant.status === 201, `Delegation grant HTTP ${delGrant.status}`);
+    const { delegation } = await delGrant.json();
+
+    const bView = await (await fetch(`${BASE}/api/v1/accountant/delegations`, { headers: { Cookie: userB.cookie } })).json();
+    assert(bView.delegatedToMe.some((c) => c.orgName === "TenantA GmbH"), "Delegated client missing from accountant view");
+
+    const delRev = await fetch(`${BASE}/api/v1/accountant/delegations?id=${encodeURIComponent(delegation.id)}`, {
+      method: "DELETE",
+      headers: { Cookie: userA.cookie },
+    });
+    assert(delRev.status === 200, "Delegation revoke failed");
+
+    // Grounded Compliance Copilot
+    const cop = await fetch(`${BASE}/api/v1/copilot`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: userA.cookie },
+      body: JSON.stringify({ question: "Why did BR-DE-15 fail?" }),
+    });
+    const copJson = await cop.json();
+    assert(cop.status === 200 && copJson.grounded === true && copJson.answer.includes("BR-DE-15"), "Copilot BR-DE-15 check failed");
   });
 
   await check("API Key Lifecycle (Create -> Bearer Validate 200 -> Revoke -> 401) & Team RBAC Invite", async () => {

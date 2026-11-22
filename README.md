@@ -41,7 +41,9 @@ norminvoice/
 └── docs/                             # PRODUCTION_AUDIT.md, GO_TO_MARKET_LAUNCH_KIT.md, FIRST_LAUNCH_CHECKLIST.md
 ```
 
-> **`services/worker` status:** the BullMQ worker is a scaffold. Its job processor builds XML/PDF and computes an audit hash, but it is **not yet wired into the live request path** (the web app generates invoices synchronously) and does not persist results. Treat it as a roadmap item, not a shipped subsystem. The optional `einvoice-engine` + `kosit-validator` containers, when enabled, provide official PDF/A-3b + KoSIT validation; without them the app uses the built-in deterministic EN 16931 validator.
+> **Durable transmission outbox (ADR-004):** invoice **delivery** runs through a persistent `transmission_jobs` outbox in SQLite drained by an **in-process, idempotent worker** (`apps/web/src/lib/transmission-outbox.ts`). The send endpoint enqueues an idempotent job (`UNIQUE(org_id, idempotency_key)` on invoice+channel+recipient), attempts it inline for instant feedback, and — if the provider is down — leaves it durably queued for automatic retry with exponential backoff and dead-lettering. A job is only ever claimed `QUEUED/FAILED → SENDING` atomically and `SENT` is terminal, so **double-clicks, retries and crashes never produce a duplicate legal submission**. No Redis required on the single node; on AWS this maps 1:1 onto SQS + a worker draining the same outbox.
+>
+> **`services/worker` status:** the BullMQ worker remains the **multi-instance scale-out path** (requires Redis + a separate process). Its job processor builds XML/PDF, archives to WORM S3 and computes an audit hash. The optional `einvoice-engine` + `kosit-validator` containers, when enabled, provide official PDF/A-3b + KoSIT validation; without them the app uses the built-in deterministic EN 16931 validator.
 
 ---
 

@@ -4,21 +4,31 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BarChart3,
+  Briefcase,
+  CreditCard,
   FileArchive,
   FileText,
+  Globe2,
   Inbox,
   LayoutDashboard,
   Loader2,
   LogOut,
   Menu,
   Package,
+  Repeat,
+  Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   UploadCloud,
   Users,
   X,
+  Zap,
 } from "lucide-react";
+import { CommandPalette } from "./CommandPalette";
+import { CopilotPanel } from "./CopilotPanel";
 
 export interface AppSession {
   user: { id: string; orgId: string; email: string; fullName: string; orgName: string; role: string };
@@ -38,11 +48,17 @@ export function useAppSession() {
 }
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/invoices", label: "Outgoing Invoices", icon: FileText },
+  { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/inbox", label: "Incoming Inbox", icon: Inbox },
+  { href: "/payments", label: "Payments & AR", icon: CreditCard },
+  { href: "/compliance", label: "EU Compliance (13)", icon: Globe2 },
+  { href: "/reports", label: "Reports & VAT", icon: BarChart3 },
+  { href: "/automations", label: "Automations", icon: Zap },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/catalog", label: "Products & Rates", icon: Package },
+  { href: "/accountant", label: "Accountant Portal", icon: Briefcase },
   { href: "/batch", label: "Batch CSV", icon: UploadCloud },
   { href: "/exports", label: "Exports & Audit", icon: FileArchive },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -54,7 +70,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AppSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const isOnboarding = pathname.startsWith("/onboarding");
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const reload = useCallback(async () => {
     const res = await fetch("/api/auth/me", { cache: "no-store" });
@@ -116,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-4">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">NI</div>
         <div>
           <span className="block text-sm font-bold tracking-tight text-white">NormInvoice</span>
@@ -124,7 +153,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </Link>
 
-      <nav className="flex-1 space-y-0.5 px-3">
+      <div className="space-y-1.5 px-3 pb-3">
+        <button
+          type="button"
+          onClick={() => setCmdOpen(true)}
+          className="flex w-full items-center justify-between rounded-lg border border-slate-700/80 bg-slate-800/70 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+        >
+          <span className="flex items-center gap-2"><Search className="h-3.5 w-3.5" /> Search…</span>
+          <kbd className="rounded bg-slate-700 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">Ctrl K</kbd>
+        </button>
+        <button
+          type="button"
+          onClick={() => setCopilotOpen(true)}
+          className="flex w-full items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-600/20 px-3 py-2 text-xs font-semibold text-brand-200 hover:bg-brand-600/30 hover:text-white"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-brand-300" /> Ask Compliance Copilot
+        </button>
+      </div>
+
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -215,6 +262,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </header>
           <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
         </div>
+        <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+        <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
       </div>
     </SessionCtx.Provider>
   );

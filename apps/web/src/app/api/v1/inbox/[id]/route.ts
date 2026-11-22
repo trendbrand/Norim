@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setIncomingInvoicePaymentStatus } from "@/lib/db-store";
+import {
+  setIncomingInvoiceApproval,
+  setIncomingInvoicePaymentStatus,
+} from "@/lib/db-store";
 import { requireTenantAuth } from "@/lib/security";
 
 export async function PATCH(
@@ -10,10 +13,31 @@ export async function PATCH(
   if (!access.ok) return access.response;
 
   const { id } = await context.params;
-  const body = (await req.json()) as { paymentStatus?: "PAID" | "UNPAID" };
-  const nextStatus = body.paymentStatus === "PAID" ? "PAID" : "UNPAID";
+  const body = (await req.json()) as {
+    paymentStatus?: "PAID" | "UNPAID";
+    approvalStatus?: "APPROVED" | "REJECTED" | "PENDING_REVIEW";
+    poReference?: string;
+  };
 
-  const updated = setIncomingInvoicePaymentStatus(access.ctx.orgId, id, nextStatus, access.ctx.actorEmail);
+  let updated = null;
+  if (body.approvalStatus) {
+    updated = setIncomingInvoiceApproval(
+      access.ctx.orgId,
+      id,
+      body.approvalStatus,
+      access.ctx.actorEmail,
+      body.poReference
+    );
+  }
+  if (body.paymentStatus) {
+    updated = setIncomingInvoicePaymentStatus(
+      access.ctx.orgId,
+      id,
+      body.paymentStatus === "PAID" ? "PAID" : "UNPAID",
+      access.ctx.actorEmail
+    );
+  }
+
   if (!updated) {
     return NextResponse.json({ error: "Incoming invoice not found" }, { status: 404 });
   }
