@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
       filename,
       detectedStandard: report.detected.standard,
       actorEmail: access.ctx.actorEmail,
+      originalXml: xmlText,
     });
 
     return NextResponse.json({ incoming: record, report }, { status: 201 });

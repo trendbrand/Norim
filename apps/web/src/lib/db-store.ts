@@ -212,6 +212,7 @@ export interface IncomingInvoiceRecord {
   approvedAt: string | null;
   poReference: string | null;
   isDuplicate: boolean;
+  hasOriginalXml: boolean;
   sha256Xml: string;
   archiveLockedUntil: string;
   canonical: CanonicalInvoice;
@@ -775,6 +776,9 @@ function getDb(): DatabaseSync {
   }
   if (!inCols.some((c) => c.name === "is_duplicate")) {
     db.exec("ALTER TABLE incoming_invoices ADD COLUMN is_duplicate INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!inCols.some((c) => c.name === "original_xml")) {
+    db.exec("ALTER TABLE incoming_invoices ADD COLUMN original_xml TEXT;");
   }
   const userCols = db.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
   if (!userCols.some((c) => c.name === "session_version")) {
@@ -2428,6 +2432,7 @@ function mapIncomingRow(r: Record<string, any>): IncomingInvoiceRecord {
     approvedAt: r.approved_at ?? null,
     poReference: r.po_reference ?? null,
     isDuplicate: Boolean(r.is_duplicate),
+    hasOriginalXml: Boolean(r.original_xml),
     sha256Xml: r.sha256_xml,
     archiveLockedUntil: r.archive_locked_until,
     canonical: JSON.parse(r.canonical_json),
@@ -2443,16 +2448,40 @@ export function listIncomingInvoicesForOrg(orgId: string): IncomingInvoiceRecord
   return rows.map(mapIncomingRow);
 }
 
+export function getIncomingInvoiceForOrg(orgId: string, id: string): IncomingInvoiceRecord | null {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT * FROM incoming_invoices WHERE id = ? AND org_id = ?")
+    .get(id, orgId) as Record<string, any> | undefined;
+  return row ? mapIncomingRow(row) : null;
+}
+
+/** Original uploaded XML bytes for export / true original-vs-parsed view. */
+export function getIncomingInvoiceOriginalXml(
+  orgId: string,
+  id: string
+): { xml: string; filename: string; invoiceNumber: string } | null {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT original_xml, filename, invoice_number FROM incoming_invoices WHERE id = ? AND org_id = ?")
+    .get(id, orgId) as { original_xml: string | null; filename: string; invoice_number: string } | undefined;
+  if (!row || !row.original_xml) return null;
+  return { xml: row.original_xml, filename: row.filename, invoiceNumber: row.invoice_number };
+}
+
 export function saveIncomingInvoiceForOrg(
   orgId: string,
   canonicalInput: CanonicalInvoice,
-  meta: { filename: string; detectedStandard: string; actorEmail: string }
+  meta: { filename: string; detectedStandard: string; actorEmail: string; originalXml?: string }
 ): IncomingInvoiceRecord {
   const db = getDb();
   const { normalized, totals } = computeCanonicalTotals(canonicalInput);
   const report = validateCanonicalInvoice(normalized);
   const isUbl = normalized.profile === "XRECHNUNG_UBL" || normalized.profile === "PEPPOL_BIS_3";
   const xml = isUbl ? serializeToUblXml(normalized) : serializeToCiiXml(normalized);
+  // Preserve the supplier's ORIGINAL uploaded bytes for a true original-vs-parsed
+  // view and export. Fall back to the re-serialized XML for non-upload sources.
+  const originalXml = meta.originalXml?.trim() || xml;
   const xmlHash = sha256(xml);
   const org = getOrgById(orgId);
   const lockDate = lockDateFromYears(org?.retentionYears ?? 8);
@@ -2469,8 +2498,8 @@ export function saveIncomingInvoiceForOrg(
     `INSERT INTO incoming_invoices (
        id, org_id, filename, invoice_number, issue_date, due_date, seller_name, seller_vat_id, seller_country,
        currency, net_amount, tax_amount, gross_amount, detected_standard, validation_passed, diagnostics_json,
-       payment_status, paid_at, approval_status, po_reference, is_duplicate, sha256_xml, archive_locked_until, canonical_json, created_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNPAID', NULL, 'PENDING_REVIEW', ?, ?, ?, ?, ?, ?)`
+       payment_status, paid_at, approval_status, po_reference, is_duplicate, original_xml, sha256_xml, archive_locked_until, canonical_json, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNPAID', NULL, 'PENDING_REVIEW', ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     orgId,
@@ -2490,6 +2519,7 @@ export function saveIncomingInvoiceForOrg(
     JSON.stringify(report.diagnostics),
     normalized.purchaseOrderReference ?? null,
     isDuplicate ? 1 : 0,
+    originalXml,
     xmlHash,
     lockDate,
     JSON.stringify(normalized),

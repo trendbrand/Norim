@@ -5,7 +5,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Code2,
+  Download,
   Eye,
+  FileCode2,
   Loader2,
   ShieldCheck,
   ThumbsDown,
@@ -38,6 +41,7 @@ interface IncomingInvoice {
   approvedBy: string | null;
   poReference: string | null;
   isDuplicate: boolean;
+  hasOriginalXml: boolean;
   sha256Xml: string;
   archiveLockedUntil: string;
   canonical: CanonicalInvoice;
@@ -48,7 +52,27 @@ export default function IncomingInboxPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [previewItem, setPreviewItem] = useState<IncomingInvoice | null>(null);
+  const [rawXml, setRawXml] = useState<string | null>(null);
+  const [rawXmlLoading, setRawXmlLoading] = useState(false);
   const [toast, setToast] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+
+  function openPreview(it: IncomingInvoice) {
+    setRawXml(null);
+    setPreviewItem(it);
+  }
+
+  async function loadRawXml(id: string) {
+    setRawXmlLoading(true);
+    try {
+      const res = await fetch(`/api/v1/inbox/${id}/download?artifact=xml`);
+      if (!res.ok) throw new Error("Could not load original XML");
+      setRawXml(await res.text());
+    } catch (e) {
+      setToast({ kind: "error", text: e instanceof Error ? e.message : "Could not load original XML" });
+    } finally {
+      setRawXmlLoading(false);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -225,9 +249,12 @@ export default function IncomingInboxPage() {
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="inline-flex flex-wrap justify-end gap-1">
-                        <button type="button" onClick={() => setPreviewItem(it)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100" title="Preview">
+                        <button type="button" onClick={() => openPreview(it)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100" title="Preview">
                           <Eye className="h-3.5 w-3.5" />
                         </button>
+                        <a href={`/api/v1/inbox/${it.id}/download?artifact=xml`} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100" title="Download original XML">
+                          <FileCode2 className="h-3.5 w-3.5" />
+                        </a>
                         {it.approvalStatus !== "APPROVED" && (
                           <button type="button" onClick={() => void patchIncoming(it.id, { approvalStatus: "APPROVED" })} className="rounded-lg border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-700 hover:bg-emerald-100" title="Approve">
                             <ThumbsUp className="h-3.5 w-3.5" />
@@ -267,7 +294,39 @@ export default function IncomingInboxPage() {
               </button>
             </div>
 
-            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-y border-slate-100 py-3">
+              <button
+                type="button"
+                onClick={() => (rawXml ? setRawXml(null) : void loadRawXml(previewItem.id))}
+                className={btnSecondary}
+              >
+                {rawXmlLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Code2 className="h-4 w-4" />}
+                {rawXml ? "Hide original XML" : "View original XML"}
+              </button>
+              <a href={`/api/v1/inbox/${previewItem.id}/download?artifact=xml`} className={btnSecondary}>
+                <FileCode2 className="h-4 w-4" /> Download XML
+              </a>
+              <a href={`/api/v1/inbox/${previewItem.id}/download?artifact=json`} className={btnSecondary}>
+                <Download className="h-4 w-4" /> Download JSON
+              </a>
+              <span className="ml-auto text-[11px] text-slate-400">
+                {previewItem.hasOriginalXml ? "Original supplier bytes preserved" : "Re-serialized view"}
+              </span>
+            </div>
+
+            {rawXml !== null && (
+              <div>
+                <p className="mb-1.5 mt-3 text-[11px] font-bold uppercase text-slate-400">
+                  Original received XML (as sent by supplier)
+                </p>
+                <pre className="max-h-72 overflow-auto rounded-xl bg-slate-900 p-4 font-mono text-[11px] text-emerald-300">
+                  {rawXml}
+                </pre>
+              </div>
+            )}
+
+            <p className="mb-1.5 mt-4 text-[11px] font-bold uppercase text-slate-400">Parsed line items (EN 16931)</p>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
               <table className="min-w-full divide-y divide-slate-200 text-xs">
                 <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
                   <tr>
