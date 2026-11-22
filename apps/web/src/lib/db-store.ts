@@ -711,6 +711,21 @@ function getDb(): DatabaseSync {
     );
     CREATE INDEX IF NOT EXISTS idx_auto_org ON automation_rules(org_id);
 
+    CREATE TABLE IF NOT EXISTS automation_runs (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      rule_id TEXT NOT NULL,
+      rule_key TEXT NOT NULL,
+      trigger_event TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      matched_count INTEGER NOT NULL DEFAULT 0,
+      detail TEXT NOT NULL DEFAULT '',
+      dry_run INTEGER NOT NULL DEFAULT 0,
+      actor_email TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_autoruns_org ON automation_runs(org_id, created_at DESC);
+
     CREATE TABLE IF NOT EXISTS invoice_payments (
       id TEXT PRIMARY KEY,
       org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -3106,6 +3121,185 @@ export function toggleAutomationRuleForOrg(orgId: string, id: string, enabled: b
   if (Number(res.changes) === 0) return null;
   appendOrgAuditEvent(orgId, null, id, "AUTOMATION_RULE_TOGGLED", actorEmail, { enabled });
   return listAutomationRulesForOrg(orgId).find((r) => r.id === id) ?? null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Automation engine: dry-run (simulate), run (execute + log), and run history.
+// Actions are internal and non-destructive; outbound comms are never auto-sent
+// (the overdue rule prepares a reminder for owner approval, it does not email).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AutomationRunRecord {
+  id: string;
+  orgId: string;
+  ruleId: string;
+  ruleKey: string;
+  triggerEvent: string;
+  outcome: string;
+  matchedCount: number;
+  detail: string;
+  dryRun: boolean;
+  actorEmail: string;
+  createdAt: string;
+}
+
+export interface AutomationMatch {
+  invoiceId: string;
+  invoiceNumber: string;
+  counterparty: string;
+  grossAmount: number;
+  currency: string;
+  dueDate: string | null;
+  daysOverdue: number;
+}
+
+export interface AutomationPlan {
+  ruleId: string;
+  ruleKey: string;
+  ruleName: string;
+  triggerEvent: string;
+  scheduled: boolean; // true = can be run/simulated on demand; false = event-driven
+  willDo: string;
+  matches: AutomationMatch[];
+}
+
+export function getAutomationRuleForOrg(orgId: string, id: string): AutomationRuleRecord | null {
+  return listAutomationRulesForOrg(orgId).find((r) => r.id === id) ?? null;
+}
+
+/** Overdue, finalized, unpaid outgoing invoices (the overdue-reminder rule's subject set). */
+export function evaluateOverdueReminders(orgId: string): AutomationMatch[] {
+  const today = new Date().toISOString().slice(0, 10);
+  const out: AutomationMatch[] = [];
+  for (const inv of listInvoicesForOrg(orgId)) {
+    if (inv.typeCode !== 380 || inv.status === "DRAFT" || inv.paymentStatus === "PAID") continue;
+    const due = inv.dueDate;
+    if (!due || due >= today) continue;
+    const days = Math.floor((Date.parse(today) - Date.parse(due)) / 86400000);
+    out.push({
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      counterparty: inv.buyerName,
+      grossAmount: inv.grossAmount,
+      currency: inv.currency,
+      dueDate: due,
+      daysOverdue: days,
+    });
+  }
+  return out;
+}
+
+export function recordAutomationRun(
+  orgId: string,
+  input: { ruleId: string; ruleKey: string; triggerEvent: string; outcome: string; matchedCount: number; detail: string; dryRun: boolean; actorEmail: string }
+): AutomationRunRecord {
+  const db = getDb();
+  const id = `arun_${crypto.randomBytes(6).toString("hex")}`;
+  const now = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO automation_runs (id, org_id, rule_id, rule_key, trigger_event, outcome, matched_count, detail, dry_run, actor_email, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, orgId, input.ruleId, input.ruleKey, input.triggerEvent, input.outcome, input.matchedCount, input.detail, input.dryRun ? 1 : 0, input.actorEmail, now);
+  return { id, orgId, ...input, createdAt: now };
+}
+
+export function listAutomationRunsForOrg(orgId: string, limit = 50): AutomationRunRecord[] {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT * FROM automation_runs WHERE org_id = ? ORDER BY created_at DESC LIMIT ?")
+    .all(orgId, limit) as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: r.org_id,
+    ruleId: r.rule_id,
+    ruleKey: r.rule_key,
+    triggerEvent: r.trigger_event,
+    outcome: r.outcome,
+    matchedCount: Number(r.matched_count),
+    detail: r.detail,
+    dryRun: Boolean(r.dry_run),
+    actorEmail: r.actor_email,
+    createdAt: r.created_at,
+  }));
+}
+
+/** Build the plan for a rule (what it would do + matched subjects). */
+export function planAutomationRule(orgId: string, rule: AutomationRuleRecord): AutomationPlan {
+  if (rule.ruleKey === "overdue_payment_reminder") {
+    const matches = evaluateOverdueReminders(orgId);
+    return {
+      ruleId: rule.id,
+      ruleKey: rule.ruleKey,
+      ruleName: rule.name,
+      triggerEvent: rule.triggerEvent,
+      scheduled: true,
+      willDo:
+        matches.length === 0
+          ? "No overdue unpaid invoices — nothing to flag."
+          : `Flag ${matches.length} overdue unpaid invoice(s) in the ageing report and prepare a reminder notice for owner approval (no email is auto-sent).`,
+      matches,
+    };
+  }
+  // Event-driven rules run automatically when their trigger fires elsewhere.
+  return {
+    ruleId: rule.id,
+    ruleKey: rule.ruleKey,
+    ruleName: rule.name,
+    triggerEvent: rule.triggerEvent,
+    scheduled: false,
+    willDo: `Runs automatically on "${rule.triggerEvent}". ${rule.actionSummary}`,
+    matches: [],
+  };
+}
+
+/** Simulate (dryRun=true) or execute (dryRun=false) a rule; both are logged to history. */
+export function runAutomationRule(
+  orgId: string,
+  ruleId: string,
+  dryRun: boolean,
+  actorEmail: string
+): { plan: AutomationPlan; run: AutomationRunRecord } | null {
+  const rule = getAutomationRuleForOrg(orgId, ruleId);
+  if (!rule) return null;
+  const plan = planAutomationRule(orgId, rule);
+
+  let outcome: string;
+  let detail: string;
+  if (dryRun) {
+    outcome = "SIMULATED";
+    detail = plan.willDo;
+  } else if (!plan.scheduled) {
+    outcome = "NOT_APPLICABLE";
+    detail = `Event-driven rule — fires on "${rule.triggerEvent}", not on demand.`;
+  } else if (!rule.enabled) {
+    outcome = "SKIPPED_DISABLED";
+    detail = "Rule is disabled; enable it to execute.";
+  } else {
+    outcome = "EXECUTED";
+    detail = plan.willDo;
+    const db = getDb();
+    db.prepare("UPDATE automation_rules SET executions_count = executions_count + 1, last_run_at = ? WHERE id = ? AND org_id = ?").run(
+      new Date().toISOString(),
+      rule.id,
+      orgId
+    );
+    appendOrgAuditEvent(orgId, null, rule.id, "AUTOMATION_RULE_EXECUTED", actorEmail, {
+      ruleKey: rule.ruleKey,
+      matched: plan.matches.length,
+    });
+  }
+
+  const run = recordAutomationRun(orgId, {
+    ruleId: rule.id,
+    ruleKey: rule.ruleKey,
+    triggerEvent: rule.triggerEvent,
+    outcome,
+    matchedCount: plan.matches.length,
+    detail,
+    dryRun,
+    actorEmail,
+  });
+  return { plan, run };
 }
 
 export function getOrgAnalyticsReport(orgId: string) {

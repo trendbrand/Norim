@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   listAutomationRulesForOrg,
+  listAutomationRunsForOrg,
   toggleAutomationRuleForOrg,
 } from "@/lib/db-store";
 import { requireTenantAuth } from "@/lib/security";
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     rules: listAutomationRulesForOrg(access.ctx.orgId),
+    runs: listAutomationRunsForOrg(access.ctx.orgId),
   });
 }
 
