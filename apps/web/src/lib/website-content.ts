@@ -837,6 +837,180 @@ const LEGAL_DRAFT_FR =
   "Brouillon de traduction automatique, pas encore validé juridiquement. En cas de doute, la version anglaise fait foi.";
 
 const LEGAL_DE: Record<string, LegalDocument> = {
+  terms: {
+    slug: "terms",
+    title: "Allgemeine Geschäftsbedingungen (AGB)",
+    badge: "Kunden-Abonnementvereinbarung",
+    subtitle: "Regelt den Zugang zur und die Nutzung der NormInvoice-Softwareplattform, der Validierungs-Engine und der Workspace-Abonnements.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice:
+      LEGAL_DRAFT_DE +
+      " Diese AGB stellen unsere aktuelle strukturierte SaaS-Basis dar und stehen vor der allgemeinen kommerziellen Einführung unter dem Vorbehalt der endgültigen Freigabe durch zuständige Rechtsberater.",
+    sections: [
+      {
+        id: "parties",
+        heading: "1. Vereinbarung und Parteien",
+        paragraphs: [
+          "Diese AGB regeln den Zugang zu NormInvoice, einem abonnementbasierten E-Rechnungs-Softwaredienst, der mit Trend&Brand verbunden ist. »Anbieter«, »wir« und »uns« bezeichnen die in Ihrer Checkout-Zusammenfassung, im Auftragsformular und im rechtlichen Hinweis genannte juristische Person (vorgesehene Vertragspartei: Trend&Brand LLC, Wyoming, USA, vorbehaltlich der förmlichen Launch-Bestätigung). »Kunde« oder »Sie« bezeichnet die Person oder Organisation, die einen Workspace erstellt oder ein Abonnement erwirbt.",
+        ],
+      },
+      {
+        id: "business-use",
+        heading: "2. Geschäftliche Nutzung und zwingende Rechte",
+        paragraphs: [
+          "NormInvoice ist primär für geschäftliche und berufliche Abläufe (B2B) konzipiert. Soweit nach zwingendem Recht in Ihrer Rechtsordnung unabdingbare gesetzliche Verbraucherrechte gelten, schließen diese AGB solche gesetzlichen Rechte weder aus noch beschränken sie sie.",
+        ],
+      },
+      {
+        id: "service-scope",
+        heading: "3. Leistungsbeschreibung & Funktionsverfügbarkeit",
+        paragraphs: [
+          "NormInvoice stellt ausschließlich die Module, Dokumentformate, Länderprofile, Speicherkontingente und Integrationen bereit, die für Ihre Abonnementstufe ausdrücklich freigeschaltet und in der Live-Anwendung als »Verfügbar« gekennzeichnet sind. Auf Funktionen, die als Beta, partnerbetrieben oder geplant gekennzeichnet sind, darf ohne ausdrückliche Prüfung nicht als produktionsreife gesetzliche Clearing-Kanäle vertraut werden.",
+        ],
+      },
+      {
+        id: "account",
+        heading: "4. Konto- & Workspace-Pflichten",
+        paragraphs: [
+          "Sie sind verantwortlich für die Pflege korrekter rechtlicher Firmendaten, USt-IdNr. und Bankdaten, den Schutz von Anmeldedaten und API-Schlüsseln, die Zuweisung angemessener Workspace-Rollen und die unverzügliche Meldung eines vermuteten unbefugten Zugriffs an official@trendandbrands.com.",
+        ],
+      },
+      {
+        id: "billing",
+        heading: "5. Abonnements, Free-Tarif, 15-Tage-Test & Gebühren",
+        paragraphs: [
+          "NormInvoice bietet einen dauerhaft begrenzten Free-Tarif (0 $), einen optionalen 15-tägigen Gratis-Test ohne Kreditkarte sowie kostenpflichtige Monatsabonnements ab dem Solo-Tarif (39 $/Monat) neben den Stufen Business, Agency und Enterprise. Gratis-Tests wandeln sich nicht stillschweigend in kostenpflichtige Abbuchungen um, wenn keine Zahlungsautorisierung hinterlegt ist. Anfallende Steuern, Abrechnungsrhythmus, Kontingente und Verlängerungsbedingungen werden vor dem kostenpflichtigen Checkout klar offengelegt.",
+        ],
+      },
+      {
+        id: "customer-data",
+        heading: "6. Kundendaten & keine Steuer-/Rechtsberatung",
+        paragraphs: [
+          "Sie behalten das Eigentum an allen Rechnungsdateien, Kundenverzeichnissen und Finanzunterlagen, die Sie hochladen oder erzeugen. NormInvoice ist technische Software und bietet keine Steuer-, Buchhaltungs- oder Rechtsberatung. Validierungsprüfungen bewerten unterstützte Regelwerke (wie EN 16931 und BR-DE-*) und garantieren keine Annahme durch einen Empfänger, eine Steuerbehörde oder ein externes behördliches Gateway.",
+        ],
+      },
+      {
+        id: "termination",
+        heading: "7. Kündigung, Export & Kontakt",
+        paragraphs: [
+          "Sie können die Verlängerung jederzeit unter Workspace-Einstellungen > Abrechnung oder durch Kontaktaufnahme über official@trendandbrands.com von der Workspace-Inhaber-E-Mail aus kündigen. Bitte exportieren Sie Ihre XML-, PDF/A-3-, DATEV/FEC- und Audit-Unterlagen, bevor der Zugang endet. Alle Einzelheiten finden Sie in unserer Widerrufs- & Erstattungsrichtlinie und der Datenaufbewahrungsrichtlinie.",
+        ],
+      },
+    ],
+  },
+  "subscription-billing": {
+    slug: "subscription-billing",
+    title: "Abonnement- & Abrechnungsrichtlinie",
+    badge: "Transparente SaaS-Preise & Verlängerungen",
+    subtitle: "Klare Regeln zu Free-Tarif-Grenzen, 15-tägigen Gratis-Tests, Solo-Abonnements für 39 $/Monat, Steuern und Verlängerungen.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "plans",
+        heading: "1. Tarife, Kontingente & Preistransparenz",
+        bullets: [
+          { label: "Free-Tarif (0 $/Monat)", text: "Dauerhaft kostenloser Zugang inklusive Zero-Retention-Validator und bis zu 5 finalisierten E-Rechnungen pro Monat." },
+          { label: "15-Tage-Gratis-Test (0 $)", text: "Echte, zeitlich begrenzte 15-tägige Evaluierung, ab Registrierung in der Datenbank erfasst, inklusive bis zu 15 finalisierten E-Rechnungen und Zugang zu den Kern-Workflows — ohne Kreditkarte." },
+          { label: "Solo-Tarif (39 $/Monat)", text: "Für Solo-Gründer und Kleinunternehmen: bis zu 150 finalisierte E-Rechnungen/Monat, wiederkehrende Zeitpläne, Automatisierungen, Eingangspostfach, Berichte und Exporte." },
+          { label: "Business (49 $/Monat) & Agency (129 $/Monat)", text: "Höhere Monatskontingente (500 / 2.500 Rechnungen), Stripe- & WooCommerce-Bridges, Mehrbenutzer-RBAC und API-Schlüssel." },
+          { label: "Enterprise (individuell)", text: "Maßgeschneidertes Volumen, dediziertes Onboarding und individuelle kommerzielle Konditionen über official@trendandbrands.com." },
+        ],
+      },
+      {
+        id: "trial",
+        heading: "2. So funktioniert der 15-Tage-Gratis-Test",
+        paragraphs: [
+          "Start- und Ablaufzeitpunkt Ihres 15-Tage-Tests werden sicher auf dem Server gespeichert und in Ihrer Workspace-Kopfzeile und den Abrechnungseinstellungen korrekt angezeigt. Läuft ein 15-Tage-Test ohne autorisiertes Upgrade auf einen kostenpflichtigen Tarif ab, wechselt Ihr Workspace reibungslos in den Free-Tarif, anstatt Ihnen stillschweigend etwas in Rechnung zu stellen.",
+        ],
+      },
+      {
+        id: "checkout-disclosures",
+        heading: "3. Offenlegung vor der Zahlung & Steuern",
+        paragraphs: [
+          "Bevor eine kostenpflichtige Abonnementgebühr finalisiert wird, zeigt der Checkout klar die Vertragspartei bzw. den autorisierten Zahlungsdienstleister / Merchant of Record, die Abrechnungswährung, das monatliche oder jährliche Intervall, das enthaltene Dokumentkontingent, die Verlängerungsbedingungen, die geltende USt- oder Reverse-Charge-Behandlung und das Kündigungsverfahren. Wir berechnen niemals nicht offengelegte Mehrkosten.",
+        ],
+      },
+      {
+        id: "billing-help",
+        heading: "4. Belege & Abrechnungs-Support",
+        paragraphs: [
+          "Abrechnungsbelege und Abonnementrechnungen werden über den aktiven Zahlungsanbieter und die Abrechnungseinstellungen bereitgestellt. Bei Abrechnungsfragen oder strittigen Abbuchungen schreiben Sie an official@trendandbrands.com mit Konto-E-Mail, Datum und Betrag — senden Sie niemals vollständige Kartennummern per E-Mail.",
+        ],
+      },
+    ],
+  },
+  "cancellation-refunds": {
+    slug: "cancellation-refunds",
+    title: "Widerrufs- & Erstattungsrichtlinie",
+    badge: "Self-Service-Kündigung & faire Erstattungen",
+    subtitle: "Wie Sie die Verlängerung jederzeit stoppen, was mit Ihren Daten geschieht und wie Erstattungsanträge und gesetzliche Verbraucherrechte behandelt werden.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "how-to-cancel",
+        heading: "1. So kündigen Sie Ihr Abonnement",
+        paragraphs: [
+          "Workspace-Inhaber und Admins können die Abonnementverlängerung direkt in der Anwendung unter Einstellungen > Abrechnung & Kontingent > Verlängerung kündigen beenden. Falls Sie nicht auf Ihren Workspace zugreifen können, schreiben Sie von der registrierten Inhaber-E-Mail an official@trendandbrands.com. Kündigungsbestätigung und wirksames Enddatum werden im Audit-Trail Ihres Workspace festgehalten.",
+        ],
+      },
+      {
+        id: "renewal-effect",
+        heading: "2. Wirkung der Kündigung",
+        paragraphs: [
+          "Die Kündigung der Verlängerung verhindert künftige wiederkehrende Abbuchungen. Sofern zwingendes lokales Recht nichts anderes vorsieht, bleiben Ihre kostenpflichtigen Workspace-Funktionen bis zum Ende des bereits bezahlten Abrechnungszeitraums aktiv; danach wechselt Ihr Konto in den Free-Tarif.",
+        ],
+      },
+      {
+        id: "refunds",
+        heading: "3. Erstattungsanträge & gesetzliche Rechte",
+        paragraphs: [
+          "NormInvoice wendet keine pauschale Regel »keine Erstattung unter keinen Umständen« an. Erstattungsanträge werden fair geprüft bei Doppelabbuchung, Abrechnungsfehlern, unbefugten Abbuchungen oder wesentlicher Nichtverfügbarkeit des Dienstes. Soweit zwingende gesetzliche Widerrufs- oder Rücktrittsrechte gelten (etwa EU-Fernabsatzregeln für berechtigte Verbraucher), gelten diese gesetzlichen Rechte vollumfänglich.",
+        ],
+      },
+      {
+        id: "export",
+        heading: "4. Datenexport vor Zugangsänderungen",
+        paragraphs: [
+          "Exportieren Sie stets Ihre XML-Rechnungen, hybriden PDF/A-3-Dateien, DATEV/FEC-Buchungsdaten, GoBD-Audit-Dossiers und DSGVO-JSON-Datenpakete, bevor Sie einen Workspace schließen oder löschen.",
+        ],
+      },
+    ],
+  },
+  "acceptable-use": {
+    slug: "acceptable-use",
+    title: "Richtlinie zur akzeptablen Nutzung",
+    badge: "Verantwortungsvolle Plattformnutzung & Betrugsbekämpfung",
+    subtitle: "Zulässige geschäftliche Nutzung, verbotenes Verhalten, Regeln für Sicherheitstests und verhältnismäßige Durchsetzung.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "permitted",
+        heading: "1. Zulässige Nutzung",
+        paragraphs: [
+          "Sie dürfen NormInvoice ausschließlich für rechtmäßige geschäftliche Rechnungsstellung, Compliance-Validierung, Buchhaltungsexporte und autorisierte Integrationen im Rahmen der Berechtigungen und des Abonnementkontingents Ihres Workspace nutzen.",
+        ],
+      },
+      {
+        id: "prohibited",
+        heading: "2. Verbotenes Verhalten",
+        bullets: [
+          { text: "Einreichen betrügerischer, erfundener oder täuschender Rechnungen oder falsche Angaben zu Steuer- oder USt-Registrierungskennungen." },
+          { text: "Hochladen schädlicher Payloads, XML-External-Entity-(XXE)-Exploits oder Versuche, Authentifizierung, Ratenbegrenzungen oder Mandantentrennung zu umgehen." },
+          { text: "Scraping, Ausspähen oder Zugriff auf den Workspace einer anderen Organisation oder unbefugte Last- oder Penetrationstests gegen Produktivsysteme." },
+        ],
+      },
+      {
+        id: "enforcement",
+        heading: "3. Durchsetzung & verantwortungsvolle Offenlegung",
+        paragraphs: [
+          "Wir können den Zugang verhältnismäßig einschränken oder aussetzen, um Betrug, Missbrauch oder aktive Sicherheitsbedrohungen zu unterbinden, und informieren, soweit rechtlich zulässig und praktikabel. Einsprüche und verantwortungsvolle Schwachstellenmeldungen senden Sie bitte an official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
   cookies: {
     slug: "cookies",
     title: "Cookie-Richtlinie",
@@ -1090,6 +1264,180 @@ const LEGAL_DE: Record<string, LegalDocument> = {
 };
 
 const LEGAL_FR: Record<string, LegalDocument> = {
+  terms: {
+    slug: "terms",
+    title: "Conditions d'utilisation",
+    badge: "Contrat d'abonnement client",
+    subtitle: "Régit l'accès à la plateforme logicielle NormInvoice, au moteur de validation et aux abonnements d'espace, ainsi que leur utilisation.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice:
+      LEGAL_DRAFT_FR +
+      " Ces conditions représentent notre base SaaS structurée actuelle et sont soumises à la validation finale d'un conseil juridique compétent avant le déploiement commercial général.",
+    sections: [
+      {
+        id: "parties",
+        heading: "1. Contrat et parties",
+        paragraphs: [
+          "Ces conditions régissent l'accès à NormInvoice, un service logiciel de facturation électronique par abonnement associé à Trend&Brand. « Prestataire », « nous » désignent l'entité juridique identifiée dans votre récapitulatif de commande, votre bon de commande et les mentions légales (entité contractante proposée : Trend&Brand LLC, Wyoming, USA, sous réserve de confirmation formelle du lancement). « Client » ou « vous » désigne la personne ou l'organisation qui crée un espace ou souscrit un abonnement.",
+        ],
+      },
+      {
+        id: "business-use",
+        heading: "2. Usage professionnel et droits impératifs",
+        paragraphs: [
+          "NormInvoice est principalement conçu pour des flux professionnels (B2B). Lorsque des droits impératifs des consommateurs auxquels il ne peut être renoncé s'appliquent en vertu du droit impératif de votre juridiction, rien dans ces conditions n'exclut ni ne restreint ces droits légaux.",
+        ],
+      },
+      {
+        id: "service-scope",
+        heading: "3. Description du service & disponibilité des fonctionnalités",
+        paragraphs: [
+          "NormInvoice ne fournit que les modules, formats de documents, profils de pays, quotas de stockage et intégrations explicitement activés pour votre niveau d'abonnement et marqués « Disponible » dans l'application en direct. Les fonctionnalités marquées Bêta, Opérées par un partenaire ou Prévues ne doivent pas être considérées comme des canaux de clearance légaux prêts pour la production sans vérification explicite.",
+        ],
+      },
+      {
+        id: "account",
+        heading: "4. Responsabilités de compte & d'espace",
+        paragraphs: [
+          "Vous êtes responsable du maintien de données d'entreprise légales exactes, des numéros de TVA et des informations bancaires, de la protection des identifiants de connexion et des clés API, de l'attribution des rôles d'espace appropriés et de la notification rapide à official@trendandbrands.com de tout accès non autorisé suspecté.",
+        ],
+      },
+      {
+        id: "billing",
+        heading: "5. Abonnements, offre Free, essai de 15 jours & frais",
+        paragraphs: [
+          "NormInvoice propose une offre Free limitée permanente (0 $), un essai gratuit optionnel de 15 jours sans carte bancaire, et des abonnements mensuels payants à partir de l'offre Solo (39 $/mois), aux côtés des niveaux Business, Agency et Enterprise. Les essais gratuits ne se transforment pas silencieusement en prélèvements payants lorsqu'aucune autorisation de paiement n'est enregistrée. Les taxes applicables, le rythme de facturation, les quotas et les conditions de renouvellement sont clairement divulgués avant tout paiement.",
+        ],
+      },
+      {
+        id: "customer-data",
+        heading: "6. Données client & aucun conseil fiscal/juridique",
+        paragraphs: [
+          "Vous conservez la propriété de tous les fichiers de factures, répertoires clients et dossiers financiers que vous importez ou générez. NormInvoice est un logiciel technique et ne fournit pas de conseil fiscal, comptable ou juridique. Les contrôles de validation évaluent les ensembles de règles pris en charge (tels que EN 16931 et BR-DE-*) et ne garantissent pas l'acceptation par un destinataire, une autorité fiscale ou une passerelle gouvernementale externe.",
+        ],
+      },
+      {
+        id: "termination",
+        heading: "7. Résiliation, export & contact",
+        paragraphs: [
+          "Vous pouvez annuler le renouvellement à tout moment depuis Paramètres de l'espace > Facturation ou en contactant official@trendandbrands.com depuis l'e-mail du propriétaire de l'espace. Veuillez exporter vos documents XML, PDF/A-3, DATEV/FEC et d'audit avant la fin de l'accès. Pour tous les détails, consultez notre politique d'annulation & de remboursement et notre politique de conservation des données.",
+        ],
+      },
+    ],
+  },
+  "subscription-billing": {
+    slug: "subscription-billing",
+    title: "Politique d'abonnement & de facturation",
+    badge: "Tarification SaaS transparente & renouvellements",
+    subtitle: "Règles claires sur les limites de l'offre Free, les essais gratuits de 15 jours, les abonnements Solo à 39 $/mois, les taxes et les renouvellements.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "plans",
+        heading: "1. Offres, quotas & transparence des prix",
+        bullets: [
+          { label: "Offre Free (0 $/mois)", text: "Accès gratuit permanent incluant le validateur sans conservation et jusqu'à 5 factures électroniques finalisées par mois." },
+          { label: "Essai gratuit de 15 jours (0 $)", text: "Évaluation réelle limitée à 15 jours, suivie en base de données dès l'inscription, incluant jusqu'à 15 factures électroniques finalisées et l'accès aux flux principaux, sans carte bancaire." },
+          { label: "Offre Solo (39 $/mois)", text: "Pensée pour les fondateurs solo et les petites entreprises : jusqu'à 150 factures électroniques finalisées/mois, échéanciers récurrents, automatisations, boîte de réception, rapports et exports." },
+          { label: "Business (49 $/mois) & Agency (129 $/mois)", text: "Quotas mensuels plus élevés (500 / 2 500 factures), passerelles Stripe & WooCommerce, RBAC multi-membres et clés API." },
+          { label: "Enterprise (sur mesure)", text: "Volume adapté, onboarding dédié et conditions commerciales personnalisées via official@trendandbrands.com." },
+        ],
+      },
+      {
+        id: "trial",
+        heading: "2. Fonctionnement de l'essai gratuit de 15 jours",
+        paragraphs: [
+          "Les horodatages de début et d'expiration de votre essai de 15 jours sont stockés en toute sécurité sur le serveur et affichés avec exactitude dans l'en-tête de votre espace et les paramètres de facturation. Lorsqu'un essai de 15 jours expire sans mise à niveau payante autorisée, votre espace bascule sans heurt vers l'offre Free au lieu de vous facturer silencieusement.",
+        ],
+      },
+      {
+        id: "checkout-disclosures",
+        heading: "3. Informations avant paiement & taxes",
+        paragraphs: [
+          "Avant la finalisation de tout prélèvement d'abonnement payant, le paiement présente clairement l'entité contractante ou le prestataire de paiement autorisé / Merchant of Record, la devise de facturation, l'intervalle mensuel ou annuel, le quota de documents inclus, les conditions de renouvellement, le traitement TVA ou d'autoliquidation applicable et la procédure d'annulation. Nous ne facturons jamais de dépassements non divulgués.",
+        ],
+      },
+      {
+        id: "billing-help",
+        heading: "4. Reçus & support facturation",
+        paragraphs: [
+          "Les reçus de facturation et les factures d'abonnement sont fournis via le prestataire de paiement actif et les paramètres de facturation. Pour les questions de facturation ou les prélèvements contestés, écrivez à official@trendandbrands.com avec l'e-mail du compte, la date et le montant — n'envoyez jamais de numéros de carte complets par e-mail.",
+        ],
+      },
+    ],
+  },
+  "cancellation-refunds": {
+    slug: "cancellation-refunds",
+    title: "Politique d'annulation & de remboursement",
+    badge: "Annulation en libre-service & remboursements équitables",
+    subtitle: "Comment arrêter le renouvellement à tout moment, ce qu'il advient de vos données, et comment sont traitées les demandes de remboursement et les droits légaux des consommateurs.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "how-to-cancel",
+        heading: "1. Comment annuler votre abonnement",
+        paragraphs: [
+          "Les propriétaires et administrateurs d'espace peuvent annuler le renouvellement de l'abonnement directement dans l'application via Paramètres > Facturation & quota > Annuler le renouvellement. Si vous ne pouvez pas accéder à votre espace, écrivez à official@trendandbrands.com depuis l'e-mail du propriétaire enregistré. La confirmation d'annulation et la date de fin effective sont consignées dans la piste d'audit de votre espace.",
+        ],
+      },
+      {
+        id: "renewal-effect",
+        heading: "2. Effet de l'annulation",
+        paragraphs: [
+          "L'annulation du renouvellement empêche les futurs prélèvements récurrents. Sauf disposition contraire du droit local impératif, vos fonctionnalités d'espace payantes restent actives jusqu'à la fin de la période de facturation déjà payée, après quoi votre compte bascule vers l'offre Free.",
+        ],
+      },
+      {
+        id: "refunds",
+        heading: "3. Demandes de remboursement & droits légaux",
+        paragraphs: [
+          "NormInvoice n'applique pas de règle générale « aucun remboursement en aucune circonstance ». Les demandes de remboursement sont examinées équitablement en cas de double facturation, d'erreurs de facturation, de prélèvements non autorisés ou d'indisponibilité substantielle du service. Lorsque des droits légaux impératifs de rétractation ou de délai de réflexion s'appliquent (tels que les règles européennes des contrats à distance pour les consommateurs éligibles), ces droits légaux s'appliquent intégralement.",
+        ],
+      },
+      {
+        id: "export",
+        heading: "4. Export des données avant tout changement d'accès",
+        paragraphs: [
+          "Exportez toujours vos factures XML, vos fichiers hybrides PDF/A-3, vos écritures DATEV/FEC, vos dossiers d'audit GoBD et vos paquets de données JSON RGPD avant de fermer ou de supprimer un espace.",
+        ],
+      },
+    ],
+  },
+  "acceptable-use": {
+    slug: "acceptable-use",
+    title: "Politique d'utilisation acceptable",
+    badge: "Usage responsable de la plateforme & anti-fraude",
+    subtitle: "Usages professionnels autorisés, comportements interdits, règles de tests de sécurité et application proportionnée.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "permitted",
+        heading: "1. Usage autorisé",
+        paragraphs: [
+          "Vous pouvez utiliser NormInvoice exclusivement pour une facturation professionnelle licite, la validation de conformité, les exports comptables et les intégrations autorisées, dans les limites des permissions et du quota d'abonnement de votre espace.",
+        ],
+      },
+      {
+        id: "prohibited",
+        heading: "2. Comportements interdits",
+        bullets: [
+          { text: "Soumettre des factures frauduleuses, fabriquées ou trompeuses, ou présenter de manière inexacte des identifiants d'enregistrement fiscal ou de TVA." },
+          { text: "Importer des charges malveillantes, des exploits XML External Entity (XXE), ou tenter de contourner l'authentification, les limites de débit ou l'isolation des locataires." },
+          { text: "Extraire, sonder ou accéder à l'espace d'une autre organisation, ou effectuer des tests de charge ou d'intrusion non autorisés contre les systèmes de production." },
+        ],
+      },
+      {
+        id: "enforcement",
+        heading: "3. Application & divulgation responsable",
+        paragraphs: [
+          "Nous pouvons restreindre ou suspendre l'accès de manière proportionnée pour stopper la fraude, les abus ou les menaces de sécurité actives, en informant chaque fois que cela est licite et praticable. Les recours et les divulgations responsables de vulnérabilités doivent être envoyés à official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
   cookies: {
     slug: "cookies",
     title: "Politique relative aux cookies",
