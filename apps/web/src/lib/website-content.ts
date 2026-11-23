@@ -831,10 +831,521 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
 // English is the canonical, binding fallback. Translated locales are added
 // per-slug under de/fr; any missing slug falls back to the English document,
 // so a half-finished language never renders a blank page.
+const LEGAL_DRAFT_DE =
+  "Maschineller Übersetzungsentwurf, noch nicht juristisch geprüft. Im Zweifel gilt die englische Fassung.";
+const LEGAL_DRAFT_FR =
+  "Brouillon de traduction automatique, pas encore validé juridiquement. En cas de doute, la version anglaise fait foi.";
+
+const LEGAL_DE: Record<string, LegalDocument> = {
+  cookies: {
+    slug: "cookies",
+    title: "Cookie-Richtlinie",
+    badge: "Einwilligungskontrollen & Speicherübersicht",
+    subtitle: "Transparente Übersicht über unbedingt erforderliche Cookies, optionale Präferenz-/Analysekategorien und die Verwaltung Ihrer Einwilligung.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "overview",
+        heading: "1. Wie NormInvoice Cookies & lokalen Speicher nutzt",
+        paragraphs: [
+          "NormInvoice minimiert den Browserspeicher und verzichtet auf aufdringliche Werbe-Tracker von Drittanbietern. Schriftarten (Inter und JetBrains Mono) werden mit der Anwendung selbst gehostet, sodass keine Anfragen an externe Google-Fonts-CDNs gesendet werden.",
+        ],
+      },
+      {
+        id: "inventory",
+        heading: "2. Aktive Erstanbieter-Cookies & Speicherübersicht",
+        bullets: [
+          { label: "norminvoice_session (unbedingt erforderlich — HttpOnly-Cookie)", text: "HMAC-SHA256-signiertes Authentifizierungs-Sitzungstoken (7 Tage Gültigkeit, SameSite=Lax). Für die sichere Anmeldung erforderlich." },
+          { label: "norminvoice_cookie_consent_v1 (unbedingt erforderlich — Local Storage)", text: "Speichert Ihre Cookie-Einwilligung, damit wir Ihre Opt-in- oder Opt-out-Präferenzen berücksichtigen." },
+          { label: "norminvoice_locale (Präferenzen — Local Storage)", text: "Merkt sich Ihre gewählte Oberflächensprache (EN / DE / FR)." },
+          { label: "Analyse- & Marketing-Cookies", text: "Standardmäßig deaktiviert. Ohne ausdrückliche Einwilligung werden keine nicht erforderlichen Analyse- oder Werbeskripte geladen." },
+        ],
+      },
+      {
+        id: "control",
+        heading: "3. Verwaltung Ihrer Präferenzen",
+        paragraphs: [
+          "Sie können jederzeit alle Cookies akzeptieren, nicht erforderliche ablehnen oder einzelne Kategorien anpassen — über den dauerhaften Link »Cookie-Einstellungen« in der Website-Fußzeile. Bei Fragen wenden Sie sich an official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+  subprocessors: {
+    slug: "subprocessors",
+    title: "Unterauftragsverarbeiter-Register",
+    badge: "Transparenz der Drittanbieter-Infrastruktur",
+    subtitle: "Offenlegung der Drittanbieter-Infrastruktur und Dienstkategorien, die den Betrieb von NormInvoice unterstützen.",
+    effectiveNote: "Entwurf Version 1.0 · Zuletzt geprüft am 22. November 2026",
+    reviewNotice:
+      LEGAL_DRAFT_DE +
+      " Ehrlichkeitsverpflichtung: Wir listen nur verifizierte aktive Dienste auf und kennzeichnen optionale/konfigurierbare Integrationen klar. Geplante Partner werden nie als aktive produktive Unterauftragsverarbeiter dargestellt.",
+    sections: [
+      {
+        id: "active-categories",
+        heading: "1. Konfigurierbare Produktionsinfrastruktur & Dienstleister",
+        bullets: [
+          { label: "Primäres Anwendungs- & Datenbank-Hosting", text: "Pro Bereitstellungsumgebung konfiguriert (ausgelegt für EU-Central-/Deutschland-Cloud-Hosting wie Hetzner im Produktivbetrieb)." },
+          { label: "Abonnementzahlung & Merchant of Record (optional / falls konfiguriert)", text: "Paddle.com Market Ltd — nur aktiv, wenn produktive Paddle-Checkout-Zugangsdaten aktiviert sind." },
+          { label: "Transaktions-E-Mail-Versand (optional / falls konfiguriert)", text: "Resend — nur aktiv, wenn RESEND_API_KEY für Rechnungsversand und Authentifizierungs-E-Mails konfiguriert ist." },
+          { label: "Technik- & Support-Betrieb des verbundenen Konzerns", text: "TREND & BRAND (PRIVATE) LIMITED (Pakistan) — Softwareentwicklung und Support unter konzerninternen Datenschutz- und Übermittlungsgarantien." },
+        ],
+      },
+      {
+        id: "changes",
+        heading: "2. Mitteilung über Änderungen bei Unterauftragsverarbeitern",
+        paragraphs: [
+          "Geschäftskunden mit AVV werden vor dem Hinzufügen oder Ersetzen wesentlicher Unterauftragsverarbeiter informiert; über official@trendandbrands.com besteht ein dokumentiertes Verfahren, um begründete datenschutzrechtliche Einwände zu erheben.",
+        ],
+      },
+    ],
+  },
+  "service-availability": {
+    slug: "service-availability",
+    title: "Richtlinie zu Serviceverfügbarkeit & Support",
+    badge: "Wahrheitsgemäßer Support- & Betriebsumfang",
+    subtitle: "Wie Support, Wartung, Incident-Kommunikation und Drittanbieter-Netzwerkabhängigkeiten funktionieren — ohne erfundene Verfügbarkeitsversprechen.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "availability",
+        heading: "1. Serviceverfügbarkeit & keine unbelegten SLA-Zusagen",
+        paragraphs: [
+          "Wir entwickeln NormInvoice für zuverlässigen täglichen Geschäftsbetrieb, automatische Backups und sichere Fehlerbehandlung. Diese allgemeine Richtlinie begründet jedoch keine numerische Verfügbarkeitsgarantie oder SLA-Gutschriftenregelung, sofern nicht in einem abgeschlossenen Enterprise-Vertrag gesondert vereinbart.",
+        ],
+      },
+      {
+        id: "support",
+        heading: "2. Support-Kanäle",
+        paragraphs: [
+          "Erreichen Sie unser Support-Team unter official@trendandbrands.com oder über die Kontaktseite. Geben Sie bei einer Meldung Ihren Organisationsnamen und die Rechnungsreferenz an — teilen Sie niemals Passwörter, API-Schlüssel oder vollständige Zahlungskartennummern.",
+        ],
+      },
+      {
+        id: "external",
+        heading: "3. Externe Netzwerke & behördliche Gateways",
+        paragraphs: [
+          "EU-VIES-USt-Dienste, Peppol-Access-Points, nationale Steuer-Gateways (KSeF, SdI, ANAF, PDP), Zahlungsanbieter und E-Mail-Relays werden von unabhängigen Dritten betrieben. Vorübergehende Ausfälle externer Netzwerke werden transparent dargestellt und können externe Bestätigungen verzögern, auch wenn NormInvoice weiterhin betriebsbereit ist.",
+        ],
+      },
+    ],
+  },
+  "data-retention": {
+    slug: "data-retention",
+    title: "Richtlinie zu Datenaufbewahrung & Löschung",
+    badge: "Archivfristen, Exporte & Löschung",
+    subtitle: "Wie lange Rechnungsarchive, Kontodaten, Audit-Ketten und Sicherheitsprotokolle aufbewahrt werden und wie die Löschung funktioniert.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "categories",
+        heading: "1. Aufbewahrungsplan nach Datenkategorie",
+        bullets: [
+          { label: "Zero-Retention-Validator (öffentlich)", text: "0 Sekunden — hochgeladene Dateien werden ausschließlich im RAM verarbeitet und sofort verworfen." },
+          { label: "Archive ausgehender & eingehender Rechnungen", text: "Durch die Workspace-Aufbewahrungseinstellungen konfiguriert (8 Jahre gemäß deutschem BEG IV / § 147 AO oder 10 Jahre gemäß französischem Handelsgesetzbuch), solange aktiv." },
+          { label: "Manipulationssichere Audit-Hash-Kette", text: "Zusammen mit den Workspace-Daten aufbewahrt, um die kryptografische Integrität für GoBD-Prüfungen zu wahren." },
+          { label: "Konto- & Kontaktanfrage-Daten", text: "Aufbewahrt, solange dies für den Betrieb Ihres Workspace, die Beantwortung von Anfragen oder gesetzliche Abrechnungspflichten erforderlich ist." },
+        ],
+      },
+      {
+        id: "export-delete",
+        heading: "2. Self-Service-Export & Workspace-Löschung",
+        paragraphs: [
+          "Workspace-Inhaber können jederzeit unter Einstellungen > Sicherheit & DSGVO einen vollständigen DSGVO-Art.-20-JSON-Datenexport und ein ZIP-Rechnungsarchiv herunterladen und die dauerhafte Workspace-Löschung (Art. 17 DSGVO) einleiten, nachdem sie bestätigt haben, dass sie die erforderlichen gesetzlichen Steuerunterlagen exportiert haben.",
+        ],
+      },
+    ],
+  },
+  "ai-transparency": {
+    slug: "ai-transparency",
+    title: "Offenlegung von KI-Funktionen",
+    badge: "Transparente assistive Hilfestellung",
+    subtitle: "Wie assistive Hilfswerkzeuge (wie der Compliance-Copilot) funktionieren, ihre deterministischen Grenzen und die erforderliche menschliche Aufsicht.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "scope",
+        heading: "1. Was assistive Werkzeuge in NormInvoice tun",
+        paragraphs: [
+          "Der Compliance-Copilot von NormInvoice verwendet deterministische EN-16931-Regelwörterbücher und strukturierte Länder-Compliance-Metadaten, um Validierungscodes (wie BR-DE-15 oder BR-CO-15) zu erklären und Nutzer zu erforderlichen Feldern zu führen.",
+        ],
+      },
+      {
+        id: "limits",
+        heading: "2. Keine Rechtsberatung & verpflichtende menschliche Prüfung",
+        paragraphs: [
+          "Assistive Erläuterungen ersetzen weder deterministische Validierungsprüfungen noch offizielle Antworten der Steuerbehörden oder die fachliche Beratung durch einen zertifizierten Steuerberater oder Rechtsanwalt. Das Finalisieren von Rechnungen, das Ausstellen von Gutschriften, das Freigeben von Lieferantenrechnungen und das Übermitteln von Dokumenten bleiben stets unter ausdrücklicher menschlicher und berechtigungsgesteuerter Workflow-Kontrolle.",
+        ],
+      },
+    ],
+  },
+  accessibility: {
+    slug: "accessibility",
+    title: "Erklärung zur Barrierefreiheit",
+    badge: "Inklusives Oberflächendesign",
+    subtitle: "Unser fortlaufendes Engagement für Tastaturnavigation, lesbaren Kontrast, reduzierte Bewegung und barrierefreie Formulare.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "priorities",
+        heading: "1. Umgesetzte Prioritäten der Barrierefreiheit",
+        bullets: [
+          { text: "Kontrastreiche Paarungen aus Navy (#011D42), Weiß (#FFFFFF) und einer barrierefreien Orange-/Semantik-Palette." },
+          { text: "Sichtbare Tastatur-Fokusrahmen, semantische Landmarks, beschreibende Formularbeschriftungen sowie ARIA-Rollen für Hinweise und Dialoge." },
+          { text: "Vollständige Unterstützung von prefers-reduced-motion, die nicht erforderliche Übergänge und Animationen automatisch deaktiviert." },
+        ],
+      },
+      {
+        id: "status",
+        heading: "2. Aktueller Prüfstatus & Feedback",
+        paragraphs: [
+          "Wir überprüfen die Barrierefreiheit über öffentliche Seiten und Workspace-Abläufe hinweg kontinuierlich und beanspruchen vor einem unabhängigen Audit keine formelle Drittzertifizierung nach WCAG 2.2 AA. Sollten Sie auf eine Barriere stoßen, senden Sie bitte eine E-Mail an official@trendandbrands.com mit der Seiten-URL und einer Beschreibung des Problems.",
+        ],
+      },
+    ],
+  },
+  "third-party-services": {
+    slug: "third-party-services",
+    title: "Haftungsausschluss für Drittanbieterdienste",
+    badge: "Unabhängige Netzwerke & verbundene Tools",
+    subtitle: "Klare Trennung zwischen NormInvoice-Software-Abonnements und Drittanbieter-E-Rechnungsnetzwerken, Zahlungsdienstleistern und ERP-Tools.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "separation",
+        heading: "1. Software vs. externe Anbieter",
+        paragraphs: [
+          "Ihr NormInvoice-Abonnement gewährt Zugang zu den Softwarefunktionen von NormInvoice. Externe Zahlungsdienstleister (wie Stripe oder Paddle), E-Commerce-Plattformen (wie WooCommerce), Peppol-Access-Points, nationale Clearing-Gateways und Buchhaltungsanwendungen sind unabhängige Dienste, die eigenen Bedingungen und einer eigenen Verfügbarkeit unterliegen.",
+        ],
+      },
+      {
+        id: "acknowledgements",
+        heading: "2. Getrennte Übertragungs- & Behördenbestätigungen",
+        paragraphs: [
+          "Interne Workflow-Status (»Entwurf«, »Validiert«, »Versendet«) sind strikt von externen behördlichen oder netzwerkseitigen Annahmebestätigungen getrennt. Etwaige Übertragungsgebühren Dritter werden, sofern zutreffend, vor der Aktivierung offengelegt.",
+        ],
+      },
+    ],
+  },
+  complaints: {
+    slug: "complaints",
+    title: "Beschwerden & Streitbeilegung",
+    badge: "Kanal zur Kundenlösung",
+    subtitle: "So melden Sie dem NormInvoice-Team Anliegen zu Abrechnung, Datenschutz, Barrierefreiheit oder Service.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "submit",
+        heading: "1. Eine Beschwerde einreichen",
+        paragraphs: [
+          "Bei Anliegen zu Abrechnung, Abonnement, Datenschutz, Sicherheit oder Produkt senden Sie eine E-Mail an official@trendandbrands.com (oder rufen Sie +92 325 5039135 an) mit Ihrem Organisationsnamen, der relevanten Rechnungs- oder Kontoreferenz und einer klaren Beschreibung des Problems. Wir prüfen jede Meldung gründlich und antworten über den passenden Support-Kanal.",
+        ],
+      },
+      {
+        id: "rights",
+        heading: "2. Gesetzliche Rechte & Hinweis zur Schließung der EU-ODR",
+        paragraphs: [
+          "Nichts in dieser Richtlinie schränkt unabdingbare gesetzliche Rechte oder Ihr Recht ein, sich an eine zuständige Datenschutzbehörde oder ein Gericht zu wenden. Bitte beachten Sie, dass die frühere Online-Streitbeilegungsplattform (ODR) der Europäischen Kommission am 20. Juli 2025 dauerhaft geschlossen wurde und kein aktiver Beschwerdeweg mehr ist.",
+        ],
+      },
+    ],
+  },
+  "intellectual-property": {
+    slug: "intellectual-property",
+    title: "Geistiges Eigentum & Markenrichtlinien",
+    badge: "Eigentum & Markennutzung",
+    subtitle: "Rechte an der NormInvoice-Software, Kundeneigentum an Geschäftsdaten und Regeln zur korrekten Markennutzung.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "ownership",
+        heading: "1. Software- & Markeneigentum",
+        paragraphs: [
+          "Die NormInvoice-Plattform, der Quellcode, die ursprünglichen Oberflächendesigns, die Dokumentation der Validierungsregeln und die Markenassets gehören den Rechteinhabern und Lizenzgebern von Trend&Brand. Die Namen und Logos von NormInvoice und Trend&Brand dürfen ohne schriftliche Zustimmung nicht so verwendet werden, dass eine Billigung oder offizielle Zugehörigkeit suggeriert wird. Markenregistrierungssymbole werden nur verwendet, wenn eine formelle Registrierung bestätigt ist.",
+        ],
+      },
+      {
+        id: "customer-ip",
+        heading: "2. Kundeneigentum an Geschäftsunterlagen",
+        paragraphs: [
+          "Kunden behalten 100 % Eigentum an ihren Firmenlogos, Kundendaten, Rechnungen, XML-Dateien und Buchhaltungsexporten. Das Hochladen von Materialien gewährt NormInvoice nur die begrenzten betrieblichen Rechte, die zur Erbringung des Dienstes erforderlich sind.",
+        ],
+      },
+      {
+        id: "requests",
+        heading: "3. Marken- & Verletzungsanfragen",
+        paragraphs: [
+          "Für Presse, Markennutzung in Partnerschaften oder Hinweise zum geistigen Eigentum wenden Sie sich an official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+};
+
+const LEGAL_FR: Record<string, LegalDocument> = {
+  cookies: {
+    slug: "cookies",
+    title: "Politique relative aux cookies",
+    badge: "Contrôles de consentement & inventaire du stockage",
+    subtitle: "Aperçu transparent des cookies strictement nécessaires, des catégories optionnelles de préférences/analyse et de la gestion de votre consentement.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "overview",
+        heading: "1. Comment NormInvoice utilise les cookies & le stockage local",
+        paragraphs: [
+          "NormInvoice minimise le stockage du navigateur et évite les traceurs publicitaires tiers intrusifs. Les polices (Inter et JetBrains Mono) sont auto-hébergées avec l'application, de sorte qu'aucune requête n'est envoyée aux CDN Google Fonts externes.",
+        ],
+      },
+      {
+        id: "inventory",
+        heading: "2. Inventaire des cookies & du stockage propriétaires actifs",
+        bullets: [
+          { label: "norminvoice_session (strictement nécessaire — cookie HttpOnly)", text: "Jeton de session d'authentification signé HMAC-SHA256 (expiration de 7 jours, SameSite=Lax). Requis pour une connexion sécurisée." },
+          { label: "norminvoice_cookie_consent_v1 (strictement nécessaire — stockage local)", text: "Conserve vos choix de consentement aux cookies afin de respecter vos préférences d'acceptation ou de refus." },
+          { label: "norminvoice_locale (préférences — stockage local)", text: "Mémorise la langue d'interface choisie (EN / DE / FR)." },
+          { label: "Cookies d'analyse & de marketing", text: "Désactivés par défaut. Aucun script d'analyse ou de publicité non essentiel ne se charge sans consentement explicite." },
+        ],
+      },
+      {
+        id: "control",
+        heading: "3. Gestion de vos préférences",
+        paragraphs: [
+          "Vous pouvez à tout moment tout accepter, refuser les cookies non essentiels ou personnaliser chaque catégorie via le lien permanent « Paramètres des cookies » dans le pied de page du site. Pour toute question, contactez official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+  subprocessors: {
+    slug: "subprocessors",
+    title: "Registre des sous-traitants",
+    badge: "Transparence de l'infrastructure tierce",
+    subtitle: "Divulgation de l'infrastructure tierce et des catégories de services soutenant l'exploitation de NormInvoice.",
+    effectiveNote: "Brouillon version 1.0 · Dernière vérification le 22 novembre 2026",
+    reviewNotice:
+      LEGAL_DRAFT_FR +
+      " Engagement d'honnêteté : nous ne listons que des services actifs vérifiés et indiquons clairement les intégrations optionnelles/configurables. Les partenaires prévus ne sont jamais présentés comme des sous-traitants actifs en production.",
+    sections: [
+      {
+        id: "active-categories",
+        heading: "1. Infrastructure de production configurable & prestataires",
+        bullets: [
+          { label: "Hébergement principal de l'application & de la base de données", text: "Configuré par environnement de déploiement (conçu pour un hébergement cloud UE-Central / Allemagne tel que Hetzner en production)." },
+          { label: "Paiement d'abonnement & Merchant of Record (optionnel / si configuré)", text: "Paddle.com Market Ltd — actif uniquement lorsque des identifiants de paiement Paddle en production sont activés." },
+          { label: "Envoi d'e-mails transactionnels (optionnel / si configuré)", text: "Resend — actif uniquement lorsque RESEND_API_KEY est configuré pour la livraison des factures et les e-mails d'authentification." },
+          { label: "Opérations d'ingénierie & de support du groupe lié", text: "TREND & BRAND (PRIVATE) LIMITED (Pakistan) — développement logiciel et support sous garanties intragroupe de protection et de transfert des données." },
+        ],
+      },
+      {
+        id: "changes",
+        heading: "2. Notification des changements de sous-traitants",
+        paragraphs: [
+          "Les clients professionnels couverts par un DPA sont informés avant l'ajout ou le remplacement de sous-traitants importants, avec une procédure documentée pour soulever des objections raisonnables en matière de protection des données en écrivant à official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+  "service-availability": {
+    slug: "service-availability",
+    title: "Politique de disponibilité du service & de support",
+    badge: "Périmètre honnête de support & d'exploitation",
+    subtitle: "Comment fonctionnent le support, la maintenance, la communication d'incidents et les dépendances aux réseaux tiers — sans promesses de disponibilité fabriquées.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "availability",
+        heading: "1. Disponibilité du service & absence de SLA non vérifié",
+        paragraphs: [
+          "Nous concevons NormInvoice pour des opérations quotidiennes fiables, des sauvegardes automatiques et une gestion sûre des erreurs. Toutefois, cette politique générale n'établit aucune garantie chiffrée de disponibilité ni barème de crédits SLA, sauf accord distinct dans un contrat Enterprise signé.",
+        ],
+      },
+      {
+        id: "support",
+        heading: "2. Canaux de support",
+        paragraphs: [
+          "Contactez notre équipe de support à official@trendandbrands.com ou via la page Contact. Indiquez le nom de votre organisation et la référence de facture lors d'un signalement — ne partagez jamais de mots de passe, de clés API ou de numéros complets de carte de paiement.",
+        ],
+      },
+      {
+        id: "external",
+        heading: "3. Réseaux externes & passerelles gouvernementales",
+        paragraphs: [
+          "Les services TVA VIES de l'UE, les points d'accès Peppol, les passerelles fiscales nationales (KSeF, SdI, ANAF, PDP), les prestataires de paiement et les relais de messagerie sont exploités par des tiers indépendants. Les pannes temporaires des réseaux externes sont signalées de manière transparente et peuvent retarder les accusés de réception externes, même si NormInvoice reste opérationnel.",
+        ],
+      },
+    ],
+  },
+  "data-retention": {
+    slug: "data-retention",
+    title: "Politique de conservation & de suppression des données",
+    badge: "Durées d'archivage, exports & effacement",
+    subtitle: "Combien de temps les archives de factures, les dossiers de compte, les chaînes d'audit et les journaux de sécurité sont conservés et comment fonctionne la suppression.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "categories",
+        heading: "1. Calendrier de conservation par catégorie de données",
+        bullets: [
+          { label: "Validateur public sans conservation", text: "0 seconde — les fichiers importés sont traités strictement en mémoire vive et supprimés immédiatement." },
+          { label: "Archives des factures émises & reçues", text: "Configurées par les paramètres de conservation de l'espace (8 ans conformément au BEG IV allemand / § 147 AO, ou 10 ans conformément au code de commerce français) tant qu'elles sont actives." },
+          { label: "Chaîne de hachage d'audit infalsifiable", text: "Conservée avec les données de l'espace afin de préserver l'intégrité cryptographique pour les contrôles GoBD." },
+          { label: "Données de compte & de demandes de contact", text: "Conservées tant que nécessaire pour exploiter votre espace, répondre aux demandes ou satisfaire aux obligations légales de facturation." },
+        ],
+      },
+      {
+        id: "export-delete",
+        heading: "2. Export en libre-service & effacement de l'espace",
+        paragraphs: [
+          "Les propriétaires d'espace peuvent à tout moment télécharger un export de données JSON RGPD art. 20 complet et une archive ZIP des factures depuis Paramètres > Sécurité & RGPD, et lancer l'effacement permanent de l'espace (art. 17 RGPD) après avoir confirmé l'export des documents fiscaux légalement requis.",
+        ],
+      },
+    ],
+  },
+  "ai-transparency": {
+    slug: "ai-transparency",
+    title: "Divulgation des fonctionnalités d'IA",
+    badge: "Assistance transparente",
+    subtitle: "Comment les outils d'assistance (comme le Copilote conformité) fonctionnent, leurs limites déterministes et la supervision humaine requise.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "scope",
+        heading: "1. Ce que font les outils d'assistance dans NormInvoice",
+        paragraphs: [
+          "Le Copilote conformité de NormInvoice utilise des dictionnaires de règles EN 16931 déterministes et des métadonnées structurées de conformité par pays pour expliquer les codes de validation (tels que BR-DE-15 ou BR-CO-15) et orienter les utilisateurs vers les champs requis.",
+        ],
+      },
+      {
+        id: "limits",
+        heading: "2. Aucun conseil juridique & revue humaine obligatoire",
+        paragraphs: [
+          "Les explications d'assistance ne remplacent pas les contrôles de validation déterministes, les réponses officielles des autorités fiscales ni les conseils professionnels d'un expert-comptable ou d'un avocat agréé. La finalisation des factures, l'émission d'avoirs, l'approbation des factures fournisseurs et la transmission des documents restent toujours sous contrôle humain explicite et sous un flux de travail soumis à autorisation.",
+        ],
+      },
+    ],
+  },
+  accessibility: {
+    slug: "accessibility",
+    title: "Déclaration d'accessibilité",
+    badge: "Conception d'interface inclusive",
+    subtitle: "Notre engagement continu en faveur de la navigation au clavier, d'un contraste lisible, d'un mouvement réduit et de formulaires accessibles.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "priorities",
+        heading: "1. Priorités d'accessibilité mises en œuvre",
+        bullets: [
+          { text: "Associations de couleurs à contraste élevé : Navy (#011D42), Blanc (#FFFFFF) et une palette Orange/sémantique accessible." },
+          { text: "Contours de focus clavier visibles, repères sémantiques, libellés de formulaire descriptifs et rôles ARIA pour les alertes et les dialogues." },
+          { text: "Prise en charge complète de prefers-reduced-motion, désactivant automatiquement les transitions et animations non essentielles." },
+        ],
+      },
+      {
+        id: "status",
+        heading: "2. Statut d'audit actuel & retours",
+        paragraphs: [
+          "Nous examinons en continu l'accessibilité des pages publiques et des flux de l'espace, et ne revendiquons aucune certification tierce formelle WCAG 2.2 AA avant un audit indépendant. Si vous rencontrez un obstacle d'accessibilité, envoyez un e-mail à official@trendandbrands.com avec l'URL de la page et une description du problème.",
+        ],
+      },
+    ],
+  },
+  "third-party-services": {
+    slug: "third-party-services",
+    title: "Clause de non-responsabilité relative aux services tiers",
+    badge: "Réseaux indépendants & outils connectés",
+    subtitle: "Séparation claire entre les abonnements au logiciel NormInvoice et les réseaux de facturation électronique tiers, les processeurs de paiement et les outils ERP.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "separation",
+        heading: "1. Logiciel vs. prestataires externes",
+        paragraphs: [
+          "Votre abonnement NormInvoice donne accès aux fonctionnalités du logiciel NormInvoice. Les processeurs de paiement externes (tels que Stripe ou Paddle), les plateformes e-commerce (telles que WooCommerce), les points d'accès Peppol, les passerelles de clearance nationales et les applications comptables sont des services indépendants régis par leurs propres conditions et disponibilité.",
+        ],
+      },
+      {
+        id: "acknowledgements",
+        heading: "2. Accusés de transport & d'autorité distincts",
+        paragraphs: [
+          "Les statuts internes du flux de travail (« Brouillon », « Validée », « Envoyée ») sont strictement séparés des confirmations d'acceptation externes, gouvernementales ou réseau. Les éventuels frais de transmission de tiers sont, le cas échéant, divulgués avant l'activation.",
+        ],
+      },
+    ],
+  },
+  complaints: {
+    slug: "complaints",
+    title: "Réclamations & résolution des litiges",
+    badge: "Canal de résolution client",
+    subtitle: "Comment soumettre à l'équipe NormInvoice des préoccupations liées à la facturation, à la confidentialité, à l'accessibilité ou au service.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "submit",
+        heading: "1. Soumettre une réclamation",
+        paragraphs: [
+          "Pour toute préoccupation de facturation, d'abonnement, de confidentialité, de sécurité ou de produit, envoyez un e-mail à official@trendandbrands.com (ou appelez le +92 325 5039135) avec le nom de votre organisation, la référence de facture ou de compte concernée et une description claire du problème. Nous examinons chaque signalement avec soin et répondons via le canal de support approprié.",
+        ],
+      },
+      {
+        id: "rights",
+        heading: "2. Droits légaux & avis de fermeture de l'ODR de l'UE",
+        paragraphs: [
+          "Rien dans cette politique ne limite les droits légaux auxquels il ne peut être renoncé ni votre droit de saisir une autorité de protection des données compétente ou un tribunal. Veuillez noter que l'ancienne plateforme de règlement en ligne des litiges (RLL/ODR) de la Commission européenne a définitivement fermé le 20 juillet 2025 et n'est plus une voie de réclamation active.",
+        ],
+      },
+    ],
+  },
+  "intellectual-property": {
+    slug: "intellectual-property",
+    title: "Propriété intellectuelle & règles d'utilisation de la marque",
+    badge: "Propriété & usage de la marque",
+    subtitle: "Droits sur le logiciel NormInvoice, propriété des données d'entreprise par le client et règles d'utilisation correcte de la marque.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "ownership",
+        heading: "1. Propriété du logiciel & de la marque",
+        paragraphs: [
+          "La plateforme NormInvoice, le code source, les conceptions d'interface originales, la documentation des règles de validation et les éléments de marque appartiennent aux titulaires de droits et concédants de Trend&Brand. Les noms et logos NormInvoice et Trend&Brand ne doivent pas être utilisés d'une manière suggérant une approbation ou une affiliation officielle sans consentement écrit. Les symboles d'enregistrement de marque ne sont utilisés que si un enregistrement formel est confirmé.",
+        ],
+      },
+      {
+        id: "customer-ip",
+        heading: "2. Propriété des dossiers d'entreprise par le client",
+        paragraphs: [
+          "Les clients conservent 100 % de la propriété de leurs logos d'entreprise, dossiers clients, factures, fichiers XML et exports comptables. L'import de contenus n'accorde à NormInvoice que les droits opérationnels limités nécessaires à la fourniture du service.",
+        ],
+      },
+      {
+        id: "requests",
+        heading: "3. Demandes relatives à la marque & à la contrefaçon",
+        paragraphs: [
+          "Pour la presse, l'usage de la marque en partenariat ou les notifications de propriété intellectuelle, contactez official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+};
+
 export const LEGAL_DOCUMENTS_I18N: Record<AppLocale, Record<string, LegalDocument>> = {
   en: LEGAL_DOCUMENTS,
-  de: {},
-  fr: {},
+  de: LEGAL_DE,
+  fr: LEGAL_FR,
 };
 
 export function resolveLocale(raw: string | undefined | null): AppLocale {
