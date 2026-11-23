@@ -2,6 +2,8 @@
 
 import React from "react";
 import { AlertTriangle, CheckCircle2, Clock, FileEdit, Send, XCircle } from "lucide-react";
+import { useLocale } from "./LocaleProvider";
+import { STATUS_LABELS } from "@/lib/i18n";
 
 export const inputCls =
   "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-navy-900 placeholder:text-slate-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-100 disabled:bg-slate-100";
@@ -81,19 +83,22 @@ export function Alert({ kind, children }: { kind: "success" | "error" | "info" |
 }
 
 export function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-    DRAFT: { cls: "bg-amber-50 text-amber-800 border border-amber-200/80", icon: <FileEdit className="h-3.5 w-3.5" />, label: "Draft" },
-    VALIDATED: { cls: "bg-emerald-50 text-emerald-800 border border-emerald-200/80", icon: <CheckCircle2 className="h-3.5 w-3.5" />, label: "Validated" },
-    DELIVERED: { cls: "bg-sky-50 text-sky-800 border border-sky-200/80", icon: <Send className="h-3.5 w-3.5" />, label: "Sent" },
-    SENT: { cls: "bg-sky-50 text-sky-800 border border-sky-200/80", icon: <Send className="h-3.5 w-3.5" />, label: "Sent" },
-    PAID: { cls: "bg-emerald-100 text-emerald-800 border border-emerald-200", icon: <CheckCircle2 className="h-3.5 w-3.5" />, label: "Paid" },
-    OVERDUE: { cls: "bg-red-50 text-red-700 border border-red-200", icon: <XCircle className="h-3.5 w-3.5" />, label: "Overdue" },
-    ACTION_REQUIRED: { cls: "bg-amber-100 text-amber-900 border border-amber-300", icon: <AlertTriangle className="h-3.5 w-3.5" />, label: "Action required" },
+  const { locale } = useLocale();
+  const labels = STATUS_LABELS[locale];
+  const map: Record<string, { cls: string; icon: React.ReactNode }> = {
+    DRAFT: { cls: "bg-amber-50 text-amber-800 border border-amber-200/80", icon: <FileEdit className="h-3.5 w-3.5" /> },
+    VALIDATED: { cls: "bg-emerald-50 text-emerald-800 border border-emerald-200/80", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    DELIVERED: { cls: "bg-sky-50 text-sky-800 border border-sky-200/80", icon: <Send className="h-3.5 w-3.5" /> },
+    SENT: { cls: "bg-sky-50 text-sky-800 border border-sky-200/80", icon: <Send className="h-3.5 w-3.5" /> },
+    PAID: { cls: "bg-emerald-100 text-emerald-800 border border-emerald-200", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    OVERDUE: { cls: "bg-red-50 text-red-700 border border-red-200", icon: <XCircle className="h-3.5 w-3.5" /> },
+    ACTION_REQUIRED: { cls: "bg-amber-100 text-amber-900 border border-amber-300", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
   };
-  const m = map[status] ?? { cls: "bg-slate-100 text-slate-700", icon: <Clock className="h-3.5 w-3.5" />, label: status };
+  const m = map[status] ?? { cls: "bg-slate-100 text-slate-700", icon: <Clock className="h-3.5 w-3.5" /> };
+  const label = labels[status] ?? status;
   return (
     <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${m.cls}`}>
-      {m.icon} {m.label}
+      {m.icon} {label}
     </span>
   );
 }

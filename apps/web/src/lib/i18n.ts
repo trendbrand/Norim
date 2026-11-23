@@ -1450,3 +1450,380 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     promoCta: "Passer à Solo — 39 $/mois",
   },
 };
+
+// ── Shared invoice status badge labels (used across dashboard, invoices, etc.) ──
+export const STATUS_LABELS: Record<AppLocale, Record<string, string>> = {
+  en: {
+    DRAFT: "Draft",
+    VALIDATED: "Validated",
+    DELIVERED: "Sent",
+    SENT: "Sent",
+    PAID: "Paid",
+    OVERDUE: "Overdue",
+    ACTION_REQUIRED: "Action required",
+  },
+  de: {
+    DRAFT: "Entwurf",
+    VALIDATED: "Validiert",
+    DELIVERED: "Versendet",
+    SENT: "Versendet",
+    PAID: "Bezahlt",
+    OVERDUE: "Überfällig",
+    ACTION_REQUIRED: "Aktion erforderlich",
+  },
+  fr: {
+    DRAFT: "Brouillon",
+    VALIDATED: "Validée",
+    DELIVERED: "Envoyée",
+    SENT: "Envoyée",
+    PAID: "Payée",
+    OVERDUE: "En retard",
+    ACTION_REQUIRED: "Action requise",
+  },
+};
+
+// ── Invoices list page translations ──
+export interface InvoicesStrings {
+  title: string;
+  subtitle: string;
+  newInvoice: string;
+  tabAll: string;
+  tabDrafts: string;
+  tabValidated: string;
+  tabDelivered: string;
+  tabActionRequired: string;
+  searchPlaceholder: string;
+  fromDate: string;
+  toDate: string;
+  docsCount: (n: number) => string;
+  totalInvoiced: (money: string) => string;
+  loading: string;
+  emptyTitle: string;
+  emptyText: string;
+  createInvoice: string;
+  thNumber: string;
+  thCustomer: string;
+  thFormat: string;
+  thSource: string;
+  thAmount: string;
+  thStatus: string;
+  thFiles: string;
+  creditBadge: string;
+  due: (date: string) => string;
+}
+
+export const INVOICES_STRINGS: Record<AppLocale, InvoicesStrings> = {
+  en: {
+    title: "Invoices",
+    subtitle: "Every invoice and credit note in your workspace. Finalized documents are immutable and archived (GoBD).",
+    newInvoice: "New invoice",
+    tabAll: "All",
+    tabDrafts: "Drafts",
+    tabValidated: "Validated",
+    tabDelivered: "Delivered",
+    tabActionRequired: "Action required",
+    searchPlaceholder: "Search number, customer or VAT ID…",
+    fromDate: "From date",
+    toDate: "To date",
+    docsCount: (n) => `${n} document(s)`,
+    totalInvoiced: (money) => `Total invoiced (net of credit notes): ${money}`,
+    loading: "Loading…",
+    emptyTitle: "No invoices match",
+    emptyText: "Adjust your filters or create a new invoice.",
+    createInvoice: "Create invoice",
+    thNumber: "Number",
+    thCustomer: "Customer",
+    thFormat: "Format",
+    thSource: "Source",
+    thAmount: "Amount",
+    thStatus: "Status",
+    thFiles: "Files",
+    creditBadge: "CREDIT",
+    due: (date) => ` · due ${date}`,
+  },
+  de: {
+    title: "Rechnungen",
+    subtitle: "Jede Rechnung und Gutschrift in Ihrem Workspace. Finalisierte Dokumente sind unveränderbar und archiviert (GoBD).",
+    newInvoice: "Neue Rechnung",
+    tabAll: "Alle",
+    tabDrafts: "Entwürfe",
+    tabValidated: "Validiert",
+    tabDelivered: "Versendet",
+    tabActionRequired: "Aktion erforderlich",
+    searchPlaceholder: "Nummer, Kunde oder USt-IdNr. suchen…",
+    fromDate: "Von Datum",
+    toDate: "Bis Datum",
+    docsCount: (n) => `${n} Dokument(e)`,
+    totalInvoiced: (money) => `Gesamt fakturiert (abzüglich Gutschriften): ${money}`,
+    loading: "Wird geladen…",
+    emptyTitle: "Keine passenden Rechnungen",
+    emptyText: "Passen Sie Ihre Filter an oder erstellen Sie eine neue Rechnung.",
+    createInvoice: "Rechnung erstellen",
+    thNumber: "Nummer",
+    thCustomer: "Kunde",
+    thFormat: "Format",
+    thSource: "Quelle",
+    thAmount: "Betrag",
+    thStatus: "Status",
+    thFiles: "Dateien",
+    creditBadge: "GUTSCHRIFT",
+    due: (date) => ` · fällig ${date}`,
+  },
+  fr: {
+    title: "Factures",
+    subtitle: "Chaque facture et avoir de votre espace. Les documents finalisés sont immuables et archivés (GoBD).",
+    newInvoice: "Nouvelle facture",
+    tabAll: "Toutes",
+    tabDrafts: "Brouillons",
+    tabValidated: "Validées",
+    tabDelivered: "Envoyées",
+    tabActionRequired: "Action requise",
+    searchPlaceholder: "Rechercher par n°, client ou n° de TVA…",
+    fromDate: "Date de début",
+    toDate: "Date de fin",
+    docsCount: (n) => `${n} document(s)`,
+    totalInvoiced: (money) => `Total facturé (net des avoirs) : ${money}`,
+    loading: "Chargement…",
+    emptyTitle: "Aucune facture correspondante",
+    emptyText: "Ajustez vos filtres ou créez une nouvelle facture.",
+    createInvoice: "Créer une facture",
+    thNumber: "Numéro",
+    thCustomer: "Client",
+    thFormat: "Format",
+    thSource: "Source",
+    thAmount: "Montant",
+    thStatus: "Statut",
+    thFiles: "Fichiers",
+    creditBadge: "AVOIR",
+    due: (date) => ` · échéance ${date}`,
+  },
+};
+
+// ── Incoming supplier inbox translations ──
+export interface InboxStrings {
+  title: string;
+  subtitle: string;
+  statArchived: string;
+  statPending: string;
+  statPayables: string;
+  statDuplicates: string;
+  dropIdle: string;
+  dropUploading: string;
+  dropHint: string;
+  queueTitle: string;
+  loading: string;
+  emptyTitle: string;
+  emptyText: string;
+  thInvoicePo: string;
+  thSupplier: string;
+  thCompliance: string;
+  thGross: string;
+  thActions: string;
+  duplicate: string;
+  poPrefix: string;
+  valid: string;
+  issues: string;
+  approvalPending: string;
+  approvalApproved: string;
+  approvalRejected: string;
+  payPaid: string;
+  payUnpaid: string;
+  preview: string;
+  downloadOrigXml: string;
+  approve: string;
+  reject: string;
+  markPaid: string;
+  markUnpaid: string;
+  modalTitle: (num: string) => string;
+  gobdLocked: (date: string) => string;
+  viewXml: string;
+  hideXml: string;
+  downloadXml: string;
+  downloadJson: string;
+  origBytes: string;
+  reSerialized: string;
+  origReceivedXml: string;
+  parsedLines: string;
+  thLineItem: string;
+  thQty: string;
+  thUnitPrice: string;
+  thVat: string;
+  sha256: string;
+  grossPayable: string;
+  toastArchived: (num: string, seller: string, dup: boolean) => string;
+  toastUploadFailed: string;
+  toastXmlFailed: string;
+  toastUpdateFailed: string;
+  toastArchiveFailed: string;
+}
+
+export const INBOX_STRINGS: Record<AppLocale, InboxStrings> = {
+  en: {
+    title: "Intelligent Incoming Supplier Inbox (Eingangsrechnungen)",
+    subtitle: "Receive, validate, detect duplicates, match PO numbers, approve, and GoBD-archive ZUGFeRD, Factur-X, and XRechnung supplier invoices.",
+    statArchived: "Archived Docs",
+    statPending: "Pending Approval",
+    statPayables: "Open Payables",
+    statDuplicates: "Duplicates Flagged",
+    dropIdle: "Drop or Upload Supplier E-Invoice (.pdf or .xml)",
+    dropUploading: "Extracting XML, checking duplicates & GoBD-archiving…",
+    dropHint: "Automatic duplicate detection, EN 16931 validation, PO extraction (BT-13), and 8–10 year GoBD SHA-256 lock.",
+    queueTitle: "Supplier Invoice Queue",
+    loading: "Loading inbox…",
+    emptyTitle: "Your incoming inbox is empty",
+    emptyText: "Upload any supplier's ZUGFeRD PDF or XRechnung XML above.",
+    thInvoicePo: "Invoice / PO",
+    thSupplier: "Supplier",
+    thCompliance: "Compliance & Approval",
+    thGross: "Gross",
+    thActions: "Actions",
+    duplicate: "DUPLICATE",
+    poPrefix: "PO:",
+    valid: "EN 16931 Valid",
+    issues: "Issues Found",
+    approvalPending: "Pending review",
+    approvalApproved: "Approved",
+    approvalRejected: "Rejected",
+    payPaid: "Paid",
+    payUnpaid: "Unpaid",
+    preview: "Preview",
+    downloadOrigXml: "Download original XML",
+    approve: "Approve",
+    reject: "Reject",
+    markPaid: "Mark Paid",
+    markUnpaid: "Unpaid",
+    modalTitle: (num) => `Supplier Invoice ${num}`,
+    gobdLocked: (date) => `GoBD Locked until ${date}`,
+    viewXml: "View original XML",
+    hideXml: "Hide original XML",
+    downloadXml: "Download XML",
+    downloadJson: "Download JSON",
+    origBytes: "Original supplier bytes preserved",
+    reSerialized: "Re-serialized view",
+    origReceivedXml: "Original received XML (as sent by supplier)",
+    parsedLines: "Parsed line items (EN 16931)",
+    thLineItem: "Line Item",
+    thQty: "Qty",
+    thUnitPrice: "Unit Price",
+    thVat: "VAT",
+    sha256: "SHA-256 Digest",
+    grossPayable: "Gross Payable",
+    toastArchived: (num, seller, dup) => `Archived ${num} from ${seller}${dup ? " (⚠ Duplicate detected!)" : ""}.`,
+    toastUploadFailed: "Upload failed",
+    toastXmlFailed: "Could not load original XML",
+    toastUpdateFailed: "Update failed",
+    toastArchiveFailed: "Failed to archive supplier invoice",
+  },
+  de: {
+    title: "Intelligenter Eingangsrechnungs-Posteingang",
+    subtitle: "Empfangen, validieren, Dubletten erkennen, Bestellnummern abgleichen, freigeben und ZUGFeRD-, Factur-X- & XRechnung-Lieferantenrechnungen GoBD-archivieren.",
+    statArchived: "Archivierte Belege",
+    statPending: "Freigabe ausstehend",
+    statPayables: "Offene Verbindlichkeiten",
+    statDuplicates: "Markierte Dubletten",
+    dropIdle: "Lieferanten-E-Rechnung ablegen oder hochladen (.pdf oder .xml)",
+    dropUploading: "XML wird extrahiert, Dubletten geprüft & GoBD-archiviert…",
+    dropHint: "Automatische Dublettenerkennung, EN-16931-Validierung, Bestellnummer-Extraktion (BT-13) und 8–10 Jahre GoBD-SHA-256-Sperre.",
+    queueTitle: "Lieferantenrechnungs-Warteschlange",
+    loading: "Posteingang wird geladen…",
+    emptyTitle: "Ihr Eingangspostfach ist leer",
+    emptyText: "Laden Sie oben eine beliebige ZUGFeRD-PDF oder XRechnung-XML eines Lieferanten hoch.",
+    thInvoicePo: "Rechnung / Bestellung",
+    thSupplier: "Lieferant",
+    thCompliance: "Compliance & Freigabe",
+    thGross: "Brutto",
+    thActions: "Aktionen",
+    duplicate: "DUBLETTE",
+    poPrefix: "Best.:",
+    valid: "EN 16931 gültig",
+    issues: "Fehler gefunden",
+    approvalPending: "Prüfung ausstehend",
+    approvalApproved: "Freigegeben",
+    approvalRejected: "Abgelehnt",
+    payPaid: "Bezahlt",
+    payUnpaid: "Offen",
+    preview: "Vorschau",
+    downloadOrigXml: "Original-XML herunterladen",
+    approve: "Freigeben",
+    reject: "Ablehnen",
+    markPaid: "Als bezahlt markieren",
+    markUnpaid: "Als offen",
+    modalTitle: (num) => `Lieferantenrechnung ${num}`,
+    gobdLocked: (date) => `GoBD-gesperrt bis ${date}`,
+    viewXml: "Original-XML anzeigen",
+    hideXml: "Original-XML ausblenden",
+    downloadXml: "XML herunterladen",
+    downloadJson: "JSON herunterladen",
+    origBytes: "Original-Lieferantenbytes erhalten",
+    reSerialized: "Neu serialisierte Ansicht",
+    origReceivedXml: "Original empfangenes XML (wie vom Lieferanten gesendet)",
+    parsedLines: "Erkannte Positionen (EN 16931)",
+    thLineItem: "Position",
+    thQty: "Menge",
+    thUnitPrice: "Einzelpreis",
+    thVat: "USt.",
+    sha256: "SHA-256-Prüfsumme",
+    grossPayable: "Zu zahlender Bruttobetrag",
+    toastArchived: (num, seller, dup) => `${num} von ${seller} archiviert${dup ? " (⚠ Dublette erkannt!)" : ""}.`,
+    toastUploadFailed: "Upload fehlgeschlagen",
+    toastXmlFailed: "Original-XML konnte nicht geladen werden",
+    toastUpdateFailed: "Aktualisierung fehlgeschlagen",
+    toastArchiveFailed: "Lieferantenrechnung konnte nicht archiviert werden",
+  },
+  fr: {
+    title: "Boîte de réception intelligente des factures fournisseurs",
+    subtitle: "Recevez, validez, détectez les doublons, rapprochez les n° de commande, approuvez et archivez (GoBD) les factures fournisseurs ZUGFeRD, Factur-X et XRechnung.",
+    statArchived: "Documents archivés",
+    statPending: "En attente d'approbation",
+    statPayables: "Dettes ouvertes",
+    statDuplicates: "Doublons signalés",
+    dropIdle: "Déposez ou importez une facture fournisseur (.pdf ou .xml)",
+    dropUploading: "Extraction du XML, contrôle des doublons & archivage GoBD…",
+    dropHint: "Détection automatique des doublons, validation EN 16931, extraction du n° de commande (BT-13) et verrou GoBD SHA-256 de 8 à 10 ans.",
+    queueTitle: "File des factures fournisseurs",
+    loading: "Chargement de la boîte de réception…",
+    emptyTitle: "Votre boîte de réception est vide",
+    emptyText: "Importez ci-dessus le PDF ZUGFeRD ou le XML XRechnung de n'importe quel fournisseur.",
+    thInvoicePo: "Facture / commande",
+    thSupplier: "Fournisseur",
+    thCompliance: "Conformité & approbation",
+    thGross: "Brut",
+    thActions: "Actions",
+    duplicate: "DOUBLON",
+    poPrefix: "Cmd :",
+    valid: "EN 16931 conforme",
+    issues: "Anomalies détectées",
+    approvalPending: "En attente de revue",
+    approvalApproved: "Approuvée",
+    approvalRejected: "Rejetée",
+    payPaid: "Payée",
+    payUnpaid: "Impayée",
+    preview: "Aperçu",
+    downloadOrigXml: "Télécharger le XML original",
+    approve: "Approuver",
+    reject: "Rejeter",
+    markPaid: "Marquer payée",
+    markUnpaid: "Marquer impayée",
+    modalTitle: (num) => `Facture fournisseur ${num}`,
+    gobdLocked: (date) => `Verrouillé GoBD jusqu'au ${date}`,
+    viewXml: "Voir le XML original",
+    hideXml: "Masquer le XML original",
+    downloadXml: "Télécharger le XML",
+    downloadJson: "Télécharger le JSON",
+    origBytes: "Octets fournisseur originaux préservés",
+    reSerialized: "Vue re-sérialisée",
+    origReceivedXml: "XML original reçu (tel qu'envoyé par le fournisseur)",
+    parsedLines: "Lignes analysées (EN 16931)",
+    thLineItem: "Ligne",
+    thQty: "Qté",
+    thUnitPrice: "Prix unitaire",
+    thVat: "TVA",
+    sha256: "Empreinte SHA-256",
+    grossPayable: "Montant brut à payer",
+    toastArchived: (num, seller, dup) => `${num} de ${seller} archivée${dup ? " (⚠ Doublon détecté !)" : ""}.`,
+    toastUploadFailed: "Échec de l'import",
+    toastXmlFailed: "Impossible de charger le XML original",
+    toastUpdateFailed: "Échec de la mise à jour",
+    toastArchiveFailed: "Impossible d'archiver la facture fournisseur",
+  },
+};
