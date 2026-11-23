@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
 import { computeCanonicalTotals, type CanonicalInvoice } from "@norminvoice/einvoice-core";
 import { Alert, Card, PageHeader, apiJson, btnPrimary, btnSecondary, formatMoney, inputCls, labelCls } from "@/components/ui";
+import { useLocale } from "@/components/LocaleProvider";
+import { INVOICE_FORM_STRINGS } from "@/lib/i18n";
 
 interface SellerSettings {
   legalName: string;
@@ -85,6 +87,8 @@ const UNIT_OPTIONS = [
 
 function BuilderInner() {
   const router = useRouter();
+  const { locale } = useLocale();
+  const t = INVOICE_FORM_STRINGS[locale];
   const params = useSearchParams();
   const draftId = params.get("draft");
   const presetCustomerId = params.get("customerId");
@@ -198,7 +202,7 @@ function BuilderInner() {
           }
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : t.errLoad);
       } finally {
         setLoading(false);
       }
@@ -265,15 +269,15 @@ function BuilderInner() {
   async function submit(mode: "draft" | "final") {
     setError(null);
     if (!s.buyer.name.trim() || !s.buyer.street.trim() || !s.buyer.postalCode.trim() || !s.buyer.city.trim()) {
-      setError("Customer name and full address are required.");
+      setError(t.errAddress);
       return;
     }
     if (s.lines.some((l) => !l.name.trim())) {
-      setError("Every line item needs a description.");
+      setError(t.errLineDesc);
       return;
     }
     if (s.typeCode === 381 && !s.precedingInvoiceReference.trim()) {
-      setError("Credit notes must reference the original invoice number (BT-25).");
+      setError(t.errCreditRef);
       return;
     }
     setSaving(mode);
@@ -308,7 +312,7 @@ function BuilderInner() {
       }
       router.push(`/invoices/${res.invoice.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      setError(e instanceof Error ? e.message : t.errSave);
     } finally {
       setSaving(null);
     }
@@ -319,7 +323,7 @@ function BuilderInner() {
     setS((p) => ({ ...p, lines: p.lines.map((l, i) => (i === idx ? { ...l, ...patch } : l)) }));
 
   if (loading || !settings) {
-    return <div className="flex items-center gap-2 py-20 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading invoice builder…</div>;
+    return <div className="flex items-center gap-2 py-20 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> {t.loadingBuilder}</div>;
   }
 
   const nextNumber = `${s.typeCode === 381 ? settings.creditNotePrefix : settings.invoicePrefix}${String(settings.nextInvoiceSeq).padStart(4, "0")}`;
@@ -328,24 +332,24 @@ function BuilderInner() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={draftId ? "Edit draft" : s.typeCode === 381 ? "New credit note" : "New invoice"}
-        subtitle="Your company details and bank account are filled in automatically from Settings. The invoice number is assigned when you finalize."
-        actions={<Link href="/invoices" className={btnSecondary}>Cancel</Link>}
+        title={draftId ? t.titleEditDraft : s.typeCode === 381 ? t.titleNewCreditNote : t.titleNewInvoice}
+        subtitle={t.subtitle}
+        actions={<Link href="/invoices" className={btnSecondary}>{t.cancel}</Link>}
       />
 
       {missingSellerBasics && (
         <Alert kind="warning">
-          Your company address or tax ID is incomplete — invoices will fail validation. <Link href="/settings?tab=company" className="underline">Complete settings →</Link>
+          {t.warnSellerIncomplete} <Link href="/settings?tab=company" className="underline">{t.completeSettings}</Link>
         </Alert>
       )}
       {error && <Alert kind="error">{error}</Alert>}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
-          <Card title="Document">
+          <Card title={t.docCard}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <label className={labelCls}>
-                Format
+                {t.fFormat}
                 <select className={inputCls} value={s.profile} onChange={(e) => setS({ ...s, profile: e.target.value as BuilderState["profile"] })}>
                   <option value="ZUGFERD_EN16931">ZUGFeRD 2.3 (PDF + XML)</option>
                   <option value="FACTURX_EN16931">Factur-X 1.07 (PDF + XML)</option>
@@ -355,41 +359,41 @@ function BuilderInner() {
                 </select>
               </label>
               <label className={labelCls}>
-                Type
+                {t.fType}
                 <select className={inputCls} value={s.typeCode} onChange={(e) => setS({ ...s, typeCode: Number(e.target.value) as 380 | 381 })}>
-                  <option value={380}>Invoice (380)</option>
-                  <option value={381}>Credit note (381)</option>
+                  <option value={380}>{t.typeInvoice}</option>
+                  <option value={381}>{t.typeCreditNote}</option>
                 </select>
               </label>
               <label className={labelCls}>
-                Number
-                <input className={`${inputCls} font-mono`} disabled value={`${nextNumber} (on finalize)`} />
+                {t.fNumber}
+                <input className={`${inputCls} font-mono`} disabled value={t.numberOnFinalize(nextNumber)} />
               </label>
               <label className={labelCls}>
-                Issue date
+                {t.fIssueDate}
                 <input type="date" className={inputCls} value={s.issueDate} onChange={(e) => setS({ ...s, issueDate: e.target.value, dueDate: addDays(e.target.value, settings.defaultDueDays ?? 14) })} />
               </label>
               <label className={labelCls}>
-                Due date
+                {t.fDueDate}
                 <input type="date" className={inputCls} value={s.dueDate} onChange={(e) => setS({ ...s, dueDate: e.target.value })} />
               </label>
               <label className={labelCls}>
-                Currency
+                {t.fCurrency}
                 <select className={inputCls} value={s.currency} onChange={(e) => setS({ ...s, currency: e.target.value })}>
                   {["EUR", "CHF", "GBP", "USD", "PLN", "SEK", "DKK"].map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
               <label className={labelCls}>
-                Buyer reference / Leitweg-ID (BT-10)
-                <input className={`${inputCls} font-mono`} value={s.buyerReference} onChange={(e) => setS({ ...s, buyerReference: e.target.value })} placeholder={s.profile.startsWith("XRECHNUNG") ? "Required for XRechnung" : "Optional"} />
+                {t.fBuyerRef}
+                <input className={`${inputCls} font-mono`} value={s.buyerReference} onChange={(e) => setS({ ...s, buyerReference: e.target.value })} placeholder={s.profile.startsWith("XRECHNUNG") ? t.buyerRefRequired : t.buyerRefOptional} />
               </label>
               <label className={labelCls}>
-                PO number (BT-13)
+                {t.fPoNumber}
                 <input className={inputCls} value={s.purchaseOrderReference} onChange={(e) => setS({ ...s, purchaseOrderReference: e.target.value })} />
               </label>
               {s.typeCode === 381 && (
                 <label className={labelCls}>
-                  Original invoice no. (BT-25) *
+                  {t.fOrigInvoice}
                   <input className={`${inputCls} font-mono`} value={s.precedingInvoiceReference} onChange={(e) => setS({ ...s, precedingInvoiceReference: e.target.value })} />
                 </label>
               )}
@@ -397,7 +401,7 @@ function BuilderInner() {
           </Card>
 
           <Card
-            title="Customer"
+            title={t.custCard}
             actions={
               <select
                 className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
@@ -408,44 +412,44 @@ function BuilderInner() {
                   else setS({ ...s, customerId: "" });
                 }}
               >
-                <option value="">{customers.length ? "Select saved customer…" : "No saved customers"}</option>
+                <option value="">{customers.length ? t.selectSaved : t.noSaved}</option>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.legalName}</option>)}
               </select>
             }
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className={`${labelCls} sm:col-span-2`}>
-                Company name *
+                {t.fCompanyName}
                 <input className={inputCls} value={s.buyer.name} onChange={(e) => { setBuyer("name", e.target.value); setS((p) => ({ ...p, customerId: "" })); }} />
               </label>
               <label className={labelCls}>
-                VAT ID (BT-48)
+                {t.fVatId}
                 <input className={`${inputCls} font-mono uppercase`} value={s.buyer.vatId} onChange={(e) => setBuyer("vatId", e.target.value)} />
               </label>
               <label className={labelCls}>
-                Invoice email (BT-49)
+                {t.fInvoiceEmail}
                 <input type="email" className={inputCls} value={s.buyer.electronicAddress} onChange={(e) => setBuyer("electronicAddress", e.target.value)} />
               </label>
               <label className={`${labelCls} sm:col-span-2`}>
-                Street *
+                {t.fStreet}
                 <input className={inputCls} value={s.buyer.street} onChange={(e) => setBuyer("street", e.target.value)} />
               </label>
               <div className="grid grid-cols-3 gap-2 sm:col-span-2">
-                <label className={labelCls}>Postal code *<input className={inputCls} value={s.buyer.postalCode} onChange={(e) => setBuyer("postalCode", e.target.value)} /></label>
-                <label className={labelCls}>City *<input className={inputCls} value={s.buyer.city} onChange={(e) => setBuyer("city", e.target.value)} /></label>
-                <label className={labelCls}>Country *<input maxLength={2} className={`${inputCls} font-mono uppercase`} value={s.buyer.countryCode} onChange={(e) => setBuyer("countryCode", e.target.value.toUpperCase())} /></label>
+                <label className={labelCls}>{t.fPostalCode}<input className={inputCls} value={s.buyer.postalCode} onChange={(e) => setBuyer("postalCode", e.target.value)} /></label>
+                <label className={labelCls}>{t.fCity}<input className={inputCls} value={s.buyer.city} onChange={(e) => setBuyer("city", e.target.value)} /></label>
+                <label className={labelCls}>{t.fCountry}<input maxLength={2} className={`${inputCls} font-mono uppercase`} value={s.buyer.countryCode} onChange={(e) => setBuyer("countryCode", e.target.value.toUpperCase())} /></label>
               </div>
               {!s.customerId && !draftId && (
                 <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 sm:col-span-2">
                   <input type="checkbox" checked={saveCustomer} onChange={(e) => setSaveCustomer(e.target.checked)} />
-                  Save this customer for future invoices
+                  {t.saveCustomer}
                 </label>
               )}
             </div>
           </Card>
 
           <Card
-            title="Line items"
+            title={t.lineCard}
             actions={
               <div className="flex flex-wrap gap-2">
                 {catalog.length > 0 && (
@@ -473,7 +477,7 @@ function BuilderInner() {
                     }}
                     className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
                   >
-                    <option value="">+ Insert from catalog…</option>
+                    <option value="">{t.insertCatalog}</option>
                     {catalog.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.sku ? `[${p.sku}] ` : ""}{p.name} ({formatMoney(p.unitPrice)})
@@ -491,7 +495,7 @@ function BuilderInner() {
                     }))
                   }
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add line
+                  <Plus className="h-3.5 w-3.5" /> {t.addLine}
                 </button>
               </div>
             }
@@ -500,25 +504,25 @@ function BuilderInner() {
               {s.lines.map((l, idx) => (
                 <div key={idx} className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:grid-cols-12 sm:items-end">
                   <label className={`${labelCls} col-span-2 sm:col-span-4`}>
-                    Description *
+                    {t.fDescription}
                     <input className={inputCls} value={l.name} onChange={(e) => setLine(idx, { name: e.target.value })} />
                   </label>
                   <label className={`${labelCls} sm:col-span-1`}>
-                    Qty
+                    {t.fQty}
                     <input type="number" step="0.01" className={`${inputCls} font-mono`} value={l.quantity} onChange={(e) => setLine(idx, { quantity: Number(e.target.value) || 0 })} />
                   </label>
                   <label className={`${labelCls} sm:col-span-2`}>
-                    Unit
+                    {t.fUnit}
                     <select className={inputCls} value={l.unitCode} onChange={(e) => setLine(idx, { unitCode: e.target.value })}>
-                      {UNIT_OPTIONS.map((u) => <option key={u.code} value={u.code}>{u.label}</option>)}
+                      {UNIT_OPTIONS.map((u) => <option key={u.code} value={u.code}>{t.units[u.code] ?? u.label}</option>)}
                     </select>
                   </label>
                   <label className={`${labelCls} sm:col-span-2`}>
-                    Unit price (net)
+                    {t.fUnitPrice}
                     <input type="number" step="0.01" className={`${inputCls} font-mono`} value={l.unitPrice} onChange={(e) => setLine(idx, { unitPrice: Number(e.target.value) || 0 })} />
                   </label>
                   <label className={`${labelCls} sm:col-span-2`}>
-                    VAT
+                    {t.fVat}
                     <select
                       className={inputCls}
                       value={`${l.vatCategory}:${l.vatRate}`}
@@ -541,7 +545,7 @@ function BuilderInner() {
                     </select>
                   </label>
                   <div className="flex items-center justify-end gap-2 sm:col-span-1">
-                    <button type="button" title="Remove line" disabled={s.lines.length <= 1} onClick={() => setS((p) => ({ ...p, lines: p.lines.filter((_, i) => i !== idx) }))} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30">
+                    <button type="button" title={t.removeLine} disabled={s.lines.length <= 1} onClick={() => setS((p) => ({ ...p, lines: p.lines.filter((_, i) => i !== idx) }))} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -550,11 +554,11 @@ function BuilderInner() {
             </div>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className={labelCls}>
-                Payment terms (BT-20)
+                {t.fPaymentTerms}
                 <input className={inputCls} value={s.paymentTerms} onChange={(e) => setS({ ...s, paymentTerms: e.target.value })} />
               </label>
               <label className={labelCls}>
-                Notes (BT-22, one per line)
+                {t.fNotes}
                 <textarea rows={2} className={inputCls} value={s.notes} onChange={(e) => setS({ ...s, notes: e.target.value })} />
               </label>
             </div>
@@ -563,34 +567,33 @@ function BuilderInner() {
 
         <div className="space-y-6">
           <div className="sticky top-6 space-y-6">
-            <Card title="Summary">
+            <Card title={t.summary}>
               <dl className="space-y-2 text-sm">
-                <div className="flex justify-between"><dt className="text-slate-500">Net</dt><dd className="font-mono tabular-money">{formatMoney(preview?.taxExclusiveTotal ?? 0, s.currency)}</dd></div>
-                <div className="flex justify-between"><dt className="text-slate-500">VAT</dt><dd className="font-mono tabular-money">{formatMoney(preview?.taxTotal ?? 0, s.currency)}</dd></div>
-                <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold"><dt>Total</dt><dd className="font-mono tabular-money text-brand-700">{formatMoney(preview?.payableAmount ?? 0, s.currency)}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate-500">{t.sNet}</dt><dd className="font-mono tabular-money">{formatMoney(preview?.taxExclusiveTotal ?? 0, s.currency)}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate-500">{t.sVat}</dt><dd className="font-mono tabular-money">{formatMoney(preview?.taxTotal ?? 0, s.currency)}</dd></div>
+                <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold"><dt>{t.sTotal}</dt><dd className="font-mono tabular-money text-brand-700">{formatMoney(preview?.payableAmount ?? 0, s.currency)}</dd></div>
               </dl>
               <div className="mt-5 space-y-2">
                 <button type="button" disabled={saving !== null} onClick={() => void submit("final")} className={`${btnPrimary} w-full`}>
-                  {saving === "final" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Validate & finalize
+                  {saving === "final" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {t.validateFinalize}
                 </button>
                 <button type="button" disabled={saving !== null} onClick={() => void submit("draft")} className={`${btnSecondary} w-full`}>
-                  {saving === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save as draft
+                  {saving === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t.saveDraft}
                 </button>
               </div>
               <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                Finalizing assigns <span className="font-mono font-semibold">{nextNumber}</span>, runs the EN 16931 validator and locks the document for {""}
-                GoBD archiving. Drafts don’t use a number or quota.
+                {t.finalizeHint(nextNumber)}
               </p>
             </Card>
 
-            <Card title="From (your company)" actions={<Link href="/settings?tab=company" className="text-xs font-bold text-brand-700 hover:underline">Edit</Link>}>
+            <Card title={t.fromCompany} actions={<Link href="/settings?tab=company" className="text-xs font-bold text-brand-700 hover:underline">{t.edit}</Link>}>
               <div className="space-y-1 text-xs text-slate-700">
                 <p className="font-bold text-slate-900">{settings.legalName}</p>
-                <p>{settings.street || <span className="text-amber-700">Street missing</span>}</p>
+                <p>{settings.street || <span className="text-amber-700">{t.streetMissing}</span>}</p>
                 <p>{settings.postalCode} {settings.city} · {settings.countryCode}</p>
-                <p className="font-mono">{settings.vatId || settings.taxNumber || <span className="text-amber-700">Tax ID missing</span>}</p>
+                <p className="font-mono">{settings.vatId || settings.taxNumber || <span className="text-amber-700">{t.taxIdMissing}</span>}</p>
                 <p className="flex items-center gap-1 font-mono">
-                  {settings.iban ? <><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> {settings.iban}</> : <><AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> No IBAN</>}
+                  {settings.iban ? <><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> {settings.iban}</> : <><AlertTriangle className="h-3.5 w-3.5 text-amber-600" /> {t.noIban}</>}
                 </p>
               </div>
             </Card>

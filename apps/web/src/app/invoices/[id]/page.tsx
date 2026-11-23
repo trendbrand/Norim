@@ -38,6 +38,8 @@ import {
   inputCls,
   labelCls,
 } from "@/components/ui";
+import { useLocale } from "@/components/LocaleProvider";
+import { INVOICE_DETAIL_STRINGS } from "@/lib/i18n";
 
 interface InvoiceDetail {
   id: string;
@@ -98,6 +100,8 @@ interface TransmissionJob {
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { locale } = useLocale();
+  const t = INVOICE_DETAIL_STRINGS[locale];
   const id = params.id;
 
   const [inv, setInv] = useState<InvoiceDetail | null>(null);
@@ -158,7 +162,7 @@ export default function InvoiceDetailPage() {
       );
       setRecipientEmail(data.invoice.canonical.buyer.electronicAddress || "");
     } catch (e) {
-      setToast({ kind: "error", text: e instanceof Error ? e.message : "Invoice not found" });
+      setToast({ kind: "error", text: e instanceof Error ? e.message : t.notFound });
     } finally {
       setLoading(false);
     }
@@ -185,10 +189,10 @@ export default function InvoiceDetailPage() {
           sellerContactEmail: repairContactEmail,
         }),
       });
-      setToast({ kind: "success", text: "Compliance fields patched and invoice re-validated." });
+      setToast({ kind: "success", text: t.toastPatched });
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Patch failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastPatchFailed });
     } finally {
       setBusy(null);
     }
@@ -200,23 +204,23 @@ export default function InvoiceDetailPage() {
     setToast(null);
     try {
       await apiJson(`/api/v1/invoices/${inv.id}/finalize`, { method: "POST" });
-      setToast({ kind: "success", text: "Draft finalized, assigned sequential number, and GoBD-archived." });
+      setToast({ kind: "success", text: t.toastFinalized });
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Finalize failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastFinalizeFailed });
     } finally {
       setBusy(null);
     }
   }
 
   async function handleDeleteDraft() {
-    if (!inv || !confirm(`Permanently delete draft ${inv.invoiceNumber}?`)) return;
+    if (!inv || !confirm(t.deletePrompt(inv.invoiceNumber))) return;
     setBusy("delete");
     try {
       await apiJson(`/api/v1/invoices/${inv.id}`, { method: "DELETE" });
       router.push("/invoices");
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Delete failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastDeleteFailed });
       setBusy(null);
     }
   }
@@ -244,20 +248,18 @@ export default function InvoiceDetailPage() {
         setToast({
           kind: "success",
           text: r.alreadySent
-            ? `Already delivered to ${r.to} — no duplicate sent (idempotent).`
-            : `E-invoice delivered to ${r.to}${r.cc ? ` (CC: ${r.cc})` : ""} and logged in GoBD audit chain.`,
+            ? t.toastAlreadyDelivered(r.to ?? "")
+            : t.toastDelivered(r.to ?? "", r.cc ?? null),
         });
       } else {
         setToast({
           kind: "success",
-          text:
-            r.note ||
-            `Delivery safely queued (${r.status}) — it will be retried automatically${r.nextAttemptAt ? ` (next ~${r.nextAttemptAt.slice(11, 16)} UTC)` : ""}.`,
+          text: r.note || t.toastQueued(r.status ?? "", r.nextAttemptAt ? r.nextAttemptAt.slice(11, 16) : undefined),
         });
       }
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Email dispatch failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastEmailFailed });
     } finally {
       setBusy(null);
     }
@@ -274,13 +276,11 @@ export default function InvoiceDetailPage() {
       );
       setToast({
         kind: "success",
-        text: r.delivered
-          ? `Transmitted via Peppol to ${r.to}.`
-          : `Queued for Peppol delivery (${r.status}).`,
+        text: r.delivered ? t.toastPeppolSent(r.to ?? "") : t.toastPeppolQueued(r.status ?? ""),
       });
     } catch (err) {
       // Honest failure (e.g. no certified Access Point configured) — surfaced, not hidden.
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Peppol delivery failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastPeppolFailed });
     } finally {
       await load();
       setBusy(null);
@@ -297,10 +297,10 @@ export default function InvoiceDetailPage() {
         method: "POST",
         body: JSON.stringify({ paymentStatus: nextStatus }),
       });
-      setToast({ kind: "success", text: `Invoice marked as ${nextStatus} and logged in GoBD audit trail.` });
+      setToast({ kind: "success", text: t.toastMarkedPayment(t.paymentLabel(nextStatus)) });
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Payment status update failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastPaymentFailed });
     } finally {
       setBusy(null);
     }
@@ -314,10 +314,10 @@ export default function InvoiceDetailPage() {
         method: "POST",
         body: JSON.stringify({ approvalStatus }),
       });
-      setToast({ kind: "success", text: `Invoice marked ${approvalStatus}.` });
+      setToast({ kind: "success", text: t.toastMarkedApproval(t.approvalLabel(approvalStatus)) });
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Approval failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastApprovalFailed });
     } finally {
       setBusy(null);
     }
@@ -353,7 +353,7 @@ export default function InvoiceDetailPage() {
       );
       router.push(`/invoices/${r.creditNote.id}`);
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Credit note creation failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastCnFailed });
       setBusy(null);
     }
   }
@@ -361,7 +361,7 @@ export default function InvoiceDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-20 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading invoice…
+        <Loader2 className="h-4 w-4 animate-spin" /> {t.loading}
       </div>
     );
   }
@@ -369,9 +369,9 @@ export default function InvoiceDetailPage() {
   if (!inv) {
     return (
       <div className="space-y-4">
-        <Alert kind="error">Invoice not found in your organization.</Alert>
+        <Alert kind="error">{t.notFoundAlert}</Alert>
         <Link href="/invoices" className={btnSecondary}>
-          <ArrowLeft className="h-4 w-4" /> Back to invoices
+          <ArrowLeft className="h-4 w-4" /> {t.backToInvoices}
         </Link>
       </div>
     );
@@ -383,7 +383,7 @@ export default function InvoiceDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
         <Link href="/invoices" className="inline-flex items-center gap-1 hover:text-brand-700">
-          <ArrowLeft className="h-3.5 w-3.5" /> Invoices
+          <ArrowLeft className="h-3.5 w-3.5" /> {t.crumbInvoices}
         </Link>
         <span>/</span>
         <span className="font-mono text-slate-800">{inv.invoiceNumber}</span>
@@ -392,24 +392,24 @@ export default function InvoiceDetailPage() {
       <PageHeader
         title={
           <>
-            {inv.typeCode === 381 ? "Credit Note" : "Invoice"}{" "}
+            {inv.typeCode === 381 ? t.titleCreditNote : t.titleInvoice}{" "}
             <span className="whitespace-nowrap">{inv.invoiceNumber}</span>
           </>
         }
-        subtitle={`${FORMAT_LABELS[inv.targetFormat] ?? inv.targetFormat} · Issued ${inv.issueDate}${inv.precedingInvoiceNumber ? ` · References ${inv.precedingInvoiceNumber}` : ""}`}
+        subtitle={`${FORMAT_LABELS[inv.targetFormat] ?? inv.targetFormat} · ${t.issued(inv.issueDate)}${inv.precedingInvoiceNumber ? t.references(inv.precedingInvoiceNumber) : ""}`}
         actions={
           <>
             <StatusBadge status={inv.status} />
             {inv.status === "DRAFT" && (
               <>
                 <Link href={`/invoices/new?draft=${inv.id}`} className={btnSecondary}>
-                  Edit draft
+                  {t.editDraft}
                 </Link>
                 <button type="button" disabled={busy !== null} onClick={() => void handleFinalizeDraft()} className={btnPrimary}>
-                  {busy === "finalize" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck2 className="h-4 w-4" />} Finalize & archive
+                  {busy === "finalize" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck2 className="h-4 w-4" />} {t.finalizeArchive}
                 </button>
                 <button type="button" disabled={busy !== null} onClick={() => void handleDeleteDraft()} className={btnDanger}>
-                  <Trash2 className="h-4 w-4" /> Delete draft
+                  <Trash2 className="h-4 w-4" /> {t.deleteDraft}
                 </button>
               </>
             )}
@@ -417,14 +417,14 @@ export default function InvoiceDetailPage() {
               <>
                 {!isUbl && (
                   <a href={`/api/v1/invoices/${inv.id}/download?artifact=pdf`} className={btnPrimary}>
-                    <FileText className="h-4 w-4" /> Download PDF/A-3
+                    <FileText className="h-4 w-4" /> {t.downloadPdf}
                   </a>
                 )}
                 <a href={`/api/v1/invoices/${inv.id}/download?artifact=xml`} className={btnSecondary}>
-                  <FileCode2 className="h-4 w-4" /> Download XML
+                  <FileCode2 className="h-4 w-4" /> {t.downloadXml}
                 </a>
                 <a href={`/api/v1/invoices/${inv.id}/download?artifact=json`} className={btnSecondary}>
-                  <Download className="h-4 w-4" /> JSON
+                  <Download className="h-4 w-4" /> {t.jsonLabel}
                 </a>
                 <button
                   type="button"
@@ -432,11 +432,11 @@ export default function InvoiceDetailPage() {
                   onClick={() => void handleTogglePaid()}
                   className={inv.paymentStatus === "PAID" ? btnSecondary : "inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"}
                 >
-                  <CheckCircle2 className="h-4 w-4" /> {inv.paymentStatus === "PAID" ? "Paid ✓ (Undo)" : "Mark as Paid"}
+                  <CheckCircle2 className="h-4 w-4" /> {inv.paymentStatus === "PAID" ? t.paidUndo : t.markPaid}
                 </button>
                 {inv.typeCode === 380 && (
                   <button type="button" onClick={() => setShowCnBox((v) => !v)} className={btnSecondary}>
-                    <RotateCcw className="h-4 w-4" /> Issue Credit Note (381)
+                    <RotateCcw className="h-4 w-4" /> {t.issueCreditNote}
                   </button>
                 )}
               </>
@@ -450,55 +450,55 @@ export default function InvoiceDetailPage() {
       {/* Multi-Dimensional Status Strip (Master Plan Section 3.3) */}
       <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm sm:grid-cols-5">
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400">Validation</p>
+          <p className="text-[10px] font-bold uppercase text-slate-400">{t.stripValidation}</p>
           <p className={`mt-0.5 font-bold ${inv.validationPassed ? "text-emerald-700" : "text-amber-700"}`}>
-            {inv.validationPassed ? "EN 16931 Passed" : "Blocked / Issues"}
+            {inv.validationPassed ? t.en16931Passed : t.blockedIssues}
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400">Approval</p>
+          <p className="text-[10px] font-bold uppercase text-slate-400">{t.stripApproval}</p>
           <div className="mt-0.5 flex items-center gap-1.5">
-            <span className="font-bold text-slate-800">{inv.approvalStatus}</span>
+            <span className="font-bold text-slate-800">{t.approvalLabel(inv.approvalStatus)}</span>
             {inv.approvalStatus !== "APPROVED" && inv.status !== "DRAFT" && (
               <button type="button" onClick={() => void handleApproval("APPROVED")} className="text-[10px] font-bold text-brand-700 underline">
-                Approve
+                {t.approve}
               </button>
             )}
           </div>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400">Delivery</p>
-          <p className="mt-0.5 font-bold text-slate-800">{inv.deliveredTo ? "Delivered" : inv.status === "DRAFT" ? "Not sent" : "Ready"}</p>
+          <p className="text-[10px] font-bold uppercase text-slate-400">{t.stripDelivery}</p>
+          <p className="mt-0.5 font-bold text-slate-800">{inv.deliveredTo ? t.delivered : inv.status === "DRAFT" ? t.notSent : t.ready}</p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400">Payment (Separate)</p>
+          <p className="text-[10px] font-bold uppercase text-slate-400">{t.stripPayment}</p>
           <p className={`mt-0.5 font-bold ${inv.paymentStatus === "PAID" ? "text-emerald-700" : inv.paymentStatus === "PARTIAL" ? "text-sky-700" : "text-amber-700"}`}>
-            {inv.paymentStatus}{inv.paidAmount > 0 && inv.paymentStatus === "PARTIAL" ? ` (${formatMoney(inv.paidAmount, inv.currency)})` : ""}
+            {t.paymentLabel(inv.paymentStatus)}{inv.paidAmount > 0 && inv.paymentStatus === "PARTIAL" ? ` (${formatMoney(inv.paidAmount, inv.currency)})` : ""}
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400">Accounting</p>
-          <p className="mt-0.5 font-bold text-slate-800">{inv.accountingStatus}</p>
+          <p className="text-[10px] font-bold uppercase text-slate-400">{t.stripAccounting}</p>
+          <p className="mt-0.5 font-bold text-slate-800">{t.accountingLabel(inv.accountingStatus)}</p>
         </div>
       </div>
 
       {showCnBox && (
         <Card
-          title="Issue GoBD Credit Note (TypeCode 381)"
-          description={`Creates a linked Stornorechnung referencing BT-25 = ${inv.invoiceNumber} using your credit note sequence.`}
+          title={t.cnTitle}
+          description={t.cnDesc(inv.invoiceNumber)}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className={`${labelCls} flex-1`}>
-              Reason (optional, included in BT-22 notes)
+              {t.cnReasonLabel}
               <input
                 className={inputCls}
                 value={cnReason}
                 onChange={(e) => setCnReason(e.target.value)}
-                placeholder="e.g. Duplicate billing or customer refund"
+                placeholder={t.cnReasonPlaceholder}
               />
             </label>
             <button type="button" disabled={busy !== null} onClick={() => void handleCreditNote()} className={btnPrimary}>
-              {busy === "credit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />} Confirm & issue credit note
+              {busy === "credit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />} {t.cnConfirm}
             </button>
           </div>
         </Card>
@@ -508,10 +508,10 @@ export default function InvoiceDetailPage() {
         <Card
           title={
             <span className="flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="h-4 w-4" /> Compliance Repair Required (Blocked before sending)
+              <AlertTriangle className="h-4 w-4" /> {t.repairTitle}
             </span>
           }
-          description="Fix the missing EN 16931 / XRechnung fields below and re-validate immediately."
+          description={t.repairDesc}
         >
           <div className="mb-4 space-y-2">
             {inv.diagnostics.map((d, i) => (
@@ -522,28 +522,28 @@ export default function InvoiceDetailPage() {
           </div>
           <form onSubmit={handleRepair} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className={labelCls}>
-              Buyer Reference / Leitweg-ID (BT-10)
+              {t.repairBuyerRef}
               <input className={`${inputCls} font-mono`} value={repairRef} onChange={(e) => setRepairRef(e.target.value)} />
             </label>
             <label className={labelCls}>
-              Buyer EU VAT ID (BT-48)
+              {t.repairBuyerVat}
               <input className={`${inputCls} font-mono uppercase`} value={repairVat} onChange={(e) => setRepairVat(e.target.value)} />
             </label>
             <label className={labelCls}>
-              Seller Contact Name (BT-41)
+              {t.repairSellerName}
               <input className={inputCls} value={repairContactName} onChange={(e) => setRepairContactName(e.target.value)} />
             </label>
             <label className={labelCls}>
-              Seller Contact Phone (BT-42)
+              {t.repairSellerPhone}
               <input className={inputCls} value={repairContactPhone} onChange={(e) => setRepairContactPhone(e.target.value)} />
             </label>
             <label className={labelCls}>
-              Seller Contact Email (BT-43)
+              {t.repairSellerEmail}
               <input type="email" className={inputCls} value={repairContactEmail} onChange={(e) => setRepairContactEmail(e.target.value)} />
             </label>
             <div className="flex items-end">
               <button type="submit" disabled={busy !== null} className={`${btnPrimary} w-full`}>
-                {busy === "repair" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wrench className="h-4 w-4" />} Patch & Re-Validate
+                {busy === "repair" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wrench className="h-4 w-4" />} {t.repairSubmit}
               </button>
             </div>
           </form>
@@ -553,28 +553,28 @@ export default function InvoiceDetailPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Invoice Preview */}
         <div className="space-y-6 lg:col-span-2">
-          <Card title="Document Summary">
+          <Card title={t.docSummary}>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Seller (BG-4)</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{t.sellerBg4}</p>
                 <p className="mt-1 text-sm font-bold text-slate-900">{inv.canonical.seller.name}</p>
                 <p className="text-xs text-slate-600">{inv.canonical.seller.address.street}</p>
                 <p className="text-xs text-slate-600">
                   {inv.canonical.seller.address.postalCode} {inv.canonical.seller.address.city} ({inv.canonical.seller.address.countryCode})
                 </p>
                 {inv.canonical.seller.vatId && (
-                  <p className="mt-1 font-mono text-xs text-slate-700">VAT: {inv.canonical.seller.vatId}</p>
+                  <p className="mt-1 font-mono text-xs text-slate-700">{t.vatPrefix} {inv.canonical.seller.vatId}</p>
                 )}
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Buyer (BG-7)</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{t.buyerBg7}</p>
                 <p className="mt-1 text-sm font-bold text-slate-900">{inv.canonical.buyer.name}</p>
                 <p className="text-xs text-slate-600">{inv.canonical.buyer.address.street}</p>
                 <p className="text-xs text-slate-600">
                   {inv.canonical.buyer.address.postalCode} {inv.canonical.buyer.address.city} ({inv.canonical.buyer.address.countryCode})
                 </p>
                 {inv.canonical.buyer.vatId && (
-                  <p className="mt-1 font-mono text-xs text-slate-700">VAT: {inv.canonical.buyer.vatId}</p>
+                  <p className="mt-1 font-mono text-xs text-slate-700">{t.vatPrefix} {inv.canonical.buyer.vatId}</p>
                 )}
                 {inv.canonical.buyerReference && (
                   <p className="font-mono text-xs text-slate-700">BT-10: {inv.canonical.buyerReference}</p>
@@ -586,11 +586,11 @@ export default function InvoiceDetailPage() {
               <table className="min-w-full divide-y divide-slate-200 text-xs">
                 <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
                   <tr>
-                    <th className="px-4 py-2.5 text-left font-semibold">Item</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Qty</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Unit price</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">VAT</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Net total</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">{t.thItem}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t.thQty}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t.thUnitPrice}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t.thVat}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t.thNetTotal}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -612,15 +612,15 @@ export default function InvoiceDetailPage() {
             <div className="mt-4 flex justify-end">
               <dl className="w-64 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Net total (BT-109)</dt>
+                  <dt className="text-slate-500">{t.netTotal}</dt>
                   <dd className="font-mono font-semibold">{formatMoney(inv.netAmount, inv.currency)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">VAT total (BT-110)</dt>
+                  <dt className="text-slate-500">{t.vatTotal}</dt>
                   <dd className="font-mono font-semibold">{formatMoney(inv.taxAmount, inv.currency)}</dd>
                 </div>
                 <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-extrabold">
-                  <dt>Gross payable (BT-115)</dt>
+                  <dt>{t.grossPayable}</dt>
                   <dd className="font-mono text-brand-700">{formatMoney(inv.grossAmount, inv.currency)}</dd>
                 </div>
               </dl>
@@ -628,10 +628,10 @@ export default function InvoiceDetailPage() {
           </Card>
 
           <Card
-            title="Structured EN 16931 XML"
+            title={t.xmlTitle}
             actions={
               <button type="button" onClick={() => setShowXml((v) => !v)} className={btnSecondary}>
-                <Code2 className="h-4 w-4" /> {showXml ? "Hide XML" : "Inspect XML"}
+                <Code2 className="h-4 w-4" /> {showXml ? t.hideXml : t.inspectXml}
               </button>
             }
           >
@@ -641,7 +641,7 @@ export default function InvoiceDetailPage() {
                 <code className="font-mono text-[11px]">{inv.sha256Xml}</code>
               </span>
               <span>
-                <strong className="text-slate-800">GoBD WORM lock until:</strong>{" "}
+                <strong className="text-slate-800">{t.gobdLockUntil}</strong>{" "}
                 <span className="font-mono font-semibold text-emerald-700">{inv.archiveLockedUntil}</span>
               </span>
             </div>
@@ -656,10 +656,10 @@ export default function InvoiceDetailPage() {
         {/* Right Sidebar: Email Dispatch, EPC QR, Per-Invoice GoBD Audit */}
         <div className="space-y-6">
           {inv.validationPassed && inv.status !== "DRAFT" && (
-            <Card title="Send E-Invoice by Email" description="Attaches compliant PDF/A-3 + XML and CCs your accountant if configured.">
+            <Card title={t.emailTitle} description={t.emailDesc}>
               <form onSubmit={handleSendEmail} className="space-y-3">
                 <label className={labelCls}>
-                  Recipient Email (BT-49)
+                  {t.recipientLabel}
                   <input
                     type="email"
                     required
@@ -670,11 +670,11 @@ export default function InvoiceDetailPage() {
                   />
                 </label>
                 <button type="submit" disabled={busy !== null} className={`${btnPrimary} w-full`}>
-                  {busy === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Send E-Invoice
+                  {busy === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} {t.sendEInvoice}
                 </button>
                 {inv.deliveredTo && (
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Last sent to {inv.deliveredTo} ({inv.deliveredAt?.slice(0, 10)})
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {t.lastSentTo(inv.deliveredTo, inv.deliveredAt?.slice(0, 10) ?? "")}
                   </p>
                 )}
               </form>
@@ -689,13 +689,13 @@ export default function InvoiceDetailPage() {
               <Card
                 title={
                   <span className="flex items-center gap-2">
-                    <Network className="h-4 w-4 text-brand-600" /> Peppol Network Delivery
+                    <Network className="h-4 w-4 text-brand-600" /> {t.peppolTitle}
                   </span>
                 }
-                description="Send over the OpenPeppol four-corner network via a certified Access Point."
+                description={t.peppolDesc}
               >
                 <p className="text-xs text-slate-600">
-                  Recipient participant:{" "}
+                  {t.peppolRecipient}{" "}
                   <span className="font-mono font-semibold text-slate-800">
                     {inv.canonical.buyer.electronicAddressScheme}::{inv.canonical.buyer.electronicAddress}
                   </span>
@@ -706,50 +706,49 @@ export default function InvoiceDetailPage() {
                   onClick={() => void handleSendPeppol()}
                   className={`${btnSecondary} mt-3 w-full`}
                 >
-                  {busy === "peppol" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Network className="h-4 w-4" />} Send via
-                  Peppol
+                  {busy === "peppol" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Network className="h-4 w-4" />} {t.sendViaPeppol}
                 </button>
                 <p className="mt-2 text-[11px] text-slate-400">
-                  Requires a connected certified Access Point. Delivery status appears in the Transmission Outbox below.
+                  {t.peppolNote}
                 </p>
               </Card>
             )}
 
           {transmissions.length > 0 && (
             <Card
-              title="Transmission Outbox"
-              description="Durable, idempotent delivery jobs (ADR-004) — retried automatically, never double-sent."
+              title={t.txTitle}
+              description={t.txDesc}
             >
               <ol className="space-y-2.5">
-                {transmissions.map((t) => {
+                {transmissions.map((tx) => {
                   const style =
-                    t.status === "SENT"
+                    tx.status === "SENT"
                       ? { cls: "text-emerald-700", Icon: CheckCircle2 }
-                      : t.status === "DEAD"
+                      : tx.status === "DEAD"
                         ? { cls: "text-red-700", Icon: XCircle }
-                        : t.status === "SENDING"
+                        : tx.status === "SENDING"
                           ? { cls: "text-sky-700", Icon: Send }
                           : { cls: "text-amber-700", Icon: Clock };
                   const Icon = style.Icon;
                   return (
-                    <li key={t.id} className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
+                    <li key={tx.id} className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`inline-flex items-center gap-1.5 font-bold ${style.cls}`}>
-                          <Icon className="h-3.5 w-3.5" /> {t.status}
+                          <Icon className="h-3.5 w-3.5" /> {tx.status}
                         </span>
-                        <span className="font-mono text-[10px] uppercase text-slate-400">{t.channel}</span>
+                        <span className="font-mono text-[10px] uppercase text-slate-400">{tx.channel}</span>
                       </div>
-                      <p className="mt-1 truncate text-slate-700">→ {t.recipient}</p>
+                      <p className="mt-1 truncate text-slate-700">→ {tx.recipient}</p>
                       <p className="mt-0.5 text-[10px] text-slate-500">
-                        Attempt {t.attempts}/{t.maxAttempts}
-                        {(t.status === "QUEUED" || t.status === "FAILED") && t.nextAttemptAt
-                          ? ` · next retry ${t.nextAttemptAt.slice(0, 16).replace("T", " ")} UTC`
+                        {t.txAttempt(tx.attempts, tx.maxAttempts)}
+                        {(tx.status === "QUEUED" || tx.status === "FAILED") && tx.nextAttemptAt
+                          ? t.txNextRetry(tx.nextAttemptAt.slice(0, 16).replace("T", " "))
                           : ""}
-                        {t.status === "SENT" && t.providerRef ? ` · ref ${t.providerRef}` : ""}
+                        {tx.status === "SENT" && tx.providerRef ? t.txRef(tx.providerRef) : ""}
                       </p>
-                      {t.lastError && t.status !== "SENT" && (
+                      {tx.lastError && tx.status !== "SENT" && (
                         <p className="mt-1 rounded border border-red-100 bg-red-50/70 px-2 py-1 font-mono text-[10px] text-red-700">
-                          {t.lastError}
+                          {tx.lastError}
                         </p>
                       )}
                     </li>
@@ -760,7 +759,7 @@ export default function InvoiceDetailPage() {
           )}
 
           {epcQrDataUrl && (
-            <Card title="EPC SEPA GiroCode QR" description="Scannable by EU banking apps (SCT).">
+            <Card title={t.epcTitle} description={t.epcDesc}>
               <div className="flex flex-col items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={epcQrDataUrl} alt="EPC SEPA Payment QR Code" className="h-40 w-40 rounded-lg border border-slate-200 p-1" />
@@ -769,10 +768,10 @@ export default function InvoiceDetailPage() {
             </Card>
           )}
 
-          <Card title="Team Collaboration & Notes" description="Immutable internal review thread (Master Plan F13).">
+          <Card title={t.teamTitle} description={t.teamDesc}>
             <div className="space-y-2.5">
               {comments.length === 0 ? (
-                <p className="text-xs text-slate-400">No internal comments yet.</p>
+                <p className="text-xs text-slate-400">{t.noComments}</p>
               ) : (
                 comments.map((c) => (
                   <div key={c.id} className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
@@ -788,19 +787,19 @@ export default function InvoiceDetailPage() {
                 <input
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
-                  placeholder="Add review note or @mention…"
+                  placeholder={t.commentPlaceholder}
                   className={`${inputCls} mt-0 text-xs`}
                 />
                 <button type="submit" disabled={busy !== null || !commentInput.trim()} className={btnSecondary}>
-                  Post
+                  {t.post}
                 </button>
               </form>
             </div>
           </Card>
 
-          <Card title="GoBD Audit Trail" description="Append-only SHA-256 hash-chained events for this document.">
+          <Card title={t.auditTitle} description={t.auditDesc}>
             {auditEvents.length === 0 ? (
-              <p className="text-xs text-slate-500">No audit events recorded yet.</p>
+              <p className="text-xs text-slate-500">{t.noAudit}</p>
             ) : (
               <ol className="space-y-3">
                 {auditEvents.map((ev) => (

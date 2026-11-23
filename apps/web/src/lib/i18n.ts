@@ -1827,3 +1827,722 @@ export const INBOX_STRINGS: Record<AppLocale, InboxStrings> = {
     toastArchiveFailed: "Impossible d'archiver la facture fournisseur",
   },
 };
+
+// ── Invoice detail page translations ──
+export interface InvoiceDetailStrings {
+  loading: string;
+  notFound: string;
+  notFoundAlert: string;
+  backToInvoices: string;
+  crumbInvoices: string;
+  titleInvoice: string;
+  titleCreditNote: string;
+  issued: (date: string) => string;
+  references: (num: string) => string;
+  editDraft: string;
+  finalizeArchive: string;
+  deleteDraft: string;
+  downloadPdf: string;
+  downloadXml: string;
+  jsonLabel: string;
+  paidUndo: string;
+  markPaid: string;
+  issueCreditNote: string;
+  // status strip
+  stripValidation: string;
+  stripApproval: string;
+  stripDelivery: string;
+  stripPayment: string;
+  stripAccounting: string;
+  en16931Passed: string;
+  blockedIssues: string;
+  approve: string;
+  delivered: string;
+  notSent: string;
+  ready: string;
+  approvalLabel: (v: string) => string;
+  paymentLabel: (v: string) => string;
+  accountingLabel: (v: string) => string;
+  // credit note box
+  cnTitle: string;
+  cnDesc: (num: string) => string;
+  cnReasonLabel: string;
+  cnReasonPlaceholder: string;
+  cnConfirm: string;
+  // repair card
+  repairTitle: string;
+  repairDesc: string;
+  repairBuyerRef: string;
+  repairBuyerVat: string;
+  repairSellerName: string;
+  repairSellerPhone: string;
+  repairSellerEmail: string;
+  repairSubmit: string;
+  // document summary
+  docSummary: string;
+  sellerBg4: string;
+  buyerBg7: string;
+  vatPrefix: string;
+  thItem: string;
+  thQty: string;
+  thUnitPrice: string;
+  thVat: string;
+  thNetTotal: string;
+  netTotal: string;
+  vatTotal: string;
+  grossPayable: string;
+  // xml card
+  xmlTitle: string;
+  hideXml: string;
+  inspectXml: string;
+  gobdLockUntil: string;
+  // email card
+  emailTitle: string;
+  emailDesc: string;
+  recipientLabel: string;
+  sendEInvoice: string;
+  lastSentTo: (to: string, date: string) => string;
+  // peppol
+  peppolTitle: string;
+  peppolDesc: string;
+  peppolRecipient: string;
+  sendViaPeppol: string;
+  peppolNote: string;
+  // transmissions
+  txTitle: string;
+  txDesc: string;
+  txAttempt: (a: number, max: number) => string;
+  txNextRetry: (date: string) => string;
+  txRef: (ref: string) => string;
+  // epc
+  epcTitle: string;
+  epcDesc: string;
+  // comments
+  teamTitle: string;
+  teamDesc: string;
+  noComments: string;
+  commentPlaceholder: string;
+  post: string;
+  // audit
+  auditTitle: string;
+  auditDesc: string;
+  noAudit: string;
+  // toasts
+  toastPatched: string;
+  toastPatchFailed: string;
+  toastFinalized: string;
+  toastFinalizeFailed: string;
+  deletePrompt: (num: string) => string;
+  toastDeleteFailed: string;
+  toastAlreadyDelivered: (to: string) => string;
+  toastDelivered: (to: string, cc: string | null) => string;
+  toastQueued: (status: string, next?: string) => string;
+  toastEmailFailed: string;
+  toastPeppolSent: (to: string) => string;
+  toastPeppolQueued: (status: string) => string;
+  toastPeppolFailed: string;
+  toastMarkedPayment: (status: string) => string;
+  toastPaymentFailed: string;
+  toastMarkedApproval: (status: string) => string;
+  toastApprovalFailed: string;
+  toastCnFailed: string;
+}
+
+const ENUM_EN: Record<string, string> = { NONE: "None", APPROVED: "Approved", REJECTED: "Rejected", UNPAID: "Unpaid", PARTIAL: "Partial", PAID: "Paid", UNPOSTED: "Unposted", EXPORTED: "Exported" };
+const ENUM_DE: Record<string, string> = { NONE: "Keine", APPROVED: "Freigegeben", REJECTED: "Abgelehnt", UNPAID: "Offen", PARTIAL: "Teilweise", PAID: "Bezahlt", UNPOSTED: "Nicht gebucht", EXPORTED: "Exportiert" };
+const ENUM_FR: Record<string, string> = { NONE: "Aucune", APPROVED: "Approuvée", REJECTED: "Rejetée", UNPAID: "Impayée", PARTIAL: "Partielle", PAID: "Payée", UNPOSTED: "Non comptabilisée", EXPORTED: "Exportée" };
+
+export const INVOICE_DETAIL_STRINGS: Record<AppLocale, InvoiceDetailStrings> = {
+  en: {
+    loading: "Loading invoice…",
+    notFound: "Invoice not found",
+    notFoundAlert: "Invoice not found in your organization.",
+    backToInvoices: "Back to invoices",
+    crumbInvoices: "Invoices",
+    titleInvoice: "Invoice",
+    titleCreditNote: "Credit Note",
+    issued: (date) => `Issued ${date}`,
+    references: (num) => ` · References ${num}`,
+    editDraft: "Edit draft",
+    finalizeArchive: "Finalize & archive",
+    deleteDraft: "Delete draft",
+    downloadPdf: "Download PDF/A-3",
+    downloadXml: "Download XML",
+    jsonLabel: "JSON",
+    paidUndo: "Paid ✓ (Undo)",
+    markPaid: "Mark as Paid",
+    issueCreditNote: "Issue Credit Note (381)",
+    stripValidation: "Validation",
+    stripApproval: "Approval",
+    stripDelivery: "Delivery",
+    stripPayment: "Payment (Separate)",
+    stripAccounting: "Accounting",
+    en16931Passed: "EN 16931 Passed",
+    blockedIssues: "Blocked / Issues",
+    approve: "Approve",
+    delivered: "Delivered",
+    notSent: "Not sent",
+    ready: "Ready",
+    approvalLabel: (v) => ENUM_EN[v] ?? v,
+    paymentLabel: (v) => ENUM_EN[v] ?? v,
+    accountingLabel: (v) => ENUM_EN[v] ?? v,
+    cnTitle: "Issue GoBD Credit Note (TypeCode 381)",
+    cnDesc: (num) => `Creates a linked Stornorechnung referencing BT-25 = ${num} using your credit note sequence.`,
+    cnReasonLabel: "Reason (optional, included in BT-22 notes)",
+    cnReasonPlaceholder: "e.g. Duplicate billing or customer refund",
+    cnConfirm: "Confirm & issue credit note",
+    repairTitle: "Compliance Repair Required (Blocked before sending)",
+    repairDesc: "Fix the missing EN 16931 / XRechnung fields below and re-validate immediately.",
+    repairBuyerRef: "Buyer Reference / Leitweg-ID (BT-10)",
+    repairBuyerVat: "Buyer EU VAT ID (BT-48)",
+    repairSellerName: "Seller Contact Name (BT-41)",
+    repairSellerPhone: "Seller Contact Phone (BT-42)",
+    repairSellerEmail: "Seller Contact Email (BT-43)",
+    repairSubmit: "Patch & Re-Validate",
+    docSummary: "Document Summary",
+    sellerBg4: "Seller (BG-4)",
+    buyerBg7: "Buyer (BG-7)",
+    vatPrefix: "VAT:",
+    thItem: "Item",
+    thQty: "Qty",
+    thUnitPrice: "Unit price",
+    thVat: "VAT",
+    thNetTotal: "Net total",
+    netTotal: "Net total (BT-109)",
+    vatTotal: "VAT total (BT-110)",
+    grossPayable: "Gross payable (BT-115)",
+    xmlTitle: "Structured EN 16931 XML",
+    hideXml: "Hide XML",
+    inspectXml: "Inspect XML",
+    gobdLockUntil: "GoBD WORM lock until:",
+    emailTitle: "Send E-Invoice by Email",
+    emailDesc: "Attaches compliant PDF/A-3 + XML and CCs your accountant if configured.",
+    recipientLabel: "Recipient Email (BT-49)",
+    sendEInvoice: "Send E-Invoice",
+    lastSentTo: (to, date) => `Last sent to ${to} (${date})`,
+    peppolTitle: "Peppol Network Delivery",
+    peppolDesc: "Send over the OpenPeppol four-corner network via a certified Access Point.",
+    peppolRecipient: "Recipient participant:",
+    sendViaPeppol: "Send via Peppol",
+    peppolNote: "Requires a connected certified Access Point. Delivery status appears in the Transmission Outbox below.",
+    txTitle: "Transmission Outbox",
+    txDesc: "Durable, idempotent delivery jobs (ADR-004) — retried automatically, never double-sent.",
+    txAttempt: (a, max) => `Attempt ${a}/${max}`,
+    txNextRetry: (date) => ` · next retry ${date} UTC`,
+    txRef: (ref) => ` · ref ${ref}`,
+    epcTitle: "EPC SEPA GiroCode QR",
+    epcDesc: "Scannable by EU banking apps (SCT).",
+    teamTitle: "Team Collaboration & Notes",
+    teamDesc: "Immutable internal review thread (Master Plan F13).",
+    noComments: "No internal comments yet.",
+    commentPlaceholder: "Add review note or @mention…",
+    post: "Post",
+    auditTitle: "GoBD Audit Trail",
+    auditDesc: "Append-only SHA-256 hash-chained events for this document.",
+    noAudit: "No audit events recorded yet.",
+    toastPatched: "Compliance fields patched and invoice re-validated.",
+    toastPatchFailed: "Patch failed",
+    toastFinalized: "Draft finalized, assigned sequential number, and GoBD-archived.",
+    toastFinalizeFailed: "Finalize failed",
+    deletePrompt: (num) => `Permanently delete draft ${num}?`,
+    toastDeleteFailed: "Delete failed",
+    toastAlreadyDelivered: (to) => `Already delivered to ${to} — no duplicate sent (idempotent).`,
+    toastDelivered: (to, cc) => `E-invoice delivered to ${to}${cc ? ` (CC: ${cc})` : ""} and logged in GoBD audit chain.`,
+    toastQueued: (status, next) => `Delivery safely queued (${status}) — it will be retried automatically${next ? ` (next ~${next} UTC)` : ""}.`,
+    toastEmailFailed: "Email dispatch failed",
+    toastPeppolSent: (to) => `Transmitted via Peppol to ${to}.`,
+    toastPeppolQueued: (status) => `Queued for Peppol delivery (${status}).`,
+    toastPeppolFailed: "Peppol delivery failed",
+    toastMarkedPayment: (status) => `Invoice marked as ${status} and logged in GoBD audit trail.`,
+    toastPaymentFailed: "Payment status update failed",
+    toastMarkedApproval: (status) => `Invoice marked ${status}.`,
+    toastApprovalFailed: "Approval failed",
+    toastCnFailed: "Credit note creation failed",
+  },
+  de: {
+    loading: "Rechnung wird geladen…",
+    notFound: "Rechnung nicht gefunden",
+    notFoundAlert: "Rechnung in Ihrer Organisation nicht gefunden.",
+    backToInvoices: "Zurück zu den Rechnungen",
+    crumbInvoices: "Rechnungen",
+    titleInvoice: "Rechnung",
+    titleCreditNote: "Gutschrift",
+    issued: (date) => `Ausgestellt ${date}`,
+    references: (num) => ` · Referenz ${num}`,
+    editDraft: "Entwurf bearbeiten",
+    finalizeArchive: "Finalisieren & archivieren",
+    deleteDraft: "Entwurf löschen",
+    downloadPdf: "PDF/A-3 herunterladen",
+    downloadXml: "XML herunterladen",
+    jsonLabel: "JSON",
+    paidUndo: "Bezahlt ✓ (rückgängig)",
+    markPaid: "Als bezahlt markieren",
+    issueCreditNote: "Gutschrift erstellen (381)",
+    stripValidation: "Validierung",
+    stripApproval: "Freigabe",
+    stripDelivery: "Zustellung",
+    stripPayment: "Zahlung (separat)",
+    stripAccounting: "Buchhaltung",
+    en16931Passed: "EN 16931 bestanden",
+    blockedIssues: "Blockiert / Fehler",
+    approve: "Freigeben",
+    delivered: "Zugestellt",
+    notSent: "Nicht gesendet",
+    ready: "Bereit",
+    approvalLabel: (v) => ENUM_DE[v] ?? v,
+    paymentLabel: (v) => ENUM_DE[v] ?? v,
+    accountingLabel: (v) => ENUM_DE[v] ?? v,
+    cnTitle: "GoBD-Gutschrift erstellen (TypeCode 381)",
+    cnDesc: (num) => `Erstellt eine verknüpfte Stornorechnung mit Bezug BT-25 = ${num} über Ihre Gutschrifts-Nummernfolge.`,
+    cnReasonLabel: "Grund (optional, in BT-22-Notizen enthalten)",
+    cnReasonPlaceholder: "z. B. Doppelte Abrechnung oder Kundenerstattung",
+    cnConfirm: "Bestätigen & Gutschrift erstellen",
+    repairTitle: "Compliance-Reparatur erforderlich (vor Versand blockiert)",
+    repairDesc: "Beheben Sie die fehlenden EN-16931- / XRechnung-Felder unten und validieren Sie sofort neu.",
+    repairBuyerRef: "Käuferreferenz / Leitweg-ID (BT-10)",
+    repairBuyerVat: "USt-IdNr. des Käufers (BT-48)",
+    repairSellerName: "Kontaktname Verkäufer (BT-41)",
+    repairSellerPhone: "Kontakttelefon Verkäufer (BT-42)",
+    repairSellerEmail: "Kontakt-E-Mail Verkäufer (BT-43)",
+    repairSubmit: "Korrigieren & neu validieren",
+    docSummary: "Dokumentübersicht",
+    sellerBg4: "Verkäufer (BG-4)",
+    buyerBg7: "Käufer (BG-7)",
+    vatPrefix: "USt:",
+    thItem: "Position",
+    thQty: "Menge",
+    thUnitPrice: "Einzelpreis",
+    thVat: "USt.",
+    thNetTotal: "Nettobetrag",
+    netTotal: "Nettobetrag (BT-109)",
+    vatTotal: "USt-Betrag (BT-110)",
+    grossPayable: "Bruttobetrag (BT-115)",
+    xmlTitle: "Strukturiertes EN-16931-XML",
+    hideXml: "XML ausblenden",
+    inspectXml: "XML prüfen",
+    gobdLockUntil: "GoBD-WORM-Sperre bis:",
+    emailTitle: "E-Rechnung per E-Mail senden",
+    emailDesc: "Hängt konforme PDF/A-3 + XML an und setzt Ihren Steuerberater auf CC, falls konfiguriert.",
+    recipientLabel: "Empfänger-E-Mail (BT-49)",
+    sendEInvoice: "E-Rechnung senden",
+    lastSentTo: (to, date) => `Zuletzt gesendet an ${to} (${date})`,
+    peppolTitle: "Peppol-Netzwerkzustellung",
+    peppolDesc: "Versand über das OpenPeppol-Vier-Ecken-Netzwerk via zertifizierten Access Point.",
+    peppolRecipient: "Empfänger-Teilnehmer:",
+    sendViaPeppol: "Via Peppol senden",
+    peppolNote: "Erfordert einen verbundenen zertifizierten Access Point. Der Zustellstatus erscheint unten im Übertragungs-Postausgang.",
+    txTitle: "Übertragungs-Postausgang",
+    txDesc: "Dauerhafte, idempotente Zustelljobs (ADR-004) — automatisch wiederholt, nie doppelt gesendet.",
+    txAttempt: (a, max) => `Versuch ${a}/${max}`,
+    txNextRetry: (date) => ` · nächster Versuch ${date} UTC`,
+    txRef: (ref) => ` · Ref. ${ref}`,
+    epcTitle: "EPC-SEPA-GiroCode-QR",
+    epcDesc: "Scanbar mit EU-Banking-Apps (SCT).",
+    teamTitle: "Team-Zusammenarbeit & Notizen",
+    teamDesc: "Unveränderbarer interner Prüf-Thread (Masterplan F13).",
+    noComments: "Noch keine internen Kommentare.",
+    commentPlaceholder: "Prüfnotiz oder @Erwähnung hinzufügen…",
+    post: "Senden",
+    auditTitle: "GoBD-Audit-Trail",
+    auditDesc: "Nur anfügbare SHA-256-hashverkettete Ereignisse für dieses Dokument.",
+    noAudit: "Noch keine Audit-Ereignisse erfasst.",
+    toastPatched: "Compliance-Felder korrigiert und Rechnung neu validiert.",
+    toastPatchFailed: "Korrektur fehlgeschlagen",
+    toastFinalized: "Entwurf finalisiert, fortlaufende Nummer vergeben und GoBD-archiviert.",
+    toastFinalizeFailed: "Finalisierung fehlgeschlagen",
+    deletePrompt: (num) => `Entwurf ${num} endgültig löschen?`,
+    toastDeleteFailed: "Löschen fehlgeschlagen",
+    toastAlreadyDelivered: (to) => `Bereits an ${to} zugestellt — kein Duplikat gesendet (idempotent).`,
+    toastDelivered: (to, cc) => `E-Rechnung an ${to} zugestellt${cc ? ` (CC: ${cc})` : ""} und in der GoBD-Audit-Kette protokolliert.`,
+    toastQueued: (status, next) => `Zustellung sicher eingereiht (${status}) — wird automatisch wiederholt${next ? ` (nächster ~${next} UTC)` : ""}.`,
+    toastEmailFailed: "E-Mail-Versand fehlgeschlagen",
+    toastPeppolSent: (to) => `Via Peppol an ${to} übertragen.`,
+    toastPeppolQueued: (status) => `Für Peppol-Zustellung eingereiht (${status}).`,
+    toastPeppolFailed: "Peppol-Zustellung fehlgeschlagen",
+    toastMarkedPayment: (status) => `Rechnung als ${status} markiert und im GoBD-Audit-Trail protokolliert.`,
+    toastPaymentFailed: "Aktualisierung des Zahlungsstatus fehlgeschlagen",
+    toastMarkedApproval: (status) => `Rechnung als ${status} markiert.`,
+    toastApprovalFailed: "Freigabe fehlgeschlagen",
+    toastCnFailed: "Erstellung der Gutschrift fehlgeschlagen",
+  },
+  fr: {
+    loading: "Chargement de la facture…",
+    notFound: "Facture introuvable",
+    notFoundAlert: "Facture introuvable dans votre organisation.",
+    backToInvoices: "Retour aux factures",
+    crumbInvoices: "Factures",
+    titleInvoice: "Facture",
+    titleCreditNote: "Avoir",
+    issued: (date) => `Émise le ${date}`,
+    references: (num) => ` · Référence ${num}`,
+    editDraft: "Modifier le brouillon",
+    finalizeArchive: "Finaliser & archiver",
+    deleteDraft: "Supprimer le brouillon",
+    downloadPdf: "Télécharger le PDF/A-3",
+    downloadXml: "Télécharger le XML",
+    jsonLabel: "JSON",
+    paidUndo: "Payée ✓ (annuler)",
+    markPaid: "Marquer payée",
+    issueCreditNote: "Émettre un avoir (381)",
+    stripValidation: "Validation",
+    stripApproval: "Approbation",
+    stripDelivery: "Livraison",
+    stripPayment: "Paiement (séparé)",
+    stripAccounting: "Comptabilité",
+    en16931Passed: "EN 16931 conforme",
+    blockedIssues: "Bloquée / anomalies",
+    approve: "Approuver",
+    delivered: "Livrée",
+    notSent: "Non envoyée",
+    ready: "Prête",
+    approvalLabel: (v) => ENUM_FR[v] ?? v,
+    paymentLabel: (v) => ENUM_FR[v] ?? v,
+    accountingLabel: (v) => ENUM_FR[v] ?? v,
+    cnTitle: "Émettre un avoir GoBD (TypeCode 381)",
+    cnDesc: (num) => `Crée un avoir lié référençant BT-25 = ${num} via votre séquence d'avoirs.`,
+    cnReasonLabel: "Motif (facultatif, inclus dans les notes BT-22)",
+    cnReasonPlaceholder: "ex. double facturation ou remboursement client",
+    cnConfirm: "Confirmer & émettre l'avoir",
+    repairTitle: "Correction de conformité requise (bloquée avant l'envoi)",
+    repairDesc: "Corrigez les champs EN 16931 / XRechnung manquants ci-dessous et revalidez immédiatement.",
+    repairBuyerRef: "Référence acheteur / Leitweg-ID (BT-10)",
+    repairBuyerVat: "N° de TVA UE de l'acheteur (BT-48)",
+    repairSellerName: "Nom du contact vendeur (BT-41)",
+    repairSellerPhone: "Téléphone du contact vendeur (BT-42)",
+    repairSellerEmail: "E-mail du contact vendeur (BT-43)",
+    repairSubmit: "Corriger & revalider",
+    docSummary: "Résumé du document",
+    sellerBg4: "Vendeur (BG-4)",
+    buyerBg7: "Acheteur (BG-7)",
+    vatPrefix: "TVA :",
+    thItem: "Article",
+    thQty: "Qté",
+    thUnitPrice: "Prix unitaire",
+    thVat: "TVA",
+    thNetTotal: "Total net",
+    netTotal: "Total net (BT-109)",
+    vatTotal: "Total TVA (BT-110)",
+    grossPayable: "Montant brut à payer (BT-115)",
+    xmlTitle: "XML structuré EN 16931",
+    hideXml: "Masquer le XML",
+    inspectXml: "Inspecter le XML",
+    gobdLockUntil: "Verrou GoBD WORM jusqu'au :",
+    emailTitle: "Envoyer la facture par e-mail",
+    emailDesc: "Joint un PDF/A-3 + XML conforme et met votre comptable en copie si configuré.",
+    recipientLabel: "E-mail du destinataire (BT-49)",
+    sendEInvoice: "Envoyer la facture",
+    lastSentTo: (to, date) => `Dernier envoi à ${to} (${date})`,
+    peppolTitle: "Livraison réseau Peppol",
+    peppolDesc: "Envoi sur le réseau OpenPeppol à quatre coins via un point d'accès certifié.",
+    peppolRecipient: "Participant destinataire :",
+    sendViaPeppol: "Envoyer via Peppol",
+    peppolNote: "Nécessite un point d'accès certifié connecté. Le statut de livraison apparaît dans la file d'envoi ci-dessous.",
+    txTitle: "File d'envoi",
+    txDesc: "Travaux de livraison durables et idempotents (ADR-004) — réessayés automatiquement, jamais envoyés en double.",
+    txAttempt: (a, max) => `Tentative ${a}/${max}`,
+    txNextRetry: (date) => ` · prochaine tentative ${date} UTC`,
+    txRef: (ref) => ` · réf. ${ref}`,
+    epcTitle: "QR EPC SEPA GiroCode",
+    epcDesc: "Scannable par les applis bancaires de l'UE (SCT).",
+    teamTitle: "Collaboration d'équipe & notes",
+    teamDesc: "Fil de revue interne immuable (Plan directeur F13).",
+    noComments: "Aucun commentaire interne pour l'instant.",
+    commentPlaceholder: "Ajouter une note de revue ou une @mention…",
+    post: "Publier",
+    auditTitle: "Piste d'audit GoBD",
+    auditDesc: "Événements chaînés SHA-256 en ajout seul pour ce document.",
+    noAudit: "Aucun événement d'audit enregistré pour l'instant.",
+    toastPatched: "Champs de conformité corrigés et facture revalidée.",
+    toastPatchFailed: "Échec de la correction",
+    toastFinalized: "Brouillon finalisé, numéro séquentiel attribué et archivé GoBD.",
+    toastFinalizeFailed: "Échec de la finalisation",
+    deletePrompt: (num) => `Supprimer définitivement le brouillon ${num} ?`,
+    toastDeleteFailed: "Échec de la suppression",
+    toastAlreadyDelivered: (to) => `Déjà livrée à ${to} — aucun doublon envoyé (idempotent).`,
+    toastDelivered: (to, cc) => `Facture livrée à ${to}${cc ? ` (copie : ${cc})` : ""} et consignée dans la chaîne d'audit GoBD.`,
+    toastQueued: (status, next) => `Livraison mise en file en toute sécurité (${status}) — elle sera réessayée automatiquement${next ? ` (prochaine ~${next} UTC)` : ""}.`,
+    toastEmailFailed: "Échec de l'envoi de l'e-mail",
+    toastPeppolSent: (to) => `Transmise via Peppol à ${to}.`,
+    toastPeppolQueued: (status) => `Mise en file pour livraison Peppol (${status}).`,
+    toastPeppolFailed: "Échec de la livraison Peppol",
+    toastMarkedPayment: (status) => `Facture marquée ${status} et consignée dans la piste d'audit GoBD.`,
+    toastPaymentFailed: "Échec de la mise à jour du statut de paiement",
+    toastMarkedApproval: (status) => `Facture marquée ${status}.`,
+    toastApprovalFailed: "Échec de l'approbation",
+    toastCnFailed: "Échec de la création de l'avoir",
+  },
+};
+
+// ── Invoice create/edit form translations ──
+export interface InvoiceFormStrings {
+  loadingBuilder: string;
+  loading: string;
+  titleEditDraft: string;
+  titleNewCreditNote: string;
+  titleNewInvoice: string;
+  subtitle: string;
+  cancel: string;
+  warnSellerIncomplete: string;
+  completeSettings: string;
+  // validation errors
+  errAddress: string;
+  errLineDesc: string;
+  errCreditRef: string;
+  errLoad: string;
+  errSave: string;
+  // document card
+  docCard: string;
+  fFormat: string;
+  fType: string;
+  fNumber: string;
+  numberOnFinalize: (num: string) => string;
+  typeInvoice: string;
+  typeCreditNote: string;
+  fIssueDate: string;
+  fDueDate: string;
+  fCurrency: string;
+  fBuyerRef: string;
+  buyerRefRequired: string;
+  buyerRefOptional: string;
+  fPoNumber: string;
+  fOrigInvoice: string;
+  // customer card
+  custCard: string;
+  selectSaved: string;
+  noSaved: string;
+  fCompanyName: string;
+  fVatId: string;
+  fInvoiceEmail: string;
+  fStreet: string;
+  fPostalCode: string;
+  fCity: string;
+  fCountry: string;
+  saveCustomer: string;
+  // line items
+  lineCard: string;
+  insertCatalog: string;
+  addLine: string;
+  fDescription: string;
+  fQty: string;
+  fUnit: string;
+  fUnitPrice: string;
+  fVat: string;
+  removeLine: string;
+  units: Record<string, string>;
+  fPaymentTerms: string;
+  fNotes: string;
+  // summary
+  summary: string;
+  sNet: string;
+  sVat: string;
+  sTotal: string;
+  validateFinalize: string;
+  saveDraft: string;
+  finalizeHint: (num: string) => string;
+  fromCompany: string;
+  edit: string;
+  streetMissing: string;
+  taxIdMissing: string;
+  noIban: string;
+}
+
+export const INVOICE_FORM_STRINGS: Record<AppLocale, InvoiceFormStrings> = {
+  en: {
+    loadingBuilder: "Loading invoice builder…",
+    loading: "Loading…",
+    titleEditDraft: "Edit draft",
+    titleNewCreditNote: "New credit note",
+    titleNewInvoice: "New invoice",
+    subtitle: "Your company details and bank account are filled in automatically from Settings. The invoice number is assigned when you finalize.",
+    cancel: "Cancel",
+    warnSellerIncomplete: "Your company address or tax ID is incomplete — invoices will fail validation.",
+    completeSettings: "Complete settings →",
+    errAddress: "Customer name and full address are required.",
+    errLineDesc: "Every line item needs a description.",
+    errCreditRef: "Credit notes must reference the original invoice number (BT-25).",
+    errLoad: "Failed to load",
+    errSave: "Save failed",
+    docCard: "Document",
+    fFormat: "Format",
+    fType: "Type",
+    fNumber: "Number",
+    numberOnFinalize: (num) => `${num} (on finalize)`,
+    typeInvoice: "Invoice (380)",
+    typeCreditNote: "Credit note (381)",
+    fIssueDate: "Issue date",
+    fDueDate: "Due date",
+    fCurrency: "Currency",
+    fBuyerRef: "Buyer reference / Leitweg-ID (BT-10)",
+    buyerRefRequired: "Required for XRechnung",
+    buyerRefOptional: "Optional",
+    fPoNumber: "PO number (BT-13)",
+    fOrigInvoice: "Original invoice no. (BT-25) *",
+    custCard: "Customer",
+    selectSaved: "Select saved customer…",
+    noSaved: "No saved customers",
+    fCompanyName: "Company name *",
+    fVatId: "VAT ID (BT-48)",
+    fInvoiceEmail: "Invoice email (BT-49)",
+    fStreet: "Street *",
+    fPostalCode: "Postal code *",
+    fCity: "City *",
+    fCountry: "Country *",
+    saveCustomer: "Save this customer for future invoices",
+    lineCard: "Line items",
+    insertCatalog: "+ Insert from catalog…",
+    addLine: "Add line",
+    fDescription: "Description *",
+    fQty: "Qty",
+    fUnit: "Unit",
+    fUnitPrice: "Unit price (net)",
+    fVat: "VAT",
+    removeLine: "Remove line",
+    units: { H87: "Piece", HUR: "Hour", DAY: "Day", MON: "Month", C62: "Unit", KGM: "kg" },
+    fPaymentTerms: "Payment terms (BT-20)",
+    fNotes: "Notes (BT-22, one per line)",
+    summary: "Summary",
+    sNet: "Net",
+    sVat: "VAT",
+    sTotal: "Total",
+    validateFinalize: "Validate & finalize",
+    saveDraft: "Save as draft",
+    finalizeHint: (num) => `Finalizing assigns ${num}, runs the EN 16931 validator and locks the document for GoBD archiving. Drafts don't use a number or quota.`,
+    fromCompany: "From (your company)",
+    edit: "Edit",
+    streetMissing: "Street missing",
+    taxIdMissing: "Tax ID missing",
+    noIban: "No IBAN",
+  },
+  de: {
+    loadingBuilder: "Rechnungseditor wird geladen…",
+    loading: "Wird geladen…",
+    titleEditDraft: "Entwurf bearbeiten",
+    titleNewCreditNote: "Neue Gutschrift",
+    titleNewInvoice: "Neue Rechnung",
+    subtitle: "Ihre Firmendaten und Ihr Bankkonto werden automatisch aus den Einstellungen übernommen. Die Rechnungsnummer wird beim Finalisieren vergeben.",
+    cancel: "Abbrechen",
+    warnSellerIncomplete: "Ihre Firmenadresse oder Steuernummer ist unvollständig — Rechnungen schlagen bei der Validierung fehl.",
+    completeSettings: "Einstellungen vervollständigen →",
+    errAddress: "Kundenname und vollständige Adresse sind erforderlich.",
+    errLineDesc: "Jede Position benötigt eine Beschreibung.",
+    errCreditRef: "Gutschriften müssen die ursprüngliche Rechnungsnummer referenzieren (BT-25).",
+    errLoad: "Laden fehlgeschlagen",
+    errSave: "Speichern fehlgeschlagen",
+    docCard: "Dokument",
+    fFormat: "Format",
+    fType: "Typ",
+    fNumber: "Nummer",
+    numberOnFinalize: (num) => `${num} (beim Finalisieren)`,
+    typeInvoice: "Rechnung (380)",
+    typeCreditNote: "Gutschrift (381)",
+    fIssueDate: "Ausstellungsdatum",
+    fDueDate: "Fälligkeitsdatum",
+    fCurrency: "Währung",
+    fBuyerRef: "Käuferreferenz / Leitweg-ID (BT-10)",
+    buyerRefRequired: "Für XRechnung erforderlich",
+    buyerRefOptional: "Optional",
+    fPoNumber: "Bestellnummer (BT-13)",
+    fOrigInvoice: "Ursprüngliche Rechnungsnr. (BT-25) *",
+    custCard: "Kunde",
+    selectSaved: "Gespeicherten Kunden wählen…",
+    noSaved: "Keine gespeicherten Kunden",
+    fCompanyName: "Firmenname *",
+    fVatId: "USt-IdNr. (BT-48)",
+    fInvoiceEmail: "Rechnungs-E-Mail (BT-49)",
+    fStreet: "Straße *",
+    fPostalCode: "PLZ *",
+    fCity: "Stadt *",
+    fCountry: "Land *",
+    saveCustomer: "Diesen Kunden für künftige Rechnungen speichern",
+    lineCard: "Positionen",
+    insertCatalog: "+ Aus Katalog einfügen…",
+    addLine: "Position hinzufügen",
+    fDescription: "Beschreibung *",
+    fQty: "Menge",
+    fUnit: "Einheit",
+    fUnitPrice: "Einzelpreis (netto)",
+    fVat: "USt.",
+    removeLine: "Position entfernen",
+    units: { H87: "Stück", HUR: "Stunde", DAY: "Tag", MON: "Monat", C62: "Einheit", KGM: "kg" },
+    fPaymentTerms: "Zahlungsbedingungen (BT-20)",
+    fNotes: "Notizen (BT-22, eine pro Zeile)",
+    summary: "Zusammenfassung",
+    sNet: "Netto",
+    sVat: "USt.",
+    sTotal: "Gesamt",
+    validateFinalize: "Validieren & finalisieren",
+    saveDraft: "Als Entwurf speichern",
+    finalizeHint: (num) => `Beim Finalisieren wird ${num} vergeben, der EN-16931-Validator ausgeführt und das Dokument für die GoBD-Archivierung gesperrt. Entwürfe verbrauchen keine Nummer und kein Kontingent.`,
+    fromCompany: "Von (Ihre Firma)",
+    edit: "Bearbeiten",
+    streetMissing: "Straße fehlt",
+    taxIdMissing: "Steuernummer fehlt",
+    noIban: "Keine IBAN",
+  },
+  fr: {
+    loadingBuilder: "Chargement de l'éditeur de facture…",
+    loading: "Chargement…",
+    titleEditDraft: "Modifier le brouillon",
+    titleNewCreditNote: "Nouvel avoir",
+    titleNewInvoice: "Nouvelle facture",
+    subtitle: "Les coordonnées de votre entreprise et votre compte bancaire sont renseignés automatiquement depuis les Paramètres. Le numéro de facture est attribué à la finalisation.",
+    cancel: "Annuler",
+    warnSellerIncomplete: "L'adresse ou le numéro fiscal de votre entreprise est incomplet — les factures échoueront à la validation.",
+    completeSettings: "Compléter les paramètres →",
+    errAddress: "Le nom du client et l'adresse complète sont requis.",
+    errLineDesc: "Chaque ligne doit avoir une description.",
+    errCreditRef: "Les avoirs doivent référencer le numéro de la facture d'origine (BT-25).",
+    errLoad: "Échec du chargement",
+    errSave: "Échec de l'enregistrement",
+    docCard: "Document",
+    fFormat: "Format",
+    fType: "Type",
+    fNumber: "Numéro",
+    numberOnFinalize: (num) => `${num} (à la finalisation)`,
+    typeInvoice: "Facture (380)",
+    typeCreditNote: "Avoir (381)",
+    fIssueDate: "Date d'émission",
+    fDueDate: "Date d'échéance",
+    fCurrency: "Devise",
+    fBuyerRef: "Référence acheteur / Leitweg-ID (BT-10)",
+    buyerRefRequired: "Requis pour XRechnung",
+    buyerRefOptional: "Facultatif",
+    fPoNumber: "N° de commande (BT-13)",
+    fOrigInvoice: "N° de facture d'origine (BT-25) *",
+    custCard: "Client",
+    selectSaved: "Sélectionner un client enregistré…",
+    noSaved: "Aucun client enregistré",
+    fCompanyName: "Nom de l'entreprise *",
+    fVatId: "N° de TVA (BT-48)",
+    fInvoiceEmail: "E-mail de facturation (BT-49)",
+    fStreet: "Rue *",
+    fPostalCode: "Code postal *",
+    fCity: "Ville *",
+    fCountry: "Pays *",
+    saveCustomer: "Enregistrer ce client pour les prochaines factures",
+    lineCard: "Lignes",
+    insertCatalog: "+ Insérer depuis le catalogue…",
+    addLine: "Ajouter une ligne",
+    fDescription: "Description *",
+    fQty: "Qté",
+    fUnit: "Unité",
+    fUnitPrice: "Prix unitaire (net)",
+    fVat: "TVA",
+    removeLine: "Supprimer la ligne",
+    units: { H87: "Pièce", HUR: "Heure", DAY: "Jour", MON: "Mois", C62: "Unité", KGM: "kg" },
+    fPaymentTerms: "Conditions de paiement (BT-20)",
+    fNotes: "Notes (BT-22, une par ligne)",
+    summary: "Résumé",
+    sNet: "Net",
+    sVat: "TVA",
+    sTotal: "Total",
+    validateFinalize: "Valider & finaliser",
+    saveDraft: "Enregistrer comme brouillon",
+    finalizeHint: (num) => `La finalisation attribue ${num}, exécute le validateur EN 16931 et verrouille le document pour l'archivage GoBD. Les brouillons n'utilisent ni numéro ni quota.`,
+    fromCompany: "De (votre entreprise)",
+    edit: "Modifier",
+    streetMissing: "Rue manquante",
+    taxIdMissing: "N° fiscal manquant",
+    noIban: "Pas d'IBAN",
+  },
+};
