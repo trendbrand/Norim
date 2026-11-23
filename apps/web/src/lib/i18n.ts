@@ -3081,3 +3081,684 @@ export const CATALOG_STRINGS: Record<AppLocale, CatalogStrings> = {
     toastRemoved: (name) => `« ${name} » supprimé.`,
   },
 };
+
+// ── Workspace settings translations ──
+export interface SettingsStrings {
+  pageTitle: string;
+  pageSubtitle: string;
+  saveChanges: string;
+  loading: string;
+  tabCompany: string;
+  tabInvoicing: string;
+  tabIntegrations: string;
+  tabTeam: string;
+  tabApiKeys: string;
+  tabBilling: string;
+  tabSecurity: string;
+  // company tab
+  companyTitle: string;
+  companyDesc: string;
+  fLegalName: string;
+  fTradingName: string;
+  fManagingDirector: string;
+  fRegistrationId: string;
+  fStreet: string;
+  fPostalCode: string;
+  fCity: string;
+  fCountry: string;
+  fVatId: string;
+  checkVies: string;
+  fTaxNumber: string;
+  fKleinunternehmer: string;
+  fElectronicAddress: string;
+  fContactName: string;
+  fContactPhone: string;
+  fContactEmail: string;
+  fLogo: string;
+  noLogo: string;
+  removeLogo: string;
+  // invoicing tab
+  invoicingTitle: string;
+  invoicingDesc: string;
+  fIban: string;
+  ibanValid: string;
+  ibanInvalid: string;
+  fBic: string;
+  fAccountHolder: string;
+  fInvoicePrefix: string;
+  fCreditPrefix: string;
+  fNextSeq: string;
+  nextInvoice: string;
+  fDefaultFormat: string;
+  fDocLanguage: string;
+  fDueDays: string;
+  fRetention: string;
+  retention8: string;
+  retention10: string;
+  fPaymentTerms: string;
+  fFooterNotes: string;
+  // integrations tab
+  rotatedSecret: (provider: string) => string;
+  copy: string;
+  stripeTitle: string;
+  stripeDesc: string;
+  wooTitle: string;
+  wooDesc: string;
+  stripeUrlLabel: string;
+  wooUrlLabel: string;
+  storedSecret: string;
+  notSet: string;
+  save: string;
+  rotateSecret: string;
+  stripePlaceholder: string;
+  wooPlaceholder: string;
+  accountantTitle: string;
+  accountantDesc: string;
+  saveCc: string;
+  fAccountantCc: string;
+  logsTitle: string;
+  logsEmpty: string;
+  thTime: string;
+  thProvider: string;
+  thEvent: string;
+  thHttp: string;
+  thSummary: string;
+  // team tab
+  inviteTitle: string;
+  inviteDesc: string;
+  fEmail: string;
+  fFullName: string;
+  fRole: string;
+  roleAccountant: string;
+  roleMember: string;
+  roleAdmin: string;
+  roleOwner: string;
+  invite: string;
+  membersTitle: (n: number) => string;
+  thMember: string;
+  thRole: string;
+  thJoined: string;
+  thAction: string;
+  remove: string;
+  removeMemberConfirm: string;
+  // api keys tab
+  keyCreatedAlert: string;
+  generateKeyTitle: string;
+  generateKeyDesc: string;
+  fKeyLabel: string;
+  createKey: string;
+  issuedKeys: (n: number) => string;
+  keysEmpty: string;
+  thName: string;
+  thPrefix: string;
+  thScopes: string;
+  thStatus: string;
+  statusRevoked: string;
+  statusActive: string;
+  revoke: string;
+  revokeConfirm: string;
+  // billing tab
+  subTitle: string;
+  cancelRenewal: string;
+  cancelRenewalConfirm: string;
+  activePlan: string;
+  trial15: string;
+  trialDaysLeft: (n: number) => string;
+  renewalCancelled: string;
+  finalizedThisMonth: string;
+  recommended: string;
+  currentPlan: string;
+  switchTo: (name: string) => string;
+  planFreeDesc: string;
+  planSoloDesc: string;
+  planBusinessDesc: string;
+  planAgencyDesc: string;
+  quotaInvoices: (n: string) => string;
+  // security tab
+  changePwTitle: string;
+  changePwDesc: string;
+  fCurrentPw: string;
+  fNewPw: string;
+  updatePw: string;
+  gdprTitle: string;
+  gdprDesc: string;
+  gdprExport: string;
+  dangerZone: string;
+  dangerText: string;
+  deletePlaceholder: string;
+  deleteBtn: string;
+  chainTitle: string;
+  chainVerified: (n: number) => string;
+  chainPending: string;
+  reverify: string;
+  thRef: string;
+  thActor: string;
+  thHash: string;
+  // toasts
+  tSaved: string;
+  tSaveFailed: string;
+  tLoadFailed: string;
+  tViesFailed: string;
+  tLogoTooBig: string;
+  tIntegrationUpdated: (provider: string) => string;
+  tIntegrationFailed: string;
+  tMemberInvited: string;
+  tInviteFailed: string;
+  tMemberRemoved: string;
+  tRemoveFailed: string;
+  tKeyCreationFailed: string;
+  tKeyRevoked: string;
+  tRevokeFailed: string;
+  tPlanSwitched: (tier: string) => string;
+  tPlanFailed: string;
+  tPwUpdated: string;
+  tPwFailed: string;
+  tDeleteTypeError: string;
+  tDeletionFailed: string;
+  tCopied: string;
+  tCancellationFailed: string;
+}
+
+export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
+  en: {
+    pageTitle: "Workspace Settings",
+    pageSubtitle: "Configure your EN 16931 legal profile, SEPA banking, sequential numbering, tenant webhooks, team RBAC, API keys, billing, and GDPR controls.",
+    saveChanges: "Save changes",
+    loading: "Loading workspace settings…",
+    tabCompany: "Company & Tax",
+    tabInvoicing: "Invoicing & Banking",
+    tabIntegrations: "Integrations",
+    tabTeam: "Team & RBAC",
+    tabApiKeys: "API Keys",
+    tabBilling: "Billing & Quota",
+    tabSecurity: "Security & GDPR",
+    companyTitle: "Company Legal & Tax Profile (EN 16931 BG-4)",
+    companyDesc: "Embedded automatically into every ZUGFeRD, Factur-X, XRechnung & Peppol document you issue.",
+    fLegalName: "Legal Company Name (BT-27) *",
+    fTradingName: "Trading Name (BT-28)",
+    fManagingDirector: "Managing Director (§ 35a GmbHG)",
+    fRegistrationId: "Commercial Register / HRB / SIREN (BT-30)",
+    fStreet: "Street & House Number (BT-35)",
+    fPostalCode: "Postal Code",
+    fCity: "City",
+    fCountry: "Country",
+    fVatId: "EU VAT ID (BT-31)",
+    checkVies: "Check VIES",
+    fTaxNumber: "National Tax Number / Steuernummer (BT-32)",
+    fKleinunternehmer: "Kleinunternehmer (§ 19 UStG) — VAT-exempt small business",
+    fElectronicAddress: "Electronic Address / Endpoint (BT-34)",
+    fContactName: "Billing Contact Name (BG-6 / BT-41)",
+    fContactPhone: "Contact Phone (BT-42)",
+    fContactEmail: "Contact Email (BT-43)",
+    fLogo: "Company Logo (for PDF/A-3 header, max 180 KB)",
+    noLogo: "No logo",
+    removeLogo: "Remove",
+    invoicingTitle: "Invoicing Defaults, Sequential Numbering & SEPA Banking (BG-16)",
+    invoicingDesc: "IBAN is validated using ISO 13616 MOD-97 on both client and server.",
+    fIban: "IBAN (BT-84)",
+    ibanValid: "✓ Valid ISO 13616 MOD-97 IBAN checksum",
+    ibanInvalid: "✗ Invalid IBAN checksum — server will reject invalid IBANs",
+    fBic: "BIC (BT-86)",
+    fAccountHolder: "Account Holder (BT-85)",
+    fInvoicePrefix: "Invoice Prefix",
+    fCreditPrefix: "Credit Note Prefix (TypeCode 381)",
+    fNextSeq: "Next Sequence Number",
+    nextInvoice: "Next invoice:",
+    fDefaultFormat: "Default Format",
+    fDocLanguage: "Default Document Language",
+    fDueDays: "Default Payment Due Days",
+    fRetention: "GoBD Archive Retention Period",
+    retention8: "8 Years (Germany BEG IV / § 147 AO)",
+    retention10: "10 Years (France / Commercial Code)",
+    fPaymentTerms: "Default Payment Terms (BT-20)",
+    fFooterNotes: "Default Invoice Footer Notes (BT-22)",
+    rotatedSecret: (provider) => `New ${provider} signing secret (copy now — shown once):`,
+    copy: "Copy",
+    stripeTitle: "Stripe E-Invoice Bridge",
+    stripeDesc: "Tenant-scoped endpoint. Every request is verified with HMAC-SHA256 + 5-min replay protection.",
+    wooTitle: "WooCommerce Plugin Bridge",
+    wooDesc: "Paste this URL & signing secret into WooCommerce → NormInvoice EU E-Invoice.",
+    stripeUrlLabel: "Your Stripe Webhook URL",
+    wooUrlLabel: "Your WooCommerce Webhook URL",
+    storedSecret: "Stored secret:",
+    notSet: "Not set",
+    save: "Save",
+    rotateSecret: "Generate / Rotate Secret",
+    stripePlaceholder: "Paste Stripe whsec_...",
+    wooPlaceholder: "Custom signing secret...",
+    accountantTitle: "Accountant Auto-CC Email",
+    accountantDesc: "Automatically CC your German Steuerberater or French Expert-comptable whenever an e-invoice is emailed.",
+    saveCc: "Save CC",
+    fAccountantCc: "Accountant CC Email",
+    logsTitle: "Recent Webhook Delivery Logs",
+    logsEmpty: "No webhook deliveries logged for your workspace yet.",
+    thTime: "Time",
+    thProvider: "Provider",
+    thEvent: "Event",
+    thHttp: "HTTP",
+    thSummary: "Summary",
+    inviteTitle: "Invite Team Member or Tax Advisor",
+    inviteDesc: "Assign least-privilege RBAC roles (Owner, Admin, Accountant read/export, Member).",
+    fEmail: "Email *",
+    fFullName: "Full Name",
+    fRole: "Role",
+    roleAccountant: "Accountant (Read & Export)",
+    roleMember: "Member (Create Invoices)",
+    roleAdmin: "Admin (Manage Settings)",
+    roleOwner: "Owner (Full Access)",
+    invite: "Invite",
+    membersTitle: (n) => `Workspace Members (${n})`,
+    thMember: "Member",
+    thRole: "Role",
+    thJoined: "Joined",
+    thAction: "Action",
+    remove: "Remove",
+    removeMemberConfirm: "Remove this team member from your workspace?",
+    keyCreatedAlert: "Copy your new API key now — it is hashed with SHA-256 and will never be shown again:",
+    generateKeyTitle: "Generate Tenant-Scoped API Key",
+    generateKeyDesc: "Use as Authorization: Bearer ni_live_... against /api/v1/validate, /api/v1/invoices, and /api/v1/exports/*.",
+    fKeyLabel: "Key Label",
+    createKey: "Create API Key",
+    issuedKeys: (n) => `Issued Keys (${n})`,
+    keysEmpty: "No API keys created yet.",
+    thName: "Name",
+    thPrefix: "Prefix",
+    thScopes: "Scopes",
+    thStatus: "Status",
+    statusRevoked: "Revoked",
+    statusActive: "Active",
+    revoke: "Revoke",
+    revokeConfirm: "Revoke this API key immediately? Any clients using it will receive HTTP 401.",
+    subTitle: "Current Subscription & Monthly Usage",
+    cancelRenewal: "Cancel Renewal",
+    cancelRenewalConfirm: "Cancel upcoming subscription renewal? Your current access remains active through the end of the period.",
+    activePlan: "Active Plan",
+    trial15: "15-Day Free Trial",
+    trialDaysLeft: (n) => `${n} day${n === 1 ? "" : "s"} left · No credit card required`,
+    renewalCancelled: "Renewal cancelled — access continues until end of current billing cycle.",
+    finalizedThisMonth: "Finalized E-Invoices This Month",
+    recommended: "Recommended",
+    currentPlan: "Current Plan",
+    switchTo: (name) => `Switch to ${name}`,
+    planFreeDesc: "Ongoing free validation & occasional invoices",
+    planSoloDesc: "Main plan: recurring, inbox, automations & DATEV/FEC",
+    planBusinessDesc: "Stripe, WooCommerce, multi-user RBAC & GoBD",
+    planAgencyDesc: "High-volume, multi-client & REST API teams",
+    quotaInvoices: (n) => `${n} invoices / mo`,
+    changePwTitle: "Change Account Password",
+    changePwDesc: "Hashed with scrypt (per-user random salt).",
+    fCurrentPw: "Current Password",
+    fNewPw: "New Password (min 8 chars, letters + numbers)",
+    updatePw: "Update Password",
+    gdprTitle: "GDPR Data Portability (Art. 20) & Erasure (Art. 17)",
+    gdprDesc: "Full sovereignty over your company data hosted in the EU.",
+    gdprExport: "Download Full GDPR Art. 20 JSON Export",
+    dangerZone: "Danger Zone — Permanent Workspace Erasure (Art. 17 GDPR)",
+    dangerText: "Permanently deletes your organization, customers, invoices, API keys, and audit logs. Export your GoBD archive first!",
+    deletePlaceholder: "Type DELETE_MY_WORKSPACE",
+    deleteBtn: "Delete",
+    chainTitle: "Live GoBD SHA-256 Audit Hash-Chain Integrity",
+    chainVerified: (n) => `VERIFIED — All ${n} append-only events cryptographically linked with zero tampering.`,
+    chainPending: "Verification pending",
+    reverify: "Re-verify Chain",
+    thRef: "Ref",
+    thActor: "Actor",
+    thHash: "SHA-256 Event Hash",
+    tSaved: "Settings saved and logged in GoBD audit trail.",
+    tSaveFailed: "Save failed",
+    tLoadFailed: "Failed to load settings",
+    tViesFailed: "VIES failed",
+    tLogoTooBig: "Logo must be smaller than 180 KB (PNG/JPG/SVG).",
+    tIntegrationUpdated: (provider) => `${provider} integration updated (AES-256-GCM encrypted at rest).`,
+    tIntegrationFailed: "Integration update failed",
+    tMemberInvited: "Team member invited.",
+    tInviteFailed: "Invite failed",
+    tMemberRemoved: "Member removed.",
+    tRemoveFailed: "Remove failed",
+    tKeyCreationFailed: "Key creation failed",
+    tKeyRevoked: "API key revoked.",
+    tRevokeFailed: "Revoke failed",
+    tPlanSwitched: (tier) => `Switched to ${tier}.`,
+    tPlanFailed: "Plan update failed",
+    tPwUpdated: "Password updated securely with scrypt.",
+    tPwFailed: "Password change failed",
+    tDeleteTypeError: 'Type "DELETE_MY_WORKSPACE" exactly to confirm.',
+    tDeletionFailed: "Deletion failed",
+    tCopied: "Copied to clipboard.",
+    tCancellationFailed: "Cancellation failed",
+  },
+  de: {
+    pageTitle: "Workspace-Einstellungen",
+    pageSubtitle: "Konfigurieren Sie Ihr EN-16931-Rechtsprofil, SEPA-Bankdaten, fortlaufende Nummerierung, Mandanten-Webhooks, Team-RBAC, API-Schlüssel, Abrechnung und DSGVO-Kontrollen.",
+    saveChanges: "Änderungen speichern",
+    loading: "Workspace-Einstellungen werden geladen…",
+    tabCompany: "Firma & Steuer",
+    tabInvoicing: "Rechnung & Bank",
+    tabIntegrations: "Integrationen",
+    tabTeam: "Team & RBAC",
+    tabApiKeys: "API-Schlüssel",
+    tabBilling: "Abrechnung & Kontingent",
+    tabSecurity: "Sicherheit & DSGVO",
+    companyTitle: "Rechtliches & steuerliches Firmenprofil (EN 16931 BG-4)",
+    companyDesc: "Wird automatisch in jedes ausgestellte ZUGFeRD-, Factur-X-, XRechnung- & Peppol-Dokument eingebettet.",
+    fLegalName: "Rechtlicher Firmenname (BT-27) *",
+    fTradingName: "Handelsname (BT-28)",
+    fManagingDirector: "Geschäftsführer (§ 35a GmbHG)",
+    fRegistrationId: "Handelsregister / HRB / SIREN (BT-30)",
+    fStreet: "Straße & Hausnummer (BT-35)",
+    fPostalCode: "PLZ",
+    fCity: "Stadt",
+    fCountry: "Land",
+    fVatId: "EU-USt-IdNr. (BT-31)",
+    checkVies: "VIES prüfen",
+    fTaxNumber: "Nationale Steuernummer (BT-32)",
+    fKleinunternehmer: "Kleinunternehmer (§ 19 UStG) — umsatzsteuerbefreit",
+    fElectronicAddress: "Elektronische Adresse / Endpunkt (BT-34)",
+    fContactName: "Name Rechnungskontakt (BG-6 / BT-41)",
+    fContactPhone: "Kontakttelefon (BT-42)",
+    fContactEmail: "Kontakt-E-Mail (BT-43)",
+    fLogo: "Firmenlogo (für PDF/A-3-Kopf, max. 180 KB)",
+    noLogo: "Kein Logo",
+    removeLogo: "Entfernen",
+    invoicingTitle: "Rechnungsvorgaben, fortlaufende Nummerierung & SEPA-Bankdaten (BG-16)",
+    invoicingDesc: "Die IBAN wird per ISO 13616 MOD-97 auf Client und Server geprüft.",
+    fIban: "IBAN (BT-84)",
+    ibanValid: "✓ Gültige ISO-13616-MOD-97-IBAN-Prüfsumme",
+    ibanInvalid: "✗ Ungültige IBAN-Prüfsumme — der Server weist ungültige IBANs ab",
+    fBic: "BIC (BT-86)",
+    fAccountHolder: "Kontoinhaber (BT-85)",
+    fInvoicePrefix: "Rechnungspräfix",
+    fCreditPrefix: "Gutschriftspräfix (TypeCode 381)",
+    fNextSeq: "Nächste laufende Nummer",
+    nextInvoice: "Nächste Rechnung:",
+    fDefaultFormat: "Standardformat",
+    fDocLanguage: "Standard-Dokumentsprache",
+    fDueDays: "Standard-Zahlungsziel (Tage)",
+    fRetention: "GoBD-Archiv-Aufbewahrungsfrist",
+    retention8: "8 Jahre (Deutschland BEG IV / § 147 AO)",
+    retention10: "10 Jahre (Frankreich / Handelsgesetzbuch)",
+    fPaymentTerms: "Standard-Zahlungsbedingungen (BT-20)",
+    fFooterNotes: "Standard-Rechnungsfußnoten (BT-22)",
+    rotatedSecret: (provider) => `Neues ${provider}-Signaturgeheimnis (jetzt kopieren — nur einmal sichtbar):`,
+    copy: "Kopieren",
+    stripeTitle: "Stripe-E-Rechnungs-Bridge",
+    stripeDesc: "Mandantenbezogener Endpunkt. Jede Anfrage wird mit HMAC-SHA256 + 5-Min-Replay-Schutz geprüft.",
+    wooTitle: "WooCommerce-Plugin-Bridge",
+    wooDesc: "Fügen Sie diese URL & das Signaturgeheimnis in WooCommerce → NormInvoice EU E-Invoice ein.",
+    stripeUrlLabel: "Ihre Stripe-Webhook-URL",
+    wooUrlLabel: "Ihre WooCommerce-Webhook-URL",
+    storedSecret: "Gespeichertes Geheimnis:",
+    notSet: "Nicht gesetzt",
+    save: "Speichern",
+    rotateSecret: "Geheimnis erzeugen / erneuern",
+    stripePlaceholder: "Stripe whsec_... einfügen",
+    wooPlaceholder: "Eigenes Signaturgeheimnis...",
+    accountantTitle: "Automatische Steuerberater-CC-E-Mail",
+    accountantDesc: "Setzt Ihren Steuerberater automatisch auf CC, sobald eine E-Rechnung per E-Mail versendet wird.",
+    saveCc: "CC speichern",
+    fAccountantCc: "Steuerberater-CC-E-Mail",
+    logsTitle: "Letzte Webhook-Zustellprotokolle",
+    logsEmpty: "Noch keine Webhook-Zustellungen für Ihren Workspace protokolliert.",
+    thTime: "Zeit",
+    thProvider: "Anbieter",
+    thEvent: "Ereignis",
+    thHttp: "HTTP",
+    thSummary: "Zusammenfassung",
+    inviteTitle: "Teammitglied oder Steuerberater einladen",
+    inviteDesc: "Weisen Sie restriktive RBAC-Rollen zu (Inhaber, Admin, Steuerberater Lesen/Export, Mitglied).",
+    fEmail: "E-Mail *",
+    fFullName: "Vollständiger Name",
+    fRole: "Rolle",
+    roleAccountant: "Steuerberater (Lesen & Export)",
+    roleMember: "Mitglied (Rechnungen erstellen)",
+    roleAdmin: "Admin (Einstellungen verwalten)",
+    roleOwner: "Inhaber (Vollzugriff)",
+    invite: "Einladen",
+    membersTitle: (n) => `Workspace-Mitglieder (${n})`,
+    thMember: "Mitglied",
+    thRole: "Rolle",
+    thJoined: "Beigetreten",
+    thAction: "Aktion",
+    remove: "Entfernen",
+    removeMemberConfirm: "Dieses Teammitglied aus Ihrem Workspace entfernen?",
+    keyCreatedAlert: "Kopieren Sie Ihren neuen API-Schlüssel jetzt — er wird mit SHA-256 gehasht und nie wieder angezeigt:",
+    generateKeyTitle: "Mandantenbezogenen API-Schlüssel erzeugen",
+    generateKeyDesc: "Als Authorization: Bearer ni_live_... für /api/v1/validate, /api/v1/invoices und /api/v1/exports/* verwenden.",
+    fKeyLabel: "Schlüsselbezeichnung",
+    createKey: "API-Schlüssel erstellen",
+    issuedKeys: (n) => `Ausgestellte Schlüssel (${n})`,
+    keysEmpty: "Noch keine API-Schlüssel erstellt.",
+    thName: "Name",
+    thPrefix: "Präfix",
+    thScopes: "Berechtigungen",
+    thStatus: "Status",
+    statusRevoked: "Widerrufen",
+    statusActive: "Aktiv",
+    revoke: "Widerrufen",
+    revokeConfirm: "Diesen API-Schlüssel sofort widerrufen? Clients, die ihn verwenden, erhalten HTTP 401.",
+    subTitle: "Aktuelles Abonnement & monatliche Nutzung",
+    cancelRenewal: "Verlängerung kündigen",
+    cancelRenewalConfirm: "Bevorstehende Abo-Verlängerung kündigen? Ihr aktueller Zugang bleibt bis zum Ende des Zeitraums aktiv.",
+    activePlan: "Aktiver Tarif",
+    trial15: "15-tägige Testphase",
+    trialDaysLeft: (n) => `noch ${n} Tag${n === 1 ? "" : "e"} · keine Kreditkarte erforderlich`,
+    renewalCancelled: "Verlängerung gekündigt — Zugang bis zum Ende des aktuellen Abrechnungszeitraums.",
+    finalizedThisMonth: "Finalisierte E-Rechnungen diesen Monat",
+    recommended: "Empfohlen",
+    currentPlan: "Aktueller Tarif",
+    switchTo: (name) => `Zu ${name} wechseln`,
+    planFreeDesc: "Dauerhaft kostenlose Prüfung & gelegentliche Rechnungen",
+    planSoloDesc: "Haupttarif: wiederkehrend, Posteingang, Automatisierung & DATEV/FEC",
+    planBusinessDesc: "Stripe, WooCommerce, Mehrbenutzer-RBAC & GoBD",
+    planAgencyDesc: "Hohes Volumen, Mehrmandanten & REST-API-Teams",
+    quotaInvoices: (n) => `${n} Rechnungen / Mon.`,
+    changePwTitle: "Konto-Passwort ändern",
+    changePwDesc: "Gehasht mit scrypt (zufälliger Salt pro Nutzer).",
+    fCurrentPw: "Aktuelles Passwort",
+    fNewPw: "Neues Passwort (mind. 8 Zeichen, Buchstaben + Zahlen)",
+    updatePw: "Passwort aktualisieren",
+    gdprTitle: "DSGVO-Datenportabilität (Art. 20) & Löschung (Art. 17)",
+    gdprDesc: "Volle Hoheit über Ihre in der EU gehosteten Firmendaten.",
+    gdprExport: "Vollständigen DSGVO-Art.-20-JSON-Export herunterladen",
+    dangerZone: "Gefahrenzone — Dauerhafte Workspace-Löschung (Art. 17 DSGVO)",
+    dangerText: "Löscht dauerhaft Ihre Organisation, Kunden, Rechnungen, API-Schlüssel und Audit-Logs. Exportieren Sie zuerst Ihr GoBD-Archiv!",
+    deletePlaceholder: "DELETE_MY_WORKSPACE eingeben",
+    deleteBtn: "Löschen",
+    chainTitle: "Live-GoBD-SHA-256-Audit-Hash-Ketten-Integrität",
+    chainVerified: (n) => `VERIFIZIERT — Alle ${n} anfüg-nur-Ereignisse kryptografisch verkettet, keine Manipulation.`,
+    chainPending: "Verifizierung ausstehend",
+    reverify: "Kette erneut prüfen",
+    thRef: "Ref.",
+    thActor: "Akteur",
+    thHash: "SHA-256-Ereignis-Hash",
+    tSaved: "Einstellungen gespeichert und im GoBD-Audit-Trail protokolliert.",
+    tSaveFailed: "Speichern fehlgeschlagen",
+    tLoadFailed: "Einstellungen konnten nicht geladen werden",
+    tViesFailed: "VIES fehlgeschlagen",
+    tLogoTooBig: "Das Logo muss kleiner als 180 KB sein (PNG/JPG/SVG).",
+    tIntegrationUpdated: (provider) => `${provider}-Integration aktualisiert (AES-256-GCM verschlüsselt gespeichert).`,
+    tIntegrationFailed: "Integrationsaktualisierung fehlgeschlagen",
+    tMemberInvited: "Teammitglied eingeladen.",
+    tInviteFailed: "Einladung fehlgeschlagen",
+    tMemberRemoved: "Mitglied entfernt.",
+    tRemoveFailed: "Entfernen fehlgeschlagen",
+    tKeyCreationFailed: "Schlüsselerstellung fehlgeschlagen",
+    tKeyRevoked: "API-Schlüssel widerrufen.",
+    tRevokeFailed: "Widerruf fehlgeschlagen",
+    tPlanSwitched: (tier) => `Zu ${tier} gewechselt.`,
+    tPlanFailed: "Tarifänderung fehlgeschlagen",
+    tPwUpdated: "Passwort sicher mit scrypt aktualisiert.",
+    tPwFailed: "Passwortänderung fehlgeschlagen",
+    tDeleteTypeError: 'Geben Sie exakt „DELETE_MY_WORKSPACE" zur Bestätigung ein.',
+    tDeletionFailed: "Löschung fehlgeschlagen",
+    tCopied: "In die Zwischenablage kopiert.",
+    tCancellationFailed: "Kündigung fehlgeschlagen",
+  },
+  fr: {
+    pageTitle: "Paramètres de l'espace",
+    pageSubtitle: "Configurez votre profil légal EN 16931, vos coordonnées bancaires SEPA, la numérotation séquentielle, les webhooks, le RBAC d'équipe, les clés API, la facturation et les contrôles RGPD.",
+    saveChanges: "Enregistrer les modifications",
+    loading: "Chargement des paramètres de l'espace…",
+    tabCompany: "Entreprise & fiscalité",
+    tabInvoicing: "Facturation & banque",
+    tabIntegrations: "Intégrations",
+    tabTeam: "Équipe & RBAC",
+    tabApiKeys: "Clés API",
+    tabBilling: "Facturation & quota",
+    tabSecurity: "Sécurité & RGPD",
+    companyTitle: "Profil légal & fiscal de l'entreprise (EN 16931 BG-4)",
+    companyDesc: "Intégré automatiquement à chaque document ZUGFeRD, Factur-X, XRechnung & Peppol que vous émettez.",
+    fLegalName: "Raison sociale (BT-27) *",
+    fTradingName: "Nom commercial (BT-28)",
+    fManagingDirector: "Gérant (§ 35a GmbHG)",
+    fRegistrationId: "Registre du commerce / HRB / SIREN (BT-30)",
+    fStreet: "Rue & numéro (BT-35)",
+    fPostalCode: "Code postal",
+    fCity: "Ville",
+    fCountry: "Pays",
+    fVatId: "N° de TVA UE (BT-31)",
+    checkVies: "Vérifier VIES",
+    fTaxNumber: "Numéro fiscal national (BT-32)",
+    fKleinunternehmer: "Franchise en base (§ 19 UStG) — petite entreprise exonérée de TVA",
+    fElectronicAddress: "Adresse électronique / point de terminaison (BT-34)",
+    fContactName: "Nom du contact de facturation (BG-6 / BT-41)",
+    fContactPhone: "Téléphone du contact (BT-42)",
+    fContactEmail: "E-mail du contact (BT-43)",
+    fLogo: "Logo de l'entreprise (en-tête PDF/A-3, max 180 Ko)",
+    noLogo: "Aucun logo",
+    removeLogo: "Supprimer",
+    invoicingTitle: "Valeurs par défaut de facturation, numérotation séquentielle & banque SEPA (BG-16)",
+    invoicingDesc: "L'IBAN est validé via ISO 13616 MOD-97 côté client et serveur.",
+    fIban: "IBAN (BT-84)",
+    ibanValid: "✓ Somme de contrôle IBAN ISO 13616 MOD-97 valide",
+    ibanInvalid: "✗ Somme de contrôle IBAN invalide — le serveur rejettera les IBAN invalides",
+    fBic: "BIC (BT-86)",
+    fAccountHolder: "Titulaire du compte (BT-85)",
+    fInvoicePrefix: "Préfixe de facture",
+    fCreditPrefix: "Préfixe d'avoir (TypeCode 381)",
+    fNextSeq: "Prochain numéro de séquence",
+    nextInvoice: "Prochaine facture :",
+    fDefaultFormat: "Format par défaut",
+    fDocLanguage: "Langue de document par défaut",
+    fDueDays: "Délai de paiement par défaut (jours)",
+    fRetention: "Durée de conservation de l'archive GoBD",
+    retention8: "8 ans (Allemagne BEG IV / § 147 AO)",
+    retention10: "10 ans (France / Code de commerce)",
+    fPaymentTerms: "Conditions de paiement par défaut (BT-20)",
+    fFooterNotes: "Notes de bas de facture par défaut (BT-22)",
+    rotatedSecret: (provider) => `Nouveau secret de signature ${provider} (copiez maintenant — affiché une seule fois) :`,
+    copy: "Copier",
+    stripeTitle: "Passerelle e-facture Stripe",
+    stripeDesc: "Point de terminaison par locataire. Chaque requête est vérifiée avec HMAC-SHA256 + protection anti-rejeu de 5 min.",
+    wooTitle: "Passerelle plugin WooCommerce",
+    wooDesc: "Collez cette URL & ce secret de signature dans WooCommerce → NormInvoice EU E-Invoice.",
+    stripeUrlLabel: "Votre URL de webhook Stripe",
+    wooUrlLabel: "Votre URL de webhook WooCommerce",
+    storedSecret: "Secret stocké :",
+    notSet: "Non défini",
+    save: "Enregistrer",
+    rotateSecret: "Générer / renouveler le secret",
+    stripePlaceholder: "Coller Stripe whsec_...",
+    wooPlaceholder: "Secret de signature personnalisé...",
+    accountantTitle: "E-mail de copie automatique au comptable",
+    accountantDesc: "Met automatiquement votre expert-comptable en copie dès qu'une e-facture est envoyée par e-mail.",
+    saveCc: "Enregistrer la copie",
+    fAccountantCc: "E-mail de copie comptable",
+    logsTitle: "Journaux de livraison de webhooks récents",
+    logsEmpty: "Aucune livraison de webhook enregistrée pour votre espace pour l'instant.",
+    thTime: "Heure",
+    thProvider: "Fournisseur",
+    thEvent: "Événement",
+    thHttp: "HTTP",
+    thSummary: "Résumé",
+    inviteTitle: "Inviter un membre d'équipe ou un conseiller fiscal",
+    inviteDesc: "Attribuez des rôles RBAC à moindre privilège (Propriétaire, Admin, Comptable lecture/export, Membre).",
+    fEmail: "E-mail *",
+    fFullName: "Nom complet",
+    fRole: "Rôle",
+    roleAccountant: "Comptable (lecture & export)",
+    roleMember: "Membre (créer des factures)",
+    roleAdmin: "Admin (gérer les paramètres)",
+    roleOwner: "Propriétaire (accès complet)",
+    invite: "Inviter",
+    membersTitle: (n) => `Membres de l'espace (${n})`,
+    thMember: "Membre",
+    thRole: "Rôle",
+    thJoined: "Rejoint le",
+    thAction: "Action",
+    remove: "Supprimer",
+    removeMemberConfirm: "Retirer ce membre de votre espace ?",
+    keyCreatedAlert: "Copiez votre nouvelle clé API maintenant — elle est hachée en SHA-256 et ne sera plus jamais affichée :",
+    generateKeyTitle: "Générer une clé API par locataire",
+    generateKeyDesc: "À utiliser comme Authorization: Bearer ni_live_... sur /api/v1/validate, /api/v1/invoices et /api/v1/exports/*.",
+    fKeyLabel: "Libellé de la clé",
+    createKey: "Créer une clé API",
+    issuedKeys: (n) => `Clés émises (${n})`,
+    keysEmpty: "Aucune clé API créée pour l'instant.",
+    thName: "Nom",
+    thPrefix: "Préfixe",
+    thScopes: "Portées",
+    thStatus: "Statut",
+    statusRevoked: "Révoquée",
+    statusActive: "Active",
+    revoke: "Révoquer",
+    revokeConfirm: "Révoquer cette clé API immédiatement ? Tout client l'utilisant recevra HTTP 401.",
+    subTitle: "Abonnement actuel & utilisation mensuelle",
+    cancelRenewal: "Annuler le renouvellement",
+    cancelRenewalConfirm: "Annuler le prochain renouvellement d'abonnement ? Votre accès actuel reste actif jusqu'à la fin de la période.",
+    activePlan: "Offre active",
+    trial15: "Essai gratuit de 15 jours",
+    trialDaysLeft: (n) => `${n} jour${n === 1 ? "" : "s"} restant${n === 1 ? "" : "s"} · sans carte bancaire`,
+    renewalCancelled: "Renouvellement annulé — l'accès continue jusqu'à la fin du cycle de facturation actuel.",
+    finalizedThisMonth: "E-factures finalisées ce mois-ci",
+    recommended: "Recommandé",
+    currentPlan: "Offre actuelle",
+    switchTo: (name) => `Passer à ${name}`,
+    planFreeDesc: "Validation gratuite permanente & factures occasionnelles",
+    planSoloDesc: "Offre principale : récurrent, boîte de réception, automatisations & DATEV/FEC",
+    planBusinessDesc: "Stripe, WooCommerce, RBAC multi-utilisateurs & GoBD",
+    planAgencyDesc: "Gros volume, multi-clients & équipes API REST",
+    quotaInvoices: (n) => `${n} factures / mois`,
+    changePwTitle: "Changer le mot de passe du compte",
+    changePwDesc: "Haché avec scrypt (sel aléatoire par utilisateur).",
+    fCurrentPw: "Mot de passe actuel",
+    fNewPw: "Nouveau mot de passe (min. 8 caractères, lettres + chiffres)",
+    updatePw: "Mettre à jour le mot de passe",
+    gdprTitle: "Portabilité des données RGPD (art. 20) & effacement (art. 17)",
+    gdprDesc: "Pleine souveraineté sur vos données d'entreprise hébergées dans l'UE.",
+    gdprExport: "Télécharger l'export JSON RGPD art. 20 complet",
+    dangerZone: "Zone de danger — effacement permanent de l'espace (art. 17 RGPD)",
+    dangerText: "Supprime définitivement votre organisation, clients, factures, clés API et journaux d'audit. Exportez d'abord votre archive GoBD !",
+    deletePlaceholder: "Saisir DELETE_MY_WORKSPACE",
+    deleteBtn: "Supprimer",
+    chainTitle: "Intégrité de la chaîne de hachage d'audit GoBD SHA-256 en direct",
+    chainVerified: (n) => `VÉRIFIÉ — Les ${n} événements en ajout seul sont liés cryptographiquement, sans altération.`,
+    chainPending: "Vérification en attente",
+    reverify: "Revérifier la chaîne",
+    thRef: "Réf.",
+    thActor: "Acteur",
+    thHash: "Hachage d'événement SHA-256",
+    tSaved: "Paramètres enregistrés et consignés dans la piste d'audit GoBD.",
+    tSaveFailed: "Échec de l'enregistrement",
+    tLoadFailed: "Échec du chargement des paramètres",
+    tViesFailed: "Échec VIES",
+    tLogoTooBig: "Le logo doit faire moins de 180 Ko (PNG/JPG/SVG).",
+    tIntegrationUpdated: (provider) => `Intégration ${provider} mise à jour (chiffrée AES-256-GCM au repos).`,
+    tIntegrationFailed: "Échec de la mise à jour de l'intégration",
+    tMemberInvited: "Membre d'équipe invité.",
+    tInviteFailed: "Échec de l'invitation",
+    tMemberRemoved: "Membre supprimé.",
+    tRemoveFailed: "Échec de la suppression",
+    tKeyCreationFailed: "Échec de la création de la clé",
+    tKeyRevoked: "Clé API révoquée.",
+    tRevokeFailed: "Échec de la révocation",
+    tPlanSwitched: (tier) => `Basculé vers ${tier}.`,
+    tPlanFailed: "Échec de la mise à jour de l'offre",
+    tPwUpdated: "Mot de passe mis à jour en toute sécurité avec scrypt.",
+    tPwFailed: "Échec du changement de mot de passe",
+    tDeleteTypeError: 'Saisissez exactement « DELETE_MY_WORKSPACE » pour confirmer.',
+    tDeletionFailed: "Échec de la suppression",
+    tCopied: "Copié dans le presse-papiers.",
+    tCancellationFailed: "Échec de l'annulation",
+  },
+};
