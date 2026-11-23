@@ -3826,3 +3826,146 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     tCancellationFailed: "Échec de l'annulation",
   },
 };
+
+// ── Trust / Security center translations (bespoke page) ──
+export interface TrustStrings {
+  badge: string;
+  title: string;
+  intro: string;
+  btnDpa: string;
+  btnPrivacy: string;
+  btnVerfahren: string;
+  cards: Array<{ title: string; bullets: string[] }>;
+}
+
+export const TRUST_STRINGS: Record<AppLocale, TrustStrings> = {
+  en: {
+    badge: "EU Sovereign Infrastructure · Zero Tracking",
+    title: "NormInvoice Trust, Security & EU Compliance Center",
+    intro:
+      "Electronic invoices contain sensitive financial and tax records. NormInvoice is engineered from the ground up for German GoBD, French Factur-X, and EU GDPR audits — with transparent cryptography, zero third-party tracking, and 100% hosting inside Germany.",
+    btnDpa: "Read Art. 28 GDPR DPA (AVV)",
+    btnPrivacy: "GDPR & TDDDG Privacy Policy",
+    btnVerfahren: "Download GoBD Verfahrensdokumentation",
+    cards: [
+      {
+        title: "100% Germany EU Data Residency",
+        bullets: [
+          "Compute, PostgreSQL 16 DB, and S3 WORM storage hosted exclusively in Falkenstein & Nuremberg, Germany (Hetzner Online GmbH).",
+          "Zero cross-border invoice transfers outside the EEA and zero exposure to foreign extra-territorial data laws.",
+          "100% locally self-hosted fonts (Inter & JetBrains Mono) — zero browser requests to Google Fonts CDN.",
+        ],
+      },
+      {
+        title: "Application & Cryptographic Security",
+        bullets: [
+          "Strict Content-Security-Policy (CSP), HSTS Preload, X-Frame-Options: DENY, and Same-Origin CSRF protection.",
+          "AES-256-GCM authenticated encryption for stored integration credentials; scrypt password hashing; SHA-256 hashed Bearer API keys.",
+          "5-minute replay-attack window + constant-time HMAC verification on Stripe, WooCommerce, and Paddle webhooks.",
+        ],
+      },
+      {
+        title: "GoBD & French Tax Audit Immutability",
+        bullets: [
+          "PostgreSQL 16 Row-Level Security (RLS) isolates every tenant transactionally via app.current_org_id.",
+          "Append-only audit table protected by database-level BEFORE UPDATE OR DELETE triggers with SHA-256 hash chaining.",
+          "Configurable 8-year (Germany BEG IV) or 10-year (France) S3 Object Lock WORM archive retention.",
+        ],
+      },
+      {
+        title: "Sandboxed Zero-Retention Validation",
+        bullets: [
+          "Public validator runs strictly in volatile RAM (tmpfs) inside zero-internet-egress containers — files are wiped immediately.",
+          "Strict XXE / DTD rejection, 10 MB upload cap, Ghostscript -dSAFER sandboxing, and Excel CSV formula-injection neutralization.",
+          "Official EN 16931 / KoSIT XRechnung 3.0.2 & veraPDF ISO 19005-3 PDF/A-3b validation pipeline.",
+        ],
+      },
+    ],
+  },
+  de: {
+    badge: "EU-souveräne Infrastruktur · Kein Tracking",
+    title: "NormInvoice Trust-, Sicherheits- & EU-Compliance-Center",
+    intro:
+      "Elektronische Rechnungen enthalten sensible Finanz- und Steuerdaten. NormInvoice ist von Grund auf für deutsche GoBD-, französische Factur-X- und EU-DSGVO-Prüfungen ausgelegt — mit transparenter Kryptografie, ohne Drittanbieter-Tracking und mit 100 % Hosting in Deutschland.",
+    btnDpa: "Art.-28-DSGVO-AVV lesen",
+    btnPrivacy: "DSGVO- & TDDDG-Datenschutzerklärung",
+    btnVerfahren: "GoBD-Verfahrensdokumentation herunterladen",
+    cards: [
+      {
+        title: "100 % Datenhaltung in Deutschland (EU)",
+        bullets: [
+          "Rechenleistung, PostgreSQL-16-Datenbank und S3-WORM-Speicher ausschließlich in Falkenstein & Nürnberg, Deutschland (Hetzner Online GmbH) gehostet.",
+          "Keine grenzüberschreitenden Rechnungsübermittlungen außerhalb des EWR und keine Exposition gegenüber ausländischen extraterritorialen Datengesetzen.",
+          "100 % lokal selbstgehostete Schriftarten (Inter & JetBrains Mono) — keine Browser-Anfragen an das Google-Fonts-CDN.",
+        ],
+      },
+      {
+        title: "Anwendungs- & kryptografische Sicherheit",
+        bullets: [
+          "Strikte Content-Security-Policy (CSP), HSTS-Preload, X-Frame-Options: DENY und Same-Origin-CSRF-Schutz.",
+          "AES-256-GCM-authentifizierte Verschlüsselung gespeicherter Integrations-Zugangsdaten; scrypt-Passwort-Hashing; SHA-256-gehashte Bearer-API-Schlüssel.",
+          "5-Minuten-Replay-Schutzfenster + konstantzeitige HMAC-Verifizierung bei Stripe-, WooCommerce- und Paddle-Webhooks.",
+        ],
+      },
+      {
+        title: "GoBD- & französische Betriebsprüfungs-Unveränderbarkeit",
+        bullets: [
+          "PostgreSQL-16-Row-Level-Security (RLS) isoliert jeden Mandanten transaktional über app.current_org_id.",
+          "Nur anfügbare Audit-Tabelle, geschützt durch Datenbank-Trigger BEFORE UPDATE OR DELETE mit SHA-256-Hash-Verkettung.",
+          "Konfigurierbare Aufbewahrung im S3-Object-Lock-WORM-Archiv über 8 Jahre (Deutschland BEG IV) oder 10 Jahre (Frankreich).",
+        ],
+      },
+      {
+        title: "Sandbox-Validierung ohne Datenspeicherung",
+        bullets: [
+          "Der öffentliche Validator läuft ausschließlich im flüchtigen RAM (tmpfs) in Containern ohne Internet-Ausgang — Dateien werden sofort gelöscht.",
+          "Strikte XXE-/DTD-Abweisung, 10-MB-Upload-Limit, Ghostscript-dSAFER-Sandboxing und Neutralisierung von Excel-CSV-Formel-Injektionen.",
+          "Offizielle EN-16931- / KoSIT-XRechnung-3.0.2- & veraPDF-ISO-19005-3-PDF/A-3b-Validierungspipeline.",
+        ],
+      },
+    ],
+  },
+  fr: {
+    badge: "Infrastructure souveraine UE · Aucun tracking",
+    title: "Centre de confiance, sécurité & conformité UE de NormInvoice",
+    intro:
+      "Les factures électroniques contiennent des données financières et fiscales sensibles. NormInvoice est conçu dès l'origine pour les contrôles GoBD allemands, Factur-X français et RGPD de l'UE — avec une cryptographie transparente, aucun tracking tiers et un hébergement 100 % en Allemagne.",
+    btnDpa: "Lire le DPA (AVV) art. 28 RGPD",
+    btnPrivacy: "Politique de confidentialité RGPD & TDDDG",
+    btnVerfahren: "Télécharger la Verfahrensdokumentation GoBD",
+    cards: [
+      {
+        title: "Résidence des données 100 % en Allemagne (UE)",
+        bullets: [
+          "Calcul, base de données PostgreSQL 16 et stockage S3 WORM hébergés exclusivement à Falkenstein & Nuremberg, Allemagne (Hetzner Online GmbH).",
+          "Aucun transfert transfrontalier de factures hors de l'EEE et aucune exposition aux lois extraterritoriales étrangères sur les données.",
+          "Polices auto-hébergées localement à 100 % (Inter & JetBrains Mono) — aucune requête du navigateur vers le CDN Google Fonts.",
+        ],
+      },
+      {
+        title: "Sécurité applicative & cryptographique",
+        bullets: [
+          "Content-Security-Policy (CSP) stricte, HSTS Preload, X-Frame-Options: DENY et protection CSRF Same-Origin.",
+          "Chiffrement authentifié AES-256-GCM des identifiants d'intégration stockés ; hachage de mot de passe scrypt ; clés API Bearer hachées en SHA-256.",
+          "Fenêtre anti-rejeu de 5 minutes + vérification HMAC à temps constant sur les webhooks Stripe, WooCommerce et Paddle.",
+        ],
+      },
+      {
+        title: "Immuabilité pour les contrôles fiscaux GoBD & français",
+        bullets: [
+          "La sécurité au niveau des lignes (RLS) de PostgreSQL 16 isole chaque locataire de façon transactionnelle via app.current_org_id.",
+          "Table d'audit en ajout seul, protégée par des déclencheurs BEFORE UPDATE OR DELETE au niveau de la base avec chaînage de hachage SHA-256.",
+          "Conservation configurable en archive S3 Object Lock WORM sur 8 ans (Allemagne BEG IV) ou 10 ans (France).",
+        ],
+      },
+      {
+        title: "Validation en bac à sable sans conservation",
+        bullets: [
+          "Le validateur public s'exécute strictement en mémoire vive volatile (tmpfs) dans des conteneurs sans sortie Internet — les fichiers sont effacés immédiatement.",
+          "Rejet strict XXE / DTD, limite d'import de 10 Mo, bac à sable Ghostscript -dSAFER et neutralisation des injections de formules CSV Excel.",
+          "Pipeline de validation officiel EN 16931 / KoSIT XRechnung 3.0.2 & veraPDF ISO 19005-3 PDF/A-3b.",
+        ],
+      },
+    ],
+  },
+};
