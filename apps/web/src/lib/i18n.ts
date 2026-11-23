@@ -585,3 +585,422 @@ export const NAV_STRINGS: Record<AppLocale, NavStrings> = {
     ],
   },
 };
+
+// ── Public footer translations ──
+export interface FooterStrings {
+  tagline: string;
+  disclaimer: string;
+  productHeading: string;
+  productLinks: string[];
+  solutionsHeading: string;
+  solutionsLinks: string[];
+  legalHeading: string;
+  legalLinks: string[];
+  cookieSettings: string;
+  copyright: string; // %YEAR% is replaced at render time
+  relatedEntity: string;
+}
+
+export const FOOTER_STRINGS: Record<AppLocale, FooterStrings> = {
+  en: {
+    tagline:
+      "Subscription-based European e-invoicing and financial workflow software. Built for EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2, Peppol BIS 3.0, and structured audit archiving.",
+    disclaimer:
+      "NormInvoice is commercial software and does not replace advice from a qualified tax advisor or lawyer.",
+    productHeading: "Product",
+    productLinks: [
+      "Features Overview",
+      "Countries & Standards",
+      "Integrations",
+      "Pricing",
+      "Security & Trust",
+      "Format Finder",
+      "API Docs",
+      "EN 16931 Error Guide",
+    ],
+    solutionsHeading: "Solutions & Company",
+    solutionsLinks: [
+      "For Small Businesses",
+      "For Finance Teams",
+      "For Accountants",
+      "About NormInvoice",
+      "Partners & Developers",
+      "Help Center",
+      "FAQ",
+      "Contact Us",
+    ],
+    legalHeading: "Legal & Policies",
+    legalLinks: [
+      "Legal Notice",
+      "Impressum (DE)",
+      "Terms of Service",
+      "Billing Policy",
+      "Refund Policy",
+      "Privacy Policy",
+      "Cookie Policy",
+      "DPA (GDPR)",
+      "Subprocessors",
+      "Acceptable Use",
+      "Availability",
+      "Data Retention",
+      "AI Disclosure",
+      "Accessibility",
+      "Third-Party Terms",
+      "Complaints",
+      "IP & Brand",
+      "Trust Center",
+    ],
+    cookieSettings: "Cookie Settings",
+    copyright:
+      "© %YEAR% NormInvoice — Product of Trend&Brand. All rights reserved. Proposed contracting entity: Trend&Brand LLC (Wyoming, USA).",
+    relatedEntity: "Related group entity: TREND & BRAND (PRIVATE) LIMITED (Pakistan).",
+  },
+  de: {
+    tagline:
+      "Abonnementbasierte europäische E-Rechnungs- und Finanzworkflow-Software. Entwickelt für EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2, Peppol BIS 3.0 und revisionssichere Archivierung.",
+    disclaimer:
+      "NormInvoice ist kommerzielle Software und ersetzt keine Beratung durch einen qualifizierten Steuerberater oder Rechtsanwalt.",
+    productHeading: "Produkt",
+    productLinks: [
+      "Funktionsübersicht",
+      "Länder & Standards",
+      "Integrationen",
+      "Preise",
+      "Sicherheit & Vertrauen",
+      "Format-Finder",
+      "API-Doku",
+      "EN-16931-Fehlerhilfe",
+    ],
+    solutionsHeading: "Lösungen & Unternehmen",
+    solutionsLinks: [
+      "Für Kleinunternehmen",
+      "Für Finanzteams",
+      "Für Steuerberater",
+      "Über NormInvoice",
+      "Partner & Entwickler",
+      "Hilfecenter",
+      "FAQ",
+      "Kontakt",
+    ],
+    legalHeading: "Rechtliches & Richtlinien",
+    legalLinks: [
+      "Rechtliche Hinweise",
+      "Impressum (DE)",
+      "AGB",
+      "Abrechnungsrichtlinie",
+      "Widerruf & Erstattung",
+      "Datenschutz",
+      "Cookie-Richtlinie",
+      "AVV (DSGVO)",
+      "Unterauftragsverarbeiter",
+      "Nutzungsbedingungen",
+      "Verfügbarkeit",
+      "Datenaufbewahrung",
+      "KI-Transparenz",
+      "Barrierefreiheit",
+      "Drittanbieter-Bedingungen",
+      "Beschwerden",
+      "Geistiges Eigentum & Marke",
+      "Trust-Center",
+    ],
+    cookieSettings: "Cookie-Einstellungen",
+    copyright:
+      "© %YEAR% NormInvoice — ein Produkt von Trend&Brand. Alle Rechte vorbehalten. Vorgesehene Vertragspartei: Trend&Brand LLC (Wyoming, USA).",
+    relatedEntity: "Verbundenes Konzernunternehmen: TREND & BRAND (PRIVATE) LIMITED (Pakistan).",
+  },
+  fr: {
+    tagline:
+      "Logiciel européen de facturation électronique et de flux financiers par abonnement. Conçu pour EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2, Peppol BIS 3.0 et l'archivage à valeur probante.",
+    disclaimer:
+      "NormInvoice est un logiciel commercial et ne remplace pas les conseils d'un expert-comptable ou d'un avocat qualifié.",
+    productHeading: "Produit",
+    productLinks: [
+      "Aperçu des fonctionnalités",
+      "Pays & normes",
+      "Intégrations",
+      "Tarifs",
+      "Sécurité & confiance",
+      "Recherche de format",
+      "Docs API",
+      "Guide des erreurs EN 16931",
+    ],
+    solutionsHeading: "Solutions & entreprise",
+    solutionsLinks: [
+      "Pour les petites entreprises",
+      "Pour les équipes financières",
+      "Pour les experts-comptables",
+      "À propos de NormInvoice",
+      "Partenaires & développeurs",
+      "Centre d'aide",
+      "FAQ",
+      "Nous contacter",
+    ],
+    legalHeading: "Mentions légales & politiques",
+    legalLinks: [
+      "Mentions légales",
+      "Impressum (DE)",
+      "Conditions d'utilisation",
+      "Politique de facturation",
+      "Annulation & remboursement",
+      "Politique de confidentialité",
+      "Politique relative aux cookies",
+      "DPA (RGPD)",
+      "Sous-traitants",
+      "Utilisation acceptable",
+      "Disponibilité",
+      "Conservation des données",
+      "Transparence IA",
+      "Accessibilité",
+      "Conditions des tiers",
+      "Réclamations",
+      "PI & marque",
+      "Centre de confiance",
+    ],
+    cookieSettings: "Paramètres des cookies",
+    copyright:
+      "© %YEAR% NormInvoice — un produit de Trend&Brand. Tous droits réservés. Entité contractante proposée : Trend&Brand LLC (Wyoming, USA).",
+    relatedEntity: "Entité de groupe liée : TREND & BRAND (PRIVATE) LIMITED (Pakistan).",
+  },
+};
+
+// ── Homepage body translations ──
+export interface HomeStrings {
+  heroBadge: string;
+  heroTitleA: string;
+  heroTitleB: string;
+  heroSubtitle: string;
+  ctaSignup: string;
+  ctaTrial: string;
+  ctaExplore: string;
+  trust: string[];
+  valEyebrow: string;
+  valTitle: string;
+  valSubtitle: string;
+  valFormatLink: string;
+  lifeEyebrow: string;
+  lifeTitle: string;
+  lifeSubtitle: string;
+  lifeSteps: Array<{ title: string; text: string }>;
+  cEyebrow: string;
+  cTitle: string;
+  cSubtitle: string;
+  cViewAll: string;
+  badgeAvailable: string;
+  badgePartner: string;
+  badgePlanned: string;
+  solEyebrow: string;
+  solTitle: string;
+  solCards: Array<{ title: string; text: string }>;
+  secBadge: string;
+  secTitle: string;
+  secSubtitle: string;
+  secBullets: string[];
+  secBtnSecurity: string;
+  secBtnIntegrations: string;
+  secBtnDocs: string;
+  faqTitle: string;
+  faqSubtitle: string;
+  faqReadAll: string;
+  faqs: Array<{ q: string; a: string }>;
+}
+
+export const HOME_STRINGS: Record<AppLocale, HomeStrings> = {
+  en: {
+    heroBadge: "NormInvoice — Product of Trend&Brand · Free plan + 15-day free trial",
+    heroTitleA: "Stay Compliant Across Europe.",
+    heroTitleB: "Automate Your E-Invoicing.",
+    heroSubtitle:
+      "Create, validate, send, receive, and archive EN 16931 electronic invoices (ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0) in one clear, multi-tenant SaaS workspace.",
+    ctaSignup: "Sign Up Free",
+    ctaTrial: "Start 15-Day Free Trial",
+    ctaExplore: "Explore the Platform",
+    trust: ["Free plan available ($0/mo)", "15-day trial · No credit card required", "Solo plan $39/month"],
+    valEyebrow: "Try Immediately · No Account Required",
+    valTitle: "Zero-Retention Dual E-Invoice Validator & Viewer",
+    valSubtitle:
+      "Drop any ZUGFeRD 2.3, Factur-X 1.07, or XRechnung 3.0.2 XML/PDF — inspected strictly in memory and wiped immediately after returning your report.",
+    valFormatLink: "Need help choosing a format? Format Finder →",
+    lifeEyebrow: "One Workspace, Complete Lifecycle",
+    lifeTitle: "E-Invoicing Without the Operational Complexity",
+    lifeSubtitle:
+      "Built around one shared canonical EN 16931 engine with country-aware rules — so outgoing invoices, incoming supplier bills, payments, and audit logs stay cleanly synchronized.",
+    lifeSteps: [
+      { title: "Create", text: "Build structured invoices with saved customers, product rates, tax rules, credit notes, and recurring schedules." },
+      { title: "Validate", text: "Run deterministic EN 16931, ZUGFeRD 2.3, Factur-X 1.07 & XRechnung checks with plain-language diagnostics before sending." },
+      { title: "Exchange", text: "Deliver hybrid PDF/A-3b + XML documents through email, webhook bridges, or configured network partners." },
+      { title: "Track & Archive", text: "Keep validation, delivery, payment, and GoBD SHA-256 hash-chained archival statuses strictly distinct and auditable." },
+      { title: "Collaborate", text: "Review incoming supplier bills, approve exceptions, and export clean DATEV EXTF or French FEC ledgers for your accountant." },
+    ],
+    cEyebrow: "13 European Markets · Honest Status Labels",
+    cTitle: "Country-Aware Rules, Never Overpromised",
+    cSubtitle:
+      "Every market clearly distinguishes what is live today in the core workspace versus partner-operated gateways or planned roadmap modules.",
+    cViewAll: "View All 13 Countries",
+    badgeAvailable: "Available",
+    badgePartner: "Partner-Operated",
+    badgePlanned: "Planned",
+    solEyebrow: "Built for Every Finance Role",
+    solTitle: "Tailored Workflows for Growing Teams",
+    solCards: [
+      { title: "Small Businesses & Solo Founders", text: "Create EN 16931 invoices in minutes, manage customers & products, and keep track of paid vs. overdue bills." },
+      { title: "Finance & Operations Teams", text: "Combine outgoing billing, incoming supplier approvals, duplicate checks, partial payments, and automation rules." },
+      { title: "Accountants & Tax Advisors", text: "Consent-gated multi-client portal with 1-click DATEV EXTF, French FEC, GoBD audit dossiers, and hash-chain proofs." },
+      { title: "Developers & Integration Partners", text: "Signed Stripe & WooCommerce webhooks, Bearer API keys, REST validation API, and zero-dependency TypeScript SDK." },
+    ],
+    secBadge: "Security, Privacy & Honest Architecture",
+    secTitle: "Engineered for Real Audits — Not Marketing Buzzwords",
+    secSubtitle:
+      "We publish only security and compliance controls actually implemented in code — never fabricated ISO badges, fake customer logos, or unverified uptime promises.",
+    secBullets: [
+      "Strict multi-tenant organization isolation on every database query and API endpoint.",
+      "Per-user random-salt scrypt password hashing, HMAC-SHA256 sessions & AES-256-GCM webhook secret encryption.",
+      "Tamper-evident SHA-256 hash-chained GoBD audit log with one-click chain verification.",
+      "Self-hosted web fonts, XXE/DTD XML attack rejection, CSRF origin blocking & OWASP CSP headers.",
+      "Signed Stripe & WooCommerce bridges plus WordPress HPOS-compatible WooCommerce plugin.",
+    ],
+    secBtnSecurity: "Security & Trust Details",
+    secBtnIntegrations: "Explore Integrations",
+    secBtnDocs: "API Docs",
+    faqTitle: "Frequently Asked Questions",
+    faqSubtitle: "Straight answers on plans, country support, and compliance boundaries.",
+    faqReadAll: "Read all FAQs →",
+    faqs: [
+      { q: "Is NormInvoice free to try?", a: "Yes. You can use our zero-retention public validator without an account, sign up on the ongoing Free plan ($0/month), or evaluate the full platform with a real 15-day free trial — no credit card required." },
+      { q: "Does a passed validation guarantee tax-authority acceptance?", a: "No. Validation checks evaluate your invoice against supported technical standards (EN 16931, BR-DE-*, BR-FR-*). Legal tax treatment and external gateway acceptance depend on your transaction and recipient." },
+      { q: "Which European countries are currently supported?", a: "Core EN 16931 workflows (Germany ZUGFeRD/XRechnung, France Factur-X, Belgium/Netherlands/Austria Peppol BIS 3.0) are live in the workspace, while national clearance gateways (KSeF, SdI, PDP, RO e-Factura) are transparently labeled as Partner-Operated or Planned." },
+      { q: "Can I cancel my paid subscription online?", a: "Yes. Workspace owners can switch plans or cancel upcoming renewal directly in Settings > Billing at any time, with zero hidden fees." },
+    ],
+  },
+  de: {
+    heroBadge: "NormInvoice — ein Produkt von Trend&Brand · Kostenloser Tarif + 15 Tage gratis testen",
+    heroTitleA: "Europaweit rechtskonform bleiben.",
+    heroTitleB: "E-Rechnungen automatisieren.",
+    heroSubtitle:
+      "Erstellen, prüfen, senden, empfangen und archivieren Sie EN-16931-E-Rechnungen (ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0) in einem übersichtlichen, mandantenfähigen SaaS-Workspace.",
+    ctaSignup: "Kostenlos starten",
+    ctaTrial: "15 Tage gratis testen",
+    ctaExplore: "Plattform entdecken",
+    trust: ["Kostenloser Tarif (0 €/Mon.)", "15-Tage-Test · Keine Kreditkarte nötig", "Solo-Tarif 39 $/Monat"],
+    valEyebrow: "Sofort testen · Kein Konto erforderlich",
+    valTitle: "Dual-Validator & Viewer ohne Datenspeicherung",
+    valSubtitle:
+      "Legen Sie eine beliebige ZUGFeRD-2.3-, Factur-X-1.07- oder XRechnung-3.0.2-Datei (XML/PDF) ab — die Prüfung erfolgt ausschließlich im Arbeitsspeicher und wird sofort nach dem Bericht verworfen.",
+    valFormatLink: "Unsicher beim Format? Zum Format-Finder →",
+    lifeEyebrow: "Ein Workspace, der komplette Lebenszyklus",
+    lifeTitle: "E-Rechnung ohne operativen Mehraufwand",
+    lifeSubtitle:
+      "Aufgebaut auf einer gemeinsamen kanonischen EN-16931-Engine mit länderspezifischen Regeln — so bleiben ausgehende Rechnungen, eingehende Lieferantenbelege, Zahlungen und Audit-Logs sauber synchronisiert.",
+    lifeSteps: [
+      { title: "Erstellen", text: "Strukturierte Rechnungen mit gespeicherten Kunden, Produktpreisen, Steuerregeln, Gutschriften und wiederkehrenden Zeitplänen anlegen." },
+      { title: "Prüfen", text: "Deterministische EN-16931-, ZUGFeRD-2.3-, Factur-X-1.07- & XRechnung-Prüfungen mit verständlichen Diagnosen vor dem Versand." },
+      { title: "Austauschen", text: "Hybride PDF/A-3b- + XML-Dokumente per E-Mail, Webhook-Bridges oder konfigurierten Netzwerkpartnern zustellen." },
+      { title: "Verfolgen & Archivieren", text: "Prüf-, Zustell-, Zahlungs- und GoBD-SHA-256-hashverkettete Archivstatus strikt getrennt und revisionssicher halten." },
+      { title: "Zusammenarbeiten", text: "Eingehende Lieferantenrechnungen prüfen, Ausnahmen freigeben und saubere DATEV-EXTF- oder FEC-Dateien für Ihren Steuerberater exportieren." },
+    ],
+    cEyebrow: "13 europäische Märkte · Ehrliche Statuskennzeichnung",
+    cTitle: "Länderspezifische Regeln, nie zu viel versprochen",
+    cSubtitle:
+      "Jeder Markt unterscheidet klar, was im Kern-Workspace heute live ist, von partnerbetriebenen Gateways oder geplanten Roadmap-Modulen.",
+    cViewAll: "Alle 13 Länder ansehen",
+    badgeAvailable: "Verfügbar",
+    badgePartner: "Partnerbetrieben",
+    badgePlanned: "Geplant",
+    solEyebrow: "Für jede Finanzrolle gebaut",
+    solTitle: "Maßgeschneiderte Workflows für wachsende Teams",
+    solCards: [
+      { title: "Kleinunternehmen & Solo-Gründer", text: "EN-16931-Rechnungen in Minuten erstellen, Kunden & Produkte verwalten und bezahlte vs. überfällige Belege im Blick behalten." },
+      { title: "Finanz- & Operations-Teams", text: "Ausgehende Abrechnung, eingehende Lieferantenfreigaben, Dublettenprüfung, Teilzahlungen und Automatisierungsregeln kombinieren." },
+      { title: "Steuerberater & Berater", text: "Einwilligungsgesteuertes Mehrmandanten-Portal mit 1-Klick-DATEV-EXTF, FEC, GoBD-Audit-Dossiers und Hash-Ketten-Nachweisen." },
+      { title: "Entwickler & Integrationspartner", text: "Signierte Stripe- & WooCommerce-Webhooks, Bearer-API-Keys, REST-Prüf-API und abhängigkeitsfreies TypeScript-SDK." },
+    ],
+    secBadge: "Sicherheit, Datenschutz & ehrliche Architektur",
+    secTitle: "Für echte Betriebsprüfungen gebaut — keine Marketing-Floskeln",
+    secSubtitle:
+      "Wir veröffentlichen nur Sicherheits- und Compliance-Kontrollen, die tatsächlich im Code umgesetzt sind — keine erfundenen ISO-Siegel, Fake-Kundenlogos oder unbelegten Verfügbarkeitsversprechen.",
+    secBullets: [
+      "Strikte mandantengetrennte Isolierung bei jeder Datenbankabfrage und jedem API-Endpunkt.",
+      "Scrypt-Passwort-Hashing mit zufälligem Salt pro Nutzer, HMAC-SHA256-Sessions & AES-256-GCM-Verschlüsselung der Webhook-Secrets.",
+      "Manipulationssicheres SHA-256-hashverkettetes GoBD-Audit-Log mit 1-Klick-Kettenprüfung.",
+      "Selbstgehostete Web-Fonts, Abwehr von XXE-/DTD-XML-Angriffen, CSRF-Origin-Blockierung & OWASP-CSP-Header.",
+      "Signierte Stripe- & WooCommerce-Bridges plus WordPress-HPOS-kompatibles WooCommerce-Plugin.",
+    ],
+    secBtnSecurity: "Sicherheit & Vertrauen im Detail",
+    secBtnIntegrations: "Integrationen entdecken",
+    secBtnDocs: "API-Doku",
+    faqTitle: "Häufig gestellte Fragen",
+    faqSubtitle: "Klare Antworten zu Tarifen, Länderunterstützung und Compliance-Grenzen.",
+    faqReadAll: "Alle FAQs lesen →",
+    faqs: [
+      { q: "Kann ich NormInvoice kostenlos testen?", a: "Ja. Nutzen Sie den öffentlichen Validator ohne Datenspeicherung und ohne Konto, registrieren Sie sich im dauerhaften Free-Tarif (0 $/Monat) oder testen Sie die komplette Plattform mit einem echten 15-tägigen Gratis-Test — ohne Kreditkarte." },
+      { q: "Garantiert eine bestandene Prüfung die Anerkennung durch die Finanzbehörde?", a: "Nein. Die Prüfungen bewerten Ihre Rechnung anhand unterstützter technischer Standards (EN 16931, BR-DE-*, BR-FR-*). Die steuerliche Behandlung und die Annahme durch externe Gateways hängen von Ihrer Transaktion und dem Empfänger ab." },
+      { q: "Welche europäischen Länder werden derzeit unterstützt?", a: "Kern-EN-16931-Workflows (Deutschland ZUGFeRD/XRechnung, Frankreich Factur-X, Belgien/Niederlande/Österreich Peppol BIS 3.0) sind im Workspace live, während nationale Clearing-Gateways (KSeF, SdI, PDP, RO e-Factura) transparent als partnerbetrieben oder geplant gekennzeichnet sind." },
+      { q: "Kann ich mein kostenpflichtiges Abo online kündigen?", a: "Ja. Workspace-Inhaber können Tarife jederzeit direkt unter Einstellungen > Abrechnung wechseln oder die nächste Verlängerung kündigen — ohne versteckte Gebühren." },
+    ],
+  },
+  fr: {
+    heroBadge: "NormInvoice — un produit de Trend&Brand · Offre gratuite + essai gratuit de 15 jours",
+    heroTitleA: "Restez conforme dans toute l'Europe.",
+    heroTitleB: "Automatisez votre facturation électronique.",
+    heroSubtitle:
+      "Créez, validez, envoyez, recevez et archivez vos factures électroniques EN 16931 (ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0) dans un espace SaaS clair et multi-locataire.",
+    ctaSignup: "Inscription gratuite",
+    ctaTrial: "Démarrer l'essai de 15 jours",
+    ctaExplore: "Découvrir la plateforme",
+    trust: ["Offre gratuite disponible (0 $/mois)", "Essai de 15 jours · Sans carte bancaire", "Offre Solo 39 $/mois"],
+    valEyebrow: "Essai immédiat · Sans compte requis",
+    valTitle: "Validateur et visionneuse double sans conservation",
+    valSubtitle:
+      "Déposez n'importe quel fichier ZUGFeRD 2.3, Factur-X 1.07 ou XRechnung 3.0.2 (XML/PDF) — analysé strictement en mémoire et effacé immédiatement après le rapport.",
+    valFormatLink: "Besoin d'aide pour choisir un format ? Recherche de format →",
+    lifeEyebrow: "Un espace, un cycle de vie complet",
+    lifeTitle: "La facturation électronique sans la complexité opérationnelle",
+    lifeSubtitle:
+      "Construit autour d'un moteur canonique EN 16931 partagé avec des règles par pays — vos factures émises, factures fournisseurs reçues, paiements et journaux d'audit restent parfaitement synchronisés.",
+    lifeSteps: [
+      { title: "Créer", text: "Composez des factures structurées avec clients enregistrés, tarifs produits, règles de TVA, avoirs et échéanciers récurrents." },
+      { title: "Valider", text: "Lancez des contrôles déterministes EN 16931, ZUGFeRD 2.3, Factur-X 1.07 & XRechnung avec des diagnostics clairs avant l'envoi." },
+      { title: "Échanger", text: "Transmettez des documents hybrides PDF/A-3b + XML par e-mail, passerelles webhook ou partenaires réseau configurés." },
+      { title: "Suivre & archiver", text: "Gardez les statuts de validation, livraison, paiement et archivage GoBD chaîné SHA-256 strictement distincts et auditables." },
+      { title: "Collaborer", text: "Examinez les factures fournisseurs, approuvez les exceptions et exportez des fichiers FEC (FR) ou DATEV propres pour votre comptable." },
+    ],
+    cEyebrow: "13 marchés européens · Statuts honnêtes",
+    cTitle: "Des règles par pays, sans surpromesse",
+    cSubtitle:
+      "Chaque marché distingue clairement ce qui est actif aujourd'hui dans l'espace principal des passerelles opérées par des partenaires ou des modules prévus.",
+    cViewAll: "Voir les 13 pays",
+    badgeAvailable: "Disponible",
+    badgePartner: "Opéré par un partenaire",
+    badgePlanned: "Prévu",
+    solEyebrow: "Conçu pour chaque rôle financier",
+    solTitle: "Des flux sur mesure pour les équipes en croissance",
+    solCards: [
+      { title: "Petites entreprises & fondateurs solo", text: "Créez des factures EN 16931 en quelques minutes, gérez clients & produits et suivez les factures payées ou en retard." },
+      { title: "Équipes finance & opérations", text: "Combinez facturation émise, approbations fournisseurs, détection de doublons, paiements partiels et règles d'automatisation." },
+      { title: "Experts-comptables & conseillers", text: "Portail multi-clients avec consentement, export DATEV EXTF, FEC, dossiers d'audit GoBD et preuves de chaîne de hachage en 1 clic." },
+      { title: "Développeurs & partenaires d'intégration", text: "Webhooks Stripe & WooCommerce signés, clés API Bearer, API de validation REST et SDK TypeScript sans dépendance." },
+    ],
+    secBadge: "Sécurité, confidentialité & architecture honnête",
+    secTitle: "Conçu pour de vrais audits — pas pour des slogans marketing",
+    secSubtitle:
+      "Nous publions uniquement les contrôles de sécurité et de conformité réellement implémentés dans le code — jamais de faux badges ISO, de faux logos clients ni de promesses de disponibilité non vérifiées.",
+    secBullets: [
+      "Isolation multi-locataire stricte sur chaque requête base de données et chaque endpoint API.",
+      "Hachage de mot de passe scrypt avec sel aléatoire par utilisateur, sessions HMAC-SHA256 & chiffrement AES-256-GCM des secrets webhook.",
+      "Journal d'audit GoBD chaîné SHA-256 infalsifiable avec vérification de chaîne en un clic.",
+      "Polices web auto-hébergées, rejet des attaques XML XXE/DTD, blocage d'origine CSRF & en-têtes CSP OWASP.",
+      "Passerelles Stripe & WooCommerce signées plus plugin WooCommerce compatible WordPress HPOS.",
+    ],
+    secBtnSecurity: "Détails sécurité & confiance",
+    secBtnIntegrations: "Découvrir les intégrations",
+    secBtnDocs: "Docs API",
+    faqTitle: "Questions fréquentes",
+    faqSubtitle: "Des réponses claires sur les offres, les pays pris en charge et les limites de conformité.",
+    faqReadAll: "Lire toutes les FAQ →",
+    faqs: [
+      { q: "Puis-je essayer NormInvoice gratuitement ?", a: "Oui. Utilisez notre validateur public sans conservation ni compte, inscrivez-vous à l'offre Free permanente (0 $/mois) ou évaluez la plateforme complète avec un véritable essai gratuit de 15 jours — sans carte bancaire." },
+      { q: "Une validation réussie garantit-elle l'acceptation par l'administration fiscale ?", a: "Non. Les contrôles évaluent votre facture au regard des normes techniques prises en charge (EN 16931, BR-DE-*, BR-FR-*). Le traitement fiscal légal et l'acceptation par les passerelles externes dépendent de votre transaction et du destinataire." },
+      { q: "Quels pays européens sont actuellement pris en charge ?", a: "Les flux EN 16931 de base (Allemagne ZUGFeRD/XRechnung, France Factur-X, Belgique/Pays-Bas/Autriche Peppol BIS 3.0) sont actifs dans l'espace, tandis que les passerelles de clearance nationales (KSeF, SdI, PDP, RO e-Factura) sont clairement étiquetées comme opérées par un partenaire ou prévues." },
+      { q: "Puis-je annuler mon abonnement payant en ligne ?", a: "Oui. Les propriétaires d'espace peuvent changer d'offre ou annuler le renouvellement à venir directement dans Paramètres > Facturation à tout moment, sans frais cachés." },
+    ],
+  },
+};
