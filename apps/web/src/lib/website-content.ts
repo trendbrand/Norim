@@ -837,6 +837,151 @@ const LEGAL_DRAFT_FR =
   "Brouillon de traduction automatique, pas encore validé juridiquement. En cas de doute, la version anglaise fait foi.";
 
 const LEGAL_DE: Record<string, LegalDocument> = {
+  "legal-notice": {
+    slug: "legal-notice",
+    title: "Rechtlicher Hinweis / Impressum",
+    badge: "Anbieterkennzeichnung & Unternehmensstruktur",
+    subtitle: "Unternehmensidentität, vorgesehene Vertragsstruktur, verbundenes Konzernunternehmen und Streitkontakt für NormInvoice.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice:
+      LEGAL_DRAFT_DE +
+      " Hinweis zur Rechtsprüfung: Die endgültige eingetragene Zustellanschrift, der bevollmächtigte Vertreter der LLC sowie etwaige erforderliche Angaben zu einem EU-/UK-Vertreter müssen vor dem vollständigen kommerziellen Start in Deutschland (§ 5 DDG) und der EU geprüft und bestätigt werden.",
+    sections: [
+      {
+        id: "provider",
+        heading: "1. Diensteanbieter & geschäftliche Identität",
+        bullets: [
+          { label: "Produkt", text: "NormInvoice — abonnementbasierte Software für elektronische Rechnungsstellung und Finanzworkflows." },
+          { label: "Markenzuordnung", text: "NormInvoice — ein Produkt von Trend&Brand." },
+          { label: "Vorgesehene Vertragspartei", text: "Trend&Brand LLC, eine in Wyoming, USA, gegründete Gesellschaft mit beschränkter Haftung (vorbehaltlich der endgültigen Launch-Bestätigung und eines unterzeichneten Auftragsformulars)." },
+          { label: "Geschäfts-/Zustellanschrift der Wyoming LLC", text: "Ausstehend bis zur endgültigen Veröffentlichungsprüfung vor dem Launch (auf schriftliche vertragliche Anfrage über official@trendandbrands.com verfügbar)." },
+          { label: "Offizielle Kontakt-E-Mail", text: "official@trendandbrands.com" },
+          { label: "Geschäftstelefon", text: "+92 325 5039135" },
+        ],
+      },
+      {
+        id: "group-entity",
+        heading: "2. Verbundenes Konzernunternehmen",
+        paragraphs: [
+          "NormInvoice wird als Produktmarke innerhalb der Unternehmensgruppe Trend&Brand betrieben. Das folgende verbundene Unternehmen wird aus Gründen der Unternehmenstransparenz offengelegt und ist nicht automatisch der Abonnement-Vertragspartner (Merchant of Record), sofern dies nicht ausdrücklich in einem Auftragsformular festgelegt ist:",
+        ],
+        bullets: [
+          { label: "Firmenname", text: "TREND & BRAND (PRIVATE) LIMITED (pakistanische Private Limited Company)" },
+          { label: "Gründungsreferenz", text: "0330212" },
+          { label: "Registrierungs-/NTN-Referenz", text: "I730873-1" },
+          { label: "Registrierungsdatum", text: "13. März 2026" },
+          { label: "Geschäftsführer (CEO)", text: "Mohram Ali" },
+          { label: "Eingetragene Anschrift", text: "Village Ali Akbar Mahar, Post Office Dad Laghari, Sutyaro, Chak No. 1, Pakistan" },
+        ],
+      },
+      {
+        id: "scope",
+        heading: "3. Umfang des Softwaregeschäfts",
+        paragraphs: [
+          "NormInvoice stellt kommerzielle Software-as-a-Service-(SaaS-)Werkzeuge zum Erstellen, Validieren, Verwalten und Exportieren elektronischer Rechnungen bereit. NormInvoice handelt nicht als Bank, Zahlungsinstitut, öffentliche Steuerbehörde oder staatlich akkreditierter E-Rechnungs-Netzbetreiber, sofern nicht auf der betreffenden Serviceseite eine konkrete Befugnis ausdrücklich geprüft und offengelegt ist.",
+        ],
+      },
+      {
+        id: "germany-ddg",
+        heading: "4. Hinweis für Nutzer in Deutschland (§ 5 DDG & § 36 VSBG)",
+        paragraphs: [
+          "Dieser rechtliche Hinweis ist im Hinblick auf Anbieterkennzeichnungspflichten einschließlich § 5 des deutschen Digitale-Dienste-Gesetzes (DDG) strukturiert. NormInvoice ist primär für geschäftliche Nutzer konzipiert (§ 14 BGB). Bei Service- oder Abrechnungsanliegen wenden Sie sich an official@trendandbrands.com. Die frühere OS-Plattform der Europäischen Kommission wurde am 20. Juli 2025 dauerhaft geschlossen.",
+        ],
+      },
+    ],
+  },
+  privacy: {
+    slug: "privacy",
+    title: "Datenschutzerklärung",
+    badge: "DSGVO & internationaler Datenschutz",
+    subtitle: "Wie NormInvoice personenbezogene Daten über unsere öffentliche Website und SaaS-Workspaces erhebt, nutzt, schützt und aufbewahrt.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice: LEGAL_DRAFT_DE,
+    sections: [
+      {
+        id: "controller",
+        heading: "1. Wer wir sind & Rollen (Verantwortlicher vs. Auftragsverarbeiter)",
+        paragraphs: [
+          "NormInvoice ist ein Softwareprodukt, das mit Trend&Brand verbunden ist (vorgesehene Vertragspartei: Trend&Brand LLC, Wyoming, USA; verbundenes Konzernunternehmen: TREND & BRAND (PRIVATE) LIMITED, Pakistan). Für Website-Anfragen, Kontoverwaltung, Sicherheitsprotokolle und Abonnementabrechnung handeln wir als Verantwortlicher. Wenn ein Geschäftskunde NormInvoice nutzt, um in seinem Auftrag Rechnungen mit personenbezogenen Daten zu verarbeiten, handelt dieser Kunde als Verantwortlicher und wir als Auftragsverarbeiter nach Maßgabe unseres Auftragsverarbeitungsvertrags (AVV/DPA).",
+        ],
+      },
+      {
+        id: "categories",
+        heading: "2. Kategorien personenbezogener Daten",
+        bullets: [
+          { label: "Konto & Identität", text: "Name, Organisationsname, geschäftliche E-Mail, Rolle, Land sowie scrypt-gehashte Anmeldedaten." },
+          { label: "Abrechnung & Abonnements", text: "Tarifstufe, Testzeiträume, Abrechnungs-E-Mail, Transaktionsreferenzen und Steuerkennungen. Vollständige Kartennummern werden von externen Zahlungsdienstleistern verarbeitet." },
+          { label: "Kunden-Rechnungsdaten", text: "Kontaktdaten von Verkäufer/Käufer, Adressen, USt-IdNr., IBANs sowie von Ihrem Workspace hochgeladene oder erstellte XML-/PDF-Dokumente." },
+          { label: "Zero-Retention-Validator (öffentlich)", text: "An den kostenlosen öffentlichen Validator (/api/v1/public/inspect) übermittelte Dateien werden im flüchtigen Speicher verarbeitet und sofort nach Rückgabe der Ergebnisse verworfen." },
+          { label: "Sicherheits- & Kontaktanfragen", text: "Ratenbegrenzungs-Telemetrie, Anmelde-Audit-Ereignisse und über unser Kontaktformular eingereichte Anfragen." },
+        ],
+      },
+      {
+        id: "legal-bases",
+        heading: "3. Zwecke & DSGVO-Rechtsgrundlagen",
+        paragraphs: [
+          "Soweit die EU-/UK-DSGVO Anwendung findet, verarbeiten wir personenbezogene Daten auf Grundlage der Vertragserfüllung und vorvertraglicher Maßnahmen (Art. 6 Abs. 1 lit. b), rechtlicher Verpflichtungen wie steuer- und buchhaltungsrechtlicher Aufbewahrung (Art. 6 Abs. 1 lit. c), berechtigter Interessen an der Kontosicherung und am Betrieb zuverlässiger Infrastruktur (Art. 6 Abs. 1 lit. f) sowie ausdrücklicher Einwilligung, soweit für optionales Marketing oder nicht erforderliche Cookies erforderlich (Art. 6 Abs. 1 lit. a).",
+        ],
+      },
+      {
+        id: "transfers",
+        heading: "4. Internationale Datenübermittlungen",
+        paragraphs: [
+          "Da Trend&Brand neben der EU-Cloud-Infrastruktur in den Vereinigten Staaten (Trend&Brand LLC) und Pakistan (TREND & BRAND (PRIVATE) LIMITED) tätig ist, wird jeder grenzüberschreitende Zugriff auf oder jede Übermittlung von personenbezogenen Daten aus dem EWR/UK nach Kapitel V der DSGVO bewertet und durch geeignete Garantien wie Standardvertragsklauseln (SCCs) und ergänzende technische Maßnahmen abgesichert.",
+        ],
+      },
+      {
+        id: "rights",
+        heading: "5. Ihre Betroffenenrechte",
+        paragraphs: [
+          "Je nach geltendem Recht haben Sie das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch gegen die Verarbeitung, Export Ihrer Workspace-Daten (DSGVO-Art.-20-JSON-Export direkt unter Einstellungen > Sicherheit & DSGVO verfügbar), Widerruf der Einwilligung sowie auf Beschwerde bei einer Aufsichtsbehörde. Für jede Datenschutzanfrage wenden Sie sich an official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+  dpa: {
+    slug: "dpa",
+    title: "Auftragsverarbeitungsvertrag (AVV/DPA)",
+    badge: "Auftragsverarbeiter-Bedingungen gemäß Art. 28 DSGVO — Entwurf",
+    subtitle: "Standardverpflichtungen zur Datenverarbeitung, technische und organisatorische Maßnahmen (Anlage II) sowie Unterauftragsverarbeiter-Regeln für Geschäftskunden.",
+    effectiveNote: "Entwurf Version 1.0 · Erstellt am 22. November 2026",
+    reviewNotice:
+      LEGAL_DRAFT_DE +
+      " Entwurfsvorlage, erstellt zur Prüfung durch Rechtsberater und zur Einbindung/Unterzeichnung durch Geschäftskunden vor dem Enterprise-Rollout.",
+    sections: [
+      {
+        id: "roles",
+        heading: "1. Gegenstand, Dauer & Rollen",
+        paragraphs: [
+          "Soweit der Anbieter personenbezogene Daten verarbeitet, die in Rechnungsdatensätzen und Workspace-Daten des Kunden enthalten sind und in dessen Auftrag verarbeitet werden, handelt der Kunde als Verantwortlicher und der Anbieter als Auftragsverarbeiter für die Dauer des Abonnements zuzüglich der vereinbarten Export-/Löschfristen.",
+        ],
+      },
+      {
+        id: "instructions",
+        heading: "2. Dokumentierte Weisungen & Vertraulichkeit",
+        paragraphs: [
+          "Der Anbieter verarbeitet Kundendaten ausschließlich auf dokumentierte Weisung des Kunden (Abonnementvertrag, Workspace-Konfiguration und autorisierte Nutzerhandlungen), stellt sicher, dass zugriffsberechtigtes Personal zur Vertraulichkeit verpflichtet ist, und benachrichtigt den Kunden, soweit rechtlich zulässig, falls eine gesetzliche Pflicht etwas anderes verlangt.",
+        ],
+      },
+      {
+        id: "toms",
+        heading: "3. Technische & organisatorische Maßnahmen (Anlage II — derzeit umgesetzt)",
+        bullets: [
+          { label: "Mandantentrennung", text: "Strikt organisationsbezogene Datenbankabfragen und ein auf PostgreSQL-Row-Level-Security (RLS) ausgelegtes Design." },
+          { label: "Schutz von Zugangsdaten & Geheimnissen", text: "Scrypt-Passwort-Hashing mit zufälligem Salt pro Nutzer, SHA-256-gehashte Bearer-API-Schlüssel und AES-256-GCM-Verschlüsselung der Webhook-Geheimnisse im Ruhezustand." },
+          { label: "XML-/PDF-Sicherheit", text: "Abweisung von XXE / DOCTYPE / ENTITY vor dem XML-Parsing, Dateinamen-Bereinigung sowie CSP-/HSTS-Sicherheitsheader." },
+          { label: "Audit-Integrität", text: "Nur anfügbare, SHA-256-hashverkettete Audit-Logs je Organisation mit Live-Kettenprüfung." },
+        ],
+      },
+      {
+        id: "breaches-subprocessors",
+        heading: "4. Meldung von Verletzungen, Unterauftragsverarbeiter & internationale Übermittlungen",
+        paragraphs: [
+          "Der Anbieter benachrichtigt den Kunden unverzüglich, nachdem er Kenntnis von einer bestätigten Verletzung des Schutzes personenbezogener Daten erlangt hat, die Kundendaten betrifft. Unterauftragsverarbeiter sind in unserem Unterauftragsverarbeiter-Register dokumentiert. Soweit internationale Übermittlungen nach Kapitel V der DSGVO gelten, schließen die Parteien geeignete Standardvertragsklauseln (SCCs) ab und führen Übermittlungsbewertungen durch.",
+        ],
+      },
+    ],
+  },
   terms: {
     slug: "terms",
     title: "Allgemeine Geschäftsbedingungen (AGB)",
@@ -1264,6 +1409,151 @@ const LEGAL_DE: Record<string, LegalDocument> = {
 };
 
 const LEGAL_FR: Record<string, LegalDocument> = {
+  "legal-notice": {
+    slug: "legal-notice",
+    title: "Mentions légales / Impressum",
+    badge: "Identification du prestataire & structure de l'entreprise",
+    subtitle: "Identité de l'entreprise, structure contractuelle proposée, entité de groupe liée et contact pour les litiges concernant NormInvoice.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice:
+      LEGAL_DRAFT_FR +
+      " Avis de revue juridique : l'adresse de service enregistrée définitive, le représentant autorisé de la LLC et les éventuelles coordonnées requises d'un représentant UE/UK doivent être vérifiés et confirmés avant le lancement commercial complet en Allemagne (§ 5 DDG) et dans l'UE.",
+    sections: [
+      {
+        id: "provider",
+        heading: "1. Prestataire de services & identité commerciale",
+        bullets: [
+          { label: "Produit", text: "NormInvoice — logiciel de facturation électronique et de flux financiers par abonnement." },
+          { label: "Attribution de marque", text: "NormInvoice — un produit de Trend&Brand." },
+          { label: "Entité contractante proposée", text: "Trend&Brand LLC, une société à responsabilité limitée constituée dans le Wyoming, États-Unis (sous réserve de la confirmation finale du lancement et d'un bon de commande signé)." },
+          { label: "Adresse commerciale/de service de la LLC du Wyoming", text: "En attente de la vérification de publication finale avant le lancement (disponible sur demande contractuelle écrite via official@trendandbrands.com)." },
+          { label: "E-mail de contact officiel", text: "official@trendandbrands.com" },
+          { label: "Téléphone professionnel", text: "+92 325 5039135" },
+        ],
+      },
+      {
+        id: "group-entity",
+        heading: "2. Entité de groupe liée",
+        paragraphs: [
+          "NormInvoice est exploité comme une marque de produit au sein du groupe d'entreprises Trend&Brand. L'entité liée suivante est divulguée à des fins de transparence et n'est pas automatiquement le marchand de référence (Merchant of Record) de l'abonnement, sauf désignation expresse dans un bon de commande :",
+        ],
+        bullets: [
+          { label: "Nom de l'entité", text: "TREND & BRAND (PRIVATE) LIMITED (société privée à responsabilité limitée pakistanaise)" },
+          { label: "Référence de constitution", text: "0330212" },
+          { label: "Référence d'enregistrement / NTN", text: "I730873-1" },
+          { label: "Date d'enregistrement", text: "13 mars 2026" },
+          { label: "Directeur général (CEO)", text: "Mohram Ali" },
+          { label: "Adresse enregistrée", text: "Village Ali Akbar Mahar, Post Office Dad Laghari, Sutyaro, Chak No. 1, Pakistan" },
+        ],
+      },
+      {
+        id: "scope",
+        heading: "3. Périmètre de l'activité logicielle",
+        paragraphs: [
+          "NormInvoice fournit des outils logiciels commerciaux en mode SaaS pour créer, valider, gérer et exporter des factures électroniques. NormInvoice n'agit pas comme banque, établissement de paiement, autorité fiscale publique ou opérateur de réseau de facturation électronique agréé par l'État, sauf si une autorisation spécifique est expressément vérifiée et divulguée sur la page de service concernée.",
+        ],
+      },
+      {
+        id: "germany-ddg",
+        heading: "4. Avis pour les utilisateurs en Allemagne (§ 5 DDG & § 36 VSBG)",
+        paragraphs: [
+          "Ces mentions légales sont structurées pour être examinées au regard des obligations d'identification du prestataire, y compris le § 5 de la loi allemande sur les services numériques (Digitale-Dienste-Gesetz, DDG). NormInvoice est principalement conçu pour des utilisateurs professionnels (§ 14 BGB). Pour toute question de service ou de facturation, contactez official@trendandbrands.com. L'ancienne plateforme de règlement en ligne des litiges de la Commission européenne a définitivement fermé le 20 juillet 2025.",
+        ],
+      },
+    ],
+  },
+  privacy: {
+    slug: "privacy",
+    title: "Politique de confidentialité",
+    badge: "RGPD & protection internationale des données",
+    subtitle: "Comment NormInvoice collecte, utilise, protège et conserve les données personnelles sur notre site public et nos espaces SaaS.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice: LEGAL_DRAFT_FR,
+    sections: [
+      {
+        id: "controller",
+        heading: "1. Qui nous sommes & rôles (responsable vs. sous-traitant)",
+        paragraphs: [
+          "NormInvoice est un produit logiciel associé à Trend&Brand (entité contractante proposée : Trend&Brand LLC, Wyoming, USA ; entité de groupe liée : TREND & BRAND (PRIVATE) LIMITED, Pakistan). Pour les demandes du site, l'administration des comptes, les journaux de sécurité et la facturation des abonnements, nous agissons en tant que responsable du traitement. Lorsqu'un client professionnel utilise NormInvoice pour traiter pour son compte des factures contenant des données personnelles, ce client agit en tant que responsable et nous en tant que sous-traitant, régis par notre accord de traitement des données (DPA).",
+        ],
+      },
+      {
+        id: "categories",
+        heading: "2. Catégories de données personnelles",
+        bullets: [
+          { label: "Compte & identité", text: "Nom, nom de l'organisation, e-mail professionnel, rôle, pays et identifiants d'authentification hachés avec scrypt." },
+          { label: "Facturation & abonnements", text: "Niveau d'offre, dates d'essai, e-mail de facturation, références de transaction et identifiants fiscaux. Les numéros de carte complets sont traités par des prestataires de paiement externes." },
+          { label: "Données de factures client", text: "Coordonnées du vendeur/acheteur, adresses, numéros de TVA, IBAN et documents XML/PDF importés ou créés par votre espace." },
+          { label: "Validateur public sans conservation", text: "Les fichiers soumis au validateur public gratuit (/api/v1/public/inspect) sont traités en mémoire volatile et supprimés immédiatement après le renvoi des résultats." },
+          { label: "Demandes de sécurité & de contact", text: "Télémétrie de limitation de débit, événements d'audit de connexion et demandes soumises via notre formulaire de contact." },
+        ],
+      },
+      {
+        id: "legal-bases",
+        heading: "3. Finalités & bases légales RGPD",
+        paragraphs: [
+          "Lorsque le RGPD UE/UK s'applique, nous traitons les données personnelles sur la base de l'exécution du contrat et des mesures précontractuelles (art. 6, § 1, b), d'obligations légales telles que la conservation fiscale et comptable (art. 6, § 1, c), d'intérêts légitimes à sécuriser les comptes et à exploiter une infrastructure fiable (art. 6, § 1, f), et du consentement explicite lorsqu'il est requis pour le marketing optionnel ou les cookies non essentiels (art. 6, § 1, a).",
+        ],
+      },
+      {
+        id: "transfers",
+        heading: "4. Transferts internationaux de données",
+        paragraphs: [
+          "Comme Trend&Brand opère aux États-Unis (Trend&Brand LLC) et au Pakistan (TREND & BRAND (PRIVATE) LIMITED) en plus de l'infrastructure cloud de l'UE, tout accès ou transfert transfrontalier de données personnelles de l'EEE/UK est évalué au titre du chapitre V du RGPD et encadré par des garanties appropriées telles que les clauses contractuelles types (CCT/SCC) et des mesures techniques complémentaires.",
+        ],
+      },
+      {
+        id: "rights",
+        heading: "5. Vos droits en tant que personne concernée",
+        paragraphs: [
+          "Selon le droit applicable, vous avez le droit d'accéder, de rectifier, d'effacer, de limiter, de vous opposer au traitement, d'exporter les données de votre espace (export JSON RGPD art. 20 disponible directement dans Paramètres > Sécurité & RGPD), de retirer votre consentement et d'introduire une réclamation auprès d'une autorité de contrôle. Pour toute demande de confidentialité, contactez official@trendandbrands.com.",
+        ],
+      },
+    ],
+  },
+  dpa: {
+    slug: "dpa",
+    title: "Accord de traitement des données (DPA)",
+    badge: "Conditions sous-traitant selon l'article 28 RGPD — brouillon",
+    subtitle: "Engagements standard de traitement des données, mesures techniques et organisationnelles (annexe II) et règles relatives aux sous-traitants pour les clients professionnels.",
+    effectiveNote: "Brouillon version 1.0 · Préparé le 22 novembre 2026",
+    reviewNotice:
+      LEGAL_DRAFT_FR +
+      " Modèle de brouillon préparé pour examen par un conseil juridique et intégration/signature par les clients professionnels avant le déploiement Enterprise.",
+    sections: [
+      {
+        id: "roles",
+        heading: "1. Objet, durée & rôles",
+        paragraphs: [
+          "Lorsque le Prestataire traite des données personnelles intégrées aux enregistrements de factures et aux données d'espace du Client pour le compte de celui-ci, le Client agit en tant que responsable du traitement et le Prestataire en tant que sous-traitant, pour la durée de l'abonnement majorée des délais convenus d'export/suppression.",
+        ],
+      },
+      {
+        id: "instructions",
+        heading: "2. Instructions documentées & confidentialité",
+        paragraphs: [
+          "Le Prestataire traite les données du Client uniquement sur instructions documentées du Client (le contrat d'abonnement, la configuration de l'espace et les actions des utilisateurs autorisés), veille à ce que le personnel ayant accès soit tenu à des obligations de confidentialité, et informe le Client, lorsque la loi le permet, si une obligation légale impose le contraire.",
+        ],
+      },
+      {
+        id: "toms",
+        heading: "3. Mesures techniques & organisationnelles (annexe II — actuellement mises en œuvre)",
+        bullets: [
+          { label: "Isolation des locataires", text: "Requêtes de base de données strictement limitées à l'organisation et conception basée sur la sécurité au niveau des lignes (RLS) de PostgreSQL." },
+          { label: "Protection des identifiants & secrets", text: "Hachage de mot de passe scrypt avec sel aléatoire par utilisateur, clés API Bearer hachées en SHA-256 et chiffrement AES-256-GCM au repos des secrets de webhook." },
+          { label: "Sécurité XML / PDF", text: "Rejet des XXE / DOCTYPE / ENTITY avant l'analyse XML, assainissement des noms de fichiers et en-têtes de sécurité CSP/HSTS." },
+          { label: "Intégrité de l'audit", text: "Journaux d'audit en ajout seul, chaînés en SHA-256 par organisation, avec vérification de chaîne en direct." },
+        ],
+      },
+      {
+        id: "breaches-subprocessors",
+        heading: "4. Notification de violation, sous-traitants & transferts internationaux",
+        paragraphs: [
+          "Le Prestataire informe le Client sans retard injustifié dès qu'il a connaissance d'une violation confirmée de données personnelles affectant les données du Client. Les sous-traitants sont documentés dans notre Registre des sous-traitants. Lorsque des transferts internationaux relevant du chapitre V du RGPD s'appliquent, les parties concluent des clauses contractuelles types (CCT/SCC) appropriées et réalisent des évaluations de transfert.",
+        ],
+      },
+    ],
+  },
   terms: {
     slug: "terms",
     title: "Conditions d'utilisation",
