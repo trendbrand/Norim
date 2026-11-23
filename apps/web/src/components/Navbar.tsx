@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocale } from "./LocaleProvider";
-import type { AppLocale } from "@/lib/i18n";
+import { NAV_STRINGS, type AppLocale } from "@/lib/i18n";
 import { BrandLogo } from "./BrandLogo";
 
 interface ActiveUser {
@@ -49,6 +49,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { locale, setLocale } = useLocale();
+  const nav = NAV_STRINGS[locale];
   const [user, setUser] = useState<ActiveUser | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<"product" | "solutions" | "countries" | null>(null);
@@ -79,9 +80,7 @@ export function Navbar() {
             NormInvoice — Product of Trend&amp;Brand
           </span>
           <span className="hidden text-navy-400 sm:inline">·</span>
-          <span className="hidden text-navy-200 sm:inline">
-            Free plan available · 15-day free trial · Zero-retention public validator
-          </span>
+          <span className="hidden text-navy-200 sm:inline">{nav.trust}</span>
         </span>
       </div>
 
@@ -103,19 +102,19 @@ export function Navbar() {
               onClick={() => setOpenMenu((m) => (m === "product" ? null : "product"))}
               className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
             >
-              Product <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              {nav.product} <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
             </button>
             {openMenu === "product" && (
               <div className="animate-scale-in absolute left-0 top-full w-80 pt-1.5">
                 <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-                  {PRODUCT_ITEMS.map((item) => (
+                  {PRODUCT_ITEMS.map((item, i) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
                     >
-                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
-                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                      <p className="text-xs font-bold text-navy-900">{nav.productItems[i]?.label ?? item.label}</p>
+                      <p className="text-[11px] text-slate-500">{nav.productItems[i]?.desc ?? item.desc}</p>
                     </Link>
                   ))}
                 </div>
@@ -134,19 +133,19 @@ export function Navbar() {
               onClick={() => setOpenMenu((m) => (m === "solutions" ? null : "solutions"))}
               className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
             >
-              Solutions <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              {nav.solutions} <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
             </button>
             {openMenu === "solutions" && (
               <div className="animate-scale-in absolute left-0 top-full w-72 pt-1.5">
                 <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-                  {SOLUTION_ITEMS.map((item) => (
+                  {SOLUTION_ITEMS.map((item, i) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
                     >
-                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
-                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                      <p className="text-xs font-bold text-navy-900">{nav.solutionItems[i]?.label ?? item.label}</p>
+                      <p className="text-[11px] text-slate-500">{nav.solutionItems[i]?.desc ?? item.desc}</p>
                     </Link>
                   ))}
                 </div>
@@ -165,19 +164,19 @@ export function Navbar() {
               onClick={() => setOpenMenu((m) => (m === "countries" ? null : "countries"))}
               className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-navy-800 hover:bg-navy-50 hover:text-navy-900"
             >
-              Countries <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              {nav.countries} <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
             </button>
             {openMenu === "countries" && (
               <div className="animate-scale-in absolute left-0 top-full w-72 pt-1.5">
                 <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-                  {COUNTRY_ITEMS.map((item) => (
+                  {COUNTRY_ITEMS.map((item, i) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       className="block rounded-xl px-3 py-2.5 hover:bg-accent-50/70"
                     >
-                      <p className="text-xs font-bold text-navy-900">{item.label}</p>
-                      <p className="text-[11px] text-slate-500">{item.desc}</p>
+                      <p className="text-xs font-bold text-navy-900">{nav.countryItems[i]?.label ?? item.label}</p>
+                      <p className="text-[11px] text-slate-500">{nav.countryItems[i]?.desc ?? item.desc}</p>
                     </Link>
                   ))}
                 </div>
@@ -186,10 +185,10 @@ export function Navbar() {
           </div>
 
           {[
-            { href: "/integrations", label: "Integrations" },
-            { href: "/pricing", label: "Pricing" },
-            { href: "/about", label: "About" },
-            { href: "/contact", label: "Contact" },
+            { href: "/integrations", label: nav.integrations },
+            { href: "/pricing", label: nav.pricing },
+            { href: "/about", label: nav.about },
+            { href: "/contact", label: nav.contact },
           ].map((link) => {
             const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -230,14 +229,14 @@ export function Navbar() {
                 className="inline-flex items-center gap-1.5 rounded-xl bg-accent-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-600"
               >
                 <LayoutDashboard className="h-3.5 w-3.5" />
-                Open Dashboard →
+                {nav.openDashboard} →
               </Link>
               <button
                 type="button"
                 onClick={() => void handleLogout()}
                 className="inline-flex items-center rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-red-50 hover:text-red-700"
-                title="Sign out"
-                aria-label="Sign out"
+                title={nav.signOut}
+                aria-label={nav.signOut}
               >
                 <LogOut className="h-3.5 w-3.5" />
               </button>
@@ -248,13 +247,13 @@ export function Navbar() {
                 href="/login"
                 className="rounded-xl px-3 py-2 text-xs font-bold text-navy-900 hover:bg-navy-50"
               >
-                Log in
+                {nav.login}
               </Link>
               <Link
                 href="/login?mode=register"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-accent-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-600"
               >
-                Sign Up Free
+                {nav.signupFree}
               </Link>
             </div>
           )}
@@ -307,14 +306,14 @@ export function Navbar() {
                   href="/dashboard"
                   className="flex-1 rounded-xl bg-accent-500 px-4 py-2.5 text-center text-xs font-bold text-white"
                 >
-                  Open Dashboard →
+                  {nav.openDashboard} →
                 </Link>
                 <button
                   type="button"
                   onClick={() => void handleLogout()}
                   className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-bold text-red-700"
                 >
-                  <LogOut className="h-3.5 w-3.5" /> Sign Out
+                  <LogOut className="h-3.5 w-3.5" /> {nav.signOut}
                 </button>
               </div>
             ) : (
@@ -323,13 +322,13 @@ export function Navbar() {
                   href="/login"
                   className="rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-center text-xs font-bold text-navy-900"
                 >
-                  Log in
+                  {nav.login}
                 </Link>
                 <Link
                   href="/login?mode=register"
                   className="rounded-xl bg-accent-500 px-4 py-2.5 text-center text-xs font-bold text-white"
                 >
-                  Sign Up Free
+                  {nav.signupFree}
                 </Link>
               </div>
             )}

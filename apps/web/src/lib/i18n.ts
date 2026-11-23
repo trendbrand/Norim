@@ -454,3 +454,134 @@ export const UI_STRINGS: Record<AppLocale, UiStrings> = {
     ],
   },
 };
+
+// ── Per-area UI translations (scalable: one map per surface, wired in its component). ──
+export interface NavItemT {
+  label: string;
+  desc: string;
+}
+export interface NavStrings {
+  product: string;
+  solutions: string;
+  countries: string;
+  integrations: string;
+  pricing: string;
+  about: string;
+  contact: string;
+  login: string;
+  signupFree: string;
+  openDashboard: string;
+  signOut: string;
+  trust: string;
+  productItems: NavItemT[];
+  solutionItems: NavItemT[];
+  countryItems: NavItemT[];
+}
+
+export const NAV_STRINGS: Record<AppLocale, NavStrings> = {
+  en: {
+    product: "Product",
+    solutions: "Solutions",
+    countries: "Countries",
+    integrations: "Integrations",
+    pricing: "Pricing",
+    about: "About",
+    contact: "Contact",
+    login: "Log in",
+    signupFree: "Sign Up Free",
+    openDashboard: "Open Dashboard",
+    signOut: "Sign out",
+    trust: "Free plan available · 15-day free trial · Zero-retention public validator",
+    productItems: [
+      { label: "Features Overview", desc: "End-to-end e-invoicing workspace" },
+      { label: "Free Dual Validator", desc: "Zero-retention ZUGFeRD, Factur-X & XRechnung check" },
+      { label: "Format Finder", desc: "Find the right EU format for any customer" },
+      { label: "Security & Trust", desc: "Encryption, audit chain & privacy controls" },
+      { label: "API Documentation", desc: "REST API, webhooks & TypeScript SDK" },
+      { label: "EN 16931 Error Reference", desc: "45+ plain-language validation rule guides" },
+    ],
+    solutionItems: [
+      { label: "Small Businesses", desc: "Simple daily invoicing & EU readiness" },
+      { label: "Finance Teams", desc: "Approvals, AR/AP, and audit visibility" },
+      { label: "Accountants & Advisors", desc: "Clean DATEV/FEC handoffs & delegated access" },
+      { label: "Partners & Developers", desc: "ERP, Peppol & compliance connectivity" },
+    ],
+    countryItems: [
+      { label: "Germany", desc: "XRechnung 3.0.2 & ZUGFeRD 2.3" },
+      { label: "Belgium", desc: "Peppol BIS Billing 3.0 (B2B Live)" },
+      { label: "France", desc: "Factur-X 1.07 & Approved Platforms" },
+      { label: "Poland", desc: "KSeF FA(3) & UPO Tracking" },
+      { label: "All 13 European Markets →", desc: "Full compliance scope & status matrix" },
+    ],
+  },
+  de: {
+    product: "Produkt",
+    solutions: "Lösungen",
+    countries: "Länder",
+    integrations: "Integrationen",
+    pricing: "Preise",
+    about: "Über uns",
+    contact: "Kontakt",
+    login: "Anmelden",
+    signupFree: "Kostenlos starten",
+    openDashboard: "Dashboard öffnen",
+    signOut: "Abmelden",
+    trust: "Kostenloser Tarif verfügbar · 15 Tage kostenlos testen · Validator ohne Datenspeicherung",
+    productItems: [
+      { label: "Funktionsübersicht", desc: "Durchgängiger E-Rechnungs-Workspace" },
+      { label: "Kostenloser Dual-Validator", desc: "ZUGFeRD, Factur-X & XRechnung ohne Speicherung prüfen" },
+      { label: "Format-Finder", desc: "Das richtige EU-Format für jeden Kunden" },
+      { label: "Sicherheit & Vertrauen", desc: "Verschlüsselung, Audit-Kette & Datenschutz" },
+      { label: "API-Dokumentation", desc: "REST-API, Webhooks & TypeScript-SDK" },
+      { label: "EN-16931-Fehlerreferenz", desc: "45+ verständliche Validierungsregeln" },
+    ],
+    solutionItems: [
+      { label: "Kleinunternehmen", desc: "Einfache tägliche Rechnungsstellung & EU-Bereitschaft" },
+      { label: "Finanzteams", desc: "Freigaben, Debitoren/Kreditoren & Audit-Transparenz" },
+      { label: "Steuerberater & Berater", desc: "Saubere DATEV/FEC-Übergaben & delegierter Zugriff" },
+      { label: "Partner & Entwickler", desc: "ERP-, Peppol- & Compliance-Anbindung" },
+    ],
+    countryItems: [
+      { label: "Deutschland", desc: "XRechnung 3.0.2 & ZUGFeRD 2.3" },
+      { label: "Belgien", desc: "Peppol BIS Billing 3.0 (B2B live)" },
+      { label: "Frankreich", desc: "Factur-X 1.07 & zugelassene Plattformen" },
+      { label: "Polen", desc: "KSeF FA(3) & UPO-Verfolgung" },
+      { label: "Alle 13 europäischen Märkte →", desc: "Vollständiger Compliance-Umfang & Statusmatrix" },
+    ],
+  },
+  fr: {
+    product: "Produit",
+    solutions: "Solutions",
+    countries: "Pays",
+    integrations: "Intégrations",
+    pricing: "Tarifs",
+    about: "À propos",
+    contact: "Contact",
+    login: "Connexion",
+    signupFree: "Inscription gratuite",
+    openDashboard: "Ouvrir le tableau de bord",
+    signOut: "Déconnexion",
+    trust: "Offre gratuite disponible · Essai gratuit de 15 jours · Validateur public sans conservation",
+    productItems: [
+      { label: "Aperçu des fonctionnalités", desc: "Espace de facturation électronique de bout en bout" },
+      { label: "Validateur double gratuit", desc: "Vérifiez ZUGFeRD, Factur-X & XRechnung sans conservation" },
+      { label: "Recherche de format", desc: "Trouvez le bon format UE pour chaque client" },
+      { label: "Sécurité & confiance", desc: "Chiffrement, chaîne d'audit & confidentialité" },
+      { label: "Documentation API", desc: "API REST, webhooks & SDK TypeScript" },
+      { label: "Référence des erreurs EN 16931", desc: "45+ guides de règles de validation clairs" },
+    ],
+    solutionItems: [
+      { label: "Petites entreprises", desc: "Facturation quotidienne simple & conformité UE" },
+      { label: "Équipes financières", desc: "Approbations, clients/fournisseurs & visibilité d'audit" },
+      { label: "Comptables & conseillers", desc: "Transferts DATEV/FEC propres & accès délégué" },
+      { label: "Partenaires & développeurs", desc: "Connectivité ERP, Peppol & conformité" },
+    ],
+    countryItems: [
+      { label: "Allemagne", desc: "XRechnung 3.0.2 & ZUGFeRD 2.3" },
+      { label: "Belgique", desc: "Peppol BIS Billing 3.0 (B2B en direct)" },
+      { label: "France", desc: "Factur-X 1.07 & plateformes agréées" },
+      { label: "Pologne", desc: "KSeF FA(3) & suivi UPO" },
+      { label: "Les 13 marchés européens →", desc: "Périmètre de conformité complet & matrice de statut" },
+    ],
+  },
+};
