@@ -1004,3 +1004,449 @@ export const HOME_STRINGS: Record<AppLocale, HomeStrings> = {
     ],
   },
 };
+
+// ── Authenticated app shell (sidebar + topbar) translations ──
+export interface AppStrings {
+  search: string;
+  copilot: string;
+  navDashboard: string;
+  navInvoices: string;
+  navAllInvoices: string;
+  navCreateInvoice: string;
+  navRecurring: string;
+  navInbox: string;
+  navBatch: string;
+  navCustomers: string;
+  navProducts: string;
+  navPayments: string;
+  navReports: string;
+  navAnalytics: string;
+  navExports: string;
+  navCompliance: string;
+  navAutomations: string;
+  navAccountant: string;
+  navSettings: string;
+  navSuperAdmin: string;
+  upgradeTo: string;
+  upgradeBullets: string[];
+  upgradeNow: string;
+  planSuffix: string;
+  finalizedThisMonth: string;
+  hashChained: string;
+  loadingWorkspace: string;
+  signOut: string;
+  welcomeBack: (name: string) => string;
+  orgSubtitle: string;
+  freeTrialActive: string;
+  daysLeftShort: (n: number) => string;
+  upgradeToSolo: string;
+  workspaceActivity: string;
+  itemsCount: (n: number) => string;
+  allClear: string;
+  helpCenter: string;
+  menuWorkspaceSettings: string;
+  menuPlanBilling: string;
+  menuSuperAdmin: string;
+  planName: (tier: string) => string;
+}
+
+export const APP_STRINGS: Record<AppLocale, AppStrings> = {
+  en: {
+    search: "Search…",
+    copilot: "Compliance Copilot",
+    navDashboard: "Dashboard",
+    navInvoices: "Invoices",
+    navAllInvoices: "All Invoices",
+    navCreateInvoice: "Create Invoice",
+    navRecurring: "Recurring Invoices",
+    navInbox: "Incoming Inbox",
+    navBatch: "Batch CSV",
+    navCustomers: "Customers",
+    navProducts: "Products & Services",
+    navPayments: "Payments",
+    navReports: "Reports",
+    navAnalytics: "Analytics & VAT",
+    navExports: "Exports & GoBD Audit",
+    navCompliance: "Compliance (13 EU)",
+    navAutomations: "Automations",
+    navAccountant: "Accountant Portal",
+    navSettings: "Settings",
+    navSuperAdmin: "Super Admin",
+    upgradeTo: "Upgrade to",
+    upgradeBullets: ["150 e-invoices / month", "Recurring & DATEV / FEC", "$39/month · Cancel anytime"],
+    upgradeNow: "Upgrade Now",
+    planSuffix: "plan",
+    finalizedThisMonth: "Finalized e-invoices this month",
+    hashChained: "GoBD SHA-256 hash-chained",
+    loadingWorkspace: "Loading secure workspace…",
+    signOut: "Sign out",
+    welcomeBack: (name) => `Welcome back, ${name}`,
+    orgSubtitle: "Here's what's happening with your business today.",
+    freeTrialActive: "Free Trial Active",
+    daysLeftShort: (n) => `${n} day${n === 1 ? "" : "s"} left`,
+    upgradeToSolo: "Upgrade to Solo",
+    workspaceActivity: "Workspace Activity",
+    itemsCount: (n) => `${n} items`,
+    allClear: "All clear — no pending alerts.",
+    helpCenter: "Help Center",
+    menuWorkspaceSettings: "Workspace Settings",
+    menuPlanBilling: "Plan & Billing",
+    menuSuperAdmin: "Super Admin Panel",
+    planName: (tier) => (tier === "free" ? "Free" : tier.charAt(0).toUpperCase() + tier.slice(1)),
+  },
+  de: {
+    search: "Suchen…",
+    copilot: "Compliance-Copilot",
+    navDashboard: "Dashboard",
+    navInvoices: "Rechnungen",
+    navAllInvoices: "Alle Rechnungen",
+    navCreateInvoice: "Rechnung erstellen",
+    navRecurring: "Wiederkehrende Rechnungen",
+    navInbox: "Eingangspostfach",
+    navBatch: "CSV-Stapel",
+    navCustomers: "Kunden",
+    navProducts: "Produkte & Leistungen",
+    navPayments: "Zahlungen",
+    navReports: "Berichte",
+    navAnalytics: "Analysen & USt.",
+    navExports: "Exporte & GoBD-Audit",
+    navCompliance: "Compliance (13 EU)",
+    navAutomations: "Automatisierungen",
+    navAccountant: "Steuerberater-Portal",
+    navSettings: "Einstellungen",
+    navSuperAdmin: "Super-Admin",
+    upgradeTo: "Upgrade auf",
+    upgradeBullets: ["150 E-Rechnungen / Monat", "Wiederkehrend & DATEV / FEC", "39 $/Monat · jederzeit kündbar"],
+    upgradeNow: "Jetzt upgraden",
+    planSuffix: "Tarif",
+    finalizedThisMonth: "Finalisierte E-Rechnungen diesen Monat",
+    hashChained: "GoBD SHA-256-hashverkettet",
+    loadingWorkspace: "Sicherer Workspace wird geladen…",
+    signOut: "Abmelden",
+    welcomeBack: (name) => `Willkommen zurück, ${name}`,
+    orgSubtitle: "Das passiert heute in Ihrem Unternehmen.",
+    freeTrialActive: "Testphase aktiv",
+    daysLeftShort: (n) => `noch ${n} Tag${n === 1 ? "" : "e"}`,
+    upgradeToSolo: "Upgrade auf Solo",
+    workspaceActivity: "Workspace-Aktivität",
+    itemsCount: (n) => `${n} Einträge`,
+    allClear: "Alles erledigt — keine offenen Hinweise.",
+    helpCenter: "Hilfecenter",
+    menuWorkspaceSettings: "Workspace-Einstellungen",
+    menuPlanBilling: "Tarif & Abrechnung",
+    menuSuperAdmin: "Super-Admin-Panel",
+    planName: (tier) => (tier === "free" ? "Free" : tier.charAt(0).toUpperCase() + tier.slice(1)),
+  },
+  fr: {
+    search: "Rechercher…",
+    copilot: "Copilote conformité",
+    navDashboard: "Tableau de bord",
+    navInvoices: "Factures",
+    navAllInvoices: "Toutes les factures",
+    navCreateInvoice: "Créer une facture",
+    navRecurring: "Factures récurrentes",
+    navInbox: "Boîte de réception",
+    navBatch: "Lot CSV",
+    navCustomers: "Clients",
+    navProducts: "Produits & services",
+    navPayments: "Paiements",
+    navReports: "Rapports",
+    navAnalytics: "Analyses & TVA",
+    navExports: "Exports & audit GoBD",
+    navCompliance: "Conformité (13 UE)",
+    navAutomations: "Automatisations",
+    navAccountant: "Portail comptable",
+    navSettings: "Paramètres",
+    navSuperAdmin: "Super Admin",
+    upgradeTo: "Passer à",
+    upgradeBullets: ["150 factures / mois", "Récurrent & DATEV / FEC", "39 $/mois · annulable à tout moment"],
+    upgradeNow: "Mettre à niveau",
+    planSuffix: "offre",
+    finalizedThisMonth: "Factures finalisées ce mois-ci",
+    hashChained: "GoBD chaîné SHA-256",
+    loadingWorkspace: "Chargement de l'espace sécurisé…",
+    signOut: "Déconnexion",
+    welcomeBack: (name) => `Bon retour, ${name}`,
+    orgSubtitle: "Voici ce qui se passe dans votre entreprise aujourd'hui.",
+    freeTrialActive: "Essai gratuit actif",
+    daysLeftShort: (n) => `${n} jour${n === 1 ? "" : "s"} restant${n === 1 ? "" : "s"}`,
+    upgradeToSolo: "Passer à Solo",
+    workspaceActivity: "Activité de l'espace",
+    itemsCount: (n) => `${n} éléments`,
+    allClear: "Tout est en ordre — aucune alerte en attente.",
+    helpCenter: "Centre d'aide",
+    menuWorkspaceSettings: "Paramètres de l'espace",
+    menuPlanBilling: "Offre & facturation",
+    menuSuperAdmin: "Panneau Super Admin",
+    planName: (tier) => (tier === "free" ? "Free" : tier.charAt(0).toUpperCase() + tier.slice(1)),
+  },
+};
+
+// ── Dashboard page translations ──
+export interface DashboardStrings {
+  kpiTotal: string;
+  kpiSent: string;
+  kpiPaid: string;
+  kpiOverdue: string;
+  kpiTotalHint: (money: string) => string;
+  kpiSentHint: (drafts: number, customers: number) => string;
+  kpiPaidHint: string;
+  kpiOverdueDue: string;
+  kpiOverdueClear: string;
+  attentionTitle: (n: number) => string;
+  attentionDesc: string;
+  fixNow: string;
+  trendTitle: string;
+  trendDesc: string;
+  tfLast: (days: number) => string;
+  legendCreated: string;
+  legendSent: string;
+  legendPaid: string;
+  statusTitle: string;
+  statusDesc: string;
+  statusPaid: string;
+  statusSent: string;
+  statusDraft: string;
+  statusOverdue: string;
+  invoicesWord: string;
+  yourPlan: string;
+  freeTrial: string;
+  planWord: string;
+  daysRemaining: (n: number) => string;
+  invoicesUsed: (used: number, limit: number) => string;
+  upToInvoices: (limit: number) => string;
+  enGoBD: string;
+  activeSub: string;
+  noCard: string;
+  manageSub: string;
+  upgradeSoloPrice: string;
+  recentTitle: string;
+  recentDesc: string;
+  viewAll: string;
+  thInvoiceNo: string;
+  thCustomer: string;
+  thDate: string;
+  thAmount: string;
+  thStatus: string;
+  thView: string;
+  emptyTitle: string;
+  emptyText: string;
+  createFirst: string;
+  quickActions: string;
+  qaCreate: string;
+  qaInbox: string;
+  qaCustomer: string;
+  qaProduct: string;
+  getStarted: (done: number, total: number) => string;
+  testIntegrations: string;
+  testIntegrationsDesc: string;
+  testStripe: string;
+  testWoo: string;
+  toastOk: (provider: string, num: string, status: string) => string;
+  toastFail: string;
+  promoTitle: string;
+  promoText: string;
+  promoBullets: string[];
+  promoCta: string;
+}
+
+export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
+  en: {
+    kpiTotal: "Total Invoices",
+    kpiSent: "Sent",
+    kpiPaid: "Paid",
+    kpiOverdue: "Overdue",
+    kpiTotalHint: (money) => `${money} invoiced this mo.`,
+    kpiSentHint: (drafts, customers) => `${drafts} draft · ${customers} customers`,
+    kpiPaidHint: "Settled & recorded",
+    kpiOverdueDue: "Past due date (BT-9)",
+    kpiOverdueClear: "All receivables current",
+    attentionTitle: (n) => `Invoices That Need Attention (${n})`,
+    attentionDesc: "Halted before delivery due to missing mandatory EN 16931 / XRechnung fields. Open to fix in 1 click.",
+    fixNow: "Fix now",
+    trendTitle: "Invoice Trend",
+    trendDesc: "Invoices created, sent, and paid over time.",
+    tfLast: (days) => `Last ${days} Days`,
+    legendCreated: "Created",
+    legendSent: "Sent",
+    legendPaid: "Paid",
+    statusTitle: "Invoice Status",
+    statusDesc: "Current live breakdown across your workspace.",
+    statusPaid: "Paid",
+    statusSent: "Sent",
+    statusDraft: "Draft / Review",
+    statusOverdue: "Overdue",
+    invoicesWord: "Invoices",
+    yourPlan: "Your Plan",
+    freeTrial: "Free Trial",
+    planWord: "Plan",
+    daysRemaining: (n) => `${n} day${n === 1 ? "" : "s"} remaining`,
+    invoicesUsed: (used, limit) => `${used} / ${limit} invoices used this mo.`,
+    upToInvoices: (limit) => `Up to ${limit} invoices / month`,
+    enGoBD: "EN 16931 & GoBD audit chain",
+    activeSub: "Active subscription",
+    noCard: "No credit card required",
+    manageSub: "Manage Subscription",
+    upgradeSoloPrice: "Upgrade to Solo — $39/month",
+    recentTitle: "Recent Invoices",
+    recentDesc: "Your latest outgoing e-invoices at a glance.",
+    viewAll: "View All Invoices →",
+    thInvoiceNo: "Invoice No.",
+    thCustomer: "Customer",
+    thDate: "Date",
+    thAmount: "Amount",
+    thStatus: "Status",
+    thView: "View",
+    emptyTitle: "No invoices yet",
+    emptyText: "Create your first compliant ZUGFeRD, Factur-X, or XRechnung e-invoice in under a minute.",
+    createFirst: "Create First Invoice",
+    quickActions: "Quick Actions",
+    qaCreate: "Create Invoice",
+    qaInbox: "Incoming Inbox",
+    qaCustomer: "Add Customer",
+    qaProduct: "Add Product",
+    getStarted: (done, total) => `Get Started (${done}/${total})`,
+    testIntegrations: "Test Your Integrations",
+    testIntegrationsDesc: "Sends a realistic event into your workspace only.",
+    testStripe: "Test Stripe Invoice Event",
+    testWoo: "Test WooCommerce Order",
+    toastOk: (provider, num, status) => `Test ${provider} event processed → ${num} (${status}).`,
+    toastFail: "Simulation failed",
+    promoTitle: "Need more power for your business?",
+    promoText: "Upgrade to Solo ($39/month) and unlock 150 monthly invoices, recurring automation, incoming approvals, and accountant DATEV/FEC exports.",
+    promoBullets: ["150 invoices / month", "Advanced VAT & AR reports", "Cancel renewal anytime"],
+    promoCta: "Upgrade to Solo — $39/month",
+  },
+  de: {
+    kpiTotal: "Rechnungen gesamt",
+    kpiSent: "Versendet",
+    kpiPaid: "Bezahlt",
+    kpiOverdue: "Überfällig",
+    kpiTotalHint: (money) => `${money} diesen Monat fakturiert`,
+    kpiSentHint: (drafts, customers) => `${drafts} Entwurf · ${customers} Kunden`,
+    kpiPaidHint: "Beglichen & erfasst",
+    kpiOverdueDue: "Über Fälligkeitsdatum (BT-9)",
+    kpiOverdueClear: "Alle Forderungen aktuell",
+    attentionTitle: (n) => `Rechnungen, die Aufmerksamkeit brauchen (${n})`,
+    attentionDesc: "Vor dem Versand gestoppt wegen fehlender Pflichtfelder (EN 16931 / XRechnung). Zum 1-Klick-Beheben öffnen.",
+    fixNow: "Jetzt beheben",
+    trendTitle: "Rechnungsverlauf",
+    trendDesc: "Erstellte, versendete und bezahlte Rechnungen im Zeitverlauf.",
+    tfLast: (days) => `Letzte ${days} Tage`,
+    legendCreated: "Erstellt",
+    legendSent: "Versendet",
+    legendPaid: "Bezahlt",
+    statusTitle: "Rechnungsstatus",
+    statusDesc: "Aktuelle Live-Aufteilung in Ihrem Workspace.",
+    statusPaid: "Bezahlt",
+    statusSent: "Versendet",
+    statusDraft: "Entwurf / Prüfung",
+    statusOverdue: "Überfällig",
+    invoicesWord: "Rechnungen",
+    yourPlan: "Ihr Tarif",
+    freeTrial: "Kostenlose Testphase",
+    planWord: "Tarif",
+    daysRemaining: (n) => `noch ${n} Tag${n === 1 ? "" : "e"}`,
+    invoicesUsed: (used, limit) => `${used} / ${limit} Rechnungen diesen Monat genutzt`,
+    upToInvoices: (limit) => `Bis zu ${limit} Rechnungen / Monat`,
+    enGoBD: "EN 16931 & GoBD-Audit-Kette",
+    activeSub: "Aktives Abonnement",
+    noCard: "Keine Kreditkarte erforderlich",
+    manageSub: "Abonnement verwalten",
+    upgradeSoloPrice: "Upgrade auf Solo — 39 $/Monat",
+    recentTitle: "Letzte Rechnungen",
+    recentDesc: "Ihre neuesten ausgehenden E-Rechnungen auf einen Blick.",
+    viewAll: "Alle Rechnungen ansehen →",
+    thInvoiceNo: "Rechnungsnr.",
+    thCustomer: "Kunde",
+    thDate: "Datum",
+    thAmount: "Betrag",
+    thStatus: "Status",
+    thView: "Ansehen",
+    emptyTitle: "Noch keine Rechnungen",
+    emptyText: "Erstellen Sie Ihre erste konforme ZUGFeRD-, Factur-X- oder XRechnung-E-Rechnung in unter einer Minute.",
+    createFirst: "Erste Rechnung erstellen",
+    quickActions: "Schnellaktionen",
+    qaCreate: "Rechnung erstellen",
+    qaInbox: "Eingangspostfach",
+    qaCustomer: "Kunde hinzufügen",
+    qaProduct: "Produkt hinzufügen",
+    getStarted: (done, total) => `Erste Schritte (${done}/${total})`,
+    testIntegrations: "Integrationen testen",
+    testIntegrationsDesc: "Sendet ein realistisches Ereignis ausschließlich in Ihren Workspace.",
+    testStripe: "Stripe-Rechnungsereignis testen",
+    testWoo: "WooCommerce-Bestellung testen",
+    toastOk: (provider, num, status) => `Test-${provider}-Ereignis verarbeitet → ${num} (${status}).`,
+    toastFail: "Simulation fehlgeschlagen",
+    promoTitle: "Mehr Leistung für Ihr Unternehmen?",
+    promoText: "Wechseln Sie zu Solo (39 $/Monat) und schalten Sie 150 Rechnungen/Monat, wiederkehrende Automatisierung, Eingangsfreigaben und DATEV/FEC-Exporte frei.",
+    promoBullets: ["150 Rechnungen / Monat", "Erweiterte USt- & Forderungsberichte", "Verlängerung jederzeit kündbar"],
+    promoCta: "Upgrade auf Solo — 39 $/Monat",
+  },
+  fr: {
+    kpiTotal: "Factures totales",
+    kpiSent: "Envoyées",
+    kpiPaid: "Payées",
+    kpiOverdue: "En retard",
+    kpiTotalHint: (money) => `${money} facturé ce mois-ci`,
+    kpiSentHint: (drafts, customers) => `${drafts} brouillon · ${customers} clients`,
+    kpiPaidHint: "Réglées & enregistrées",
+    kpiOverdueDue: "Date d'échéance dépassée (BT-9)",
+    kpiOverdueClear: "Toutes les créances à jour",
+    attentionTitle: (n) => `Factures nécessitant une action (${n})`,
+    attentionDesc: "Bloquées avant l'envoi en raison de champs EN 16931 / XRechnung obligatoires manquants. Ouvrez pour corriger en 1 clic.",
+    fixNow: "Corriger",
+    trendTitle: "Tendance des factures",
+    trendDesc: "Factures créées, envoyées et payées au fil du temps.",
+    tfLast: (days) => `${days} derniers jours`,
+    legendCreated: "Créées",
+    legendSent: "Envoyées",
+    legendPaid: "Payées",
+    statusTitle: "Statut des factures",
+    statusDesc: "Répartition en direct dans votre espace.",
+    statusPaid: "Payées",
+    statusSent: "Envoyées",
+    statusDraft: "Brouillon / revue",
+    statusOverdue: "En retard",
+    invoicesWord: "Factures",
+    yourPlan: "Votre offre",
+    freeTrial: "Essai gratuit",
+    planWord: "Offre",
+    daysRemaining: (n) => `${n} jour${n === 1 ? "" : "s"} restant${n === 1 ? "" : "s"}`,
+    invoicesUsed: (used, limit) => `${used} / ${limit} factures utilisées ce mois-ci`,
+    upToInvoices: (limit) => `Jusqu'à ${limit} factures / mois`,
+    enGoBD: "Chaîne d'audit EN 16931 & GoBD",
+    activeSub: "Abonnement actif",
+    noCard: "Sans carte bancaire",
+    manageSub: "Gérer l'abonnement",
+    upgradeSoloPrice: "Passer à Solo — 39 $/mois",
+    recentTitle: "Factures récentes",
+    recentDesc: "Vos dernières factures émises en un coup d'œil.",
+    viewAll: "Voir toutes les factures →",
+    thInvoiceNo: "N° de facture",
+    thCustomer: "Client",
+    thDate: "Date",
+    thAmount: "Montant",
+    thStatus: "Statut",
+    thView: "Voir",
+    emptyTitle: "Aucune facture pour l'instant",
+    emptyText: "Créez votre première facture conforme ZUGFeRD, Factur-X ou XRechnung en moins d'une minute.",
+    createFirst: "Créer la première facture",
+    quickActions: "Actions rapides",
+    qaCreate: "Créer une facture",
+    qaInbox: "Boîte de réception",
+    qaCustomer: "Ajouter un client",
+    qaProduct: "Ajouter un produit",
+    getStarted: (done, total) => `Pour commencer (${done}/${total})`,
+    testIntegrations: "Tester vos intégrations",
+    testIntegrationsDesc: "Envoie un événement réaliste uniquement dans votre espace.",
+    testStripe: "Tester un événement de facture Stripe",
+    testWoo: "Tester une commande WooCommerce",
+    toastOk: (provider, num, status) => `Événement test ${provider} traité → ${num} (${status}).`,
+    toastFail: "Échec de la simulation",
+    promoTitle: "Besoin de plus de puissance pour votre activité ?",
+    promoText: "Passez à Solo (39 $/mois) et débloquez 150 factures mensuelles, l'automatisation récurrente, les approbations entrantes et les exports comptables DATEV/FEC.",
+    promoBullets: ["150 factures / mois", "Rapports TVA & créances avancés", "Renouvellement annulable à tout moment"],
+    promoCta: "Passer à Solo — 39 $/mois",
+  },
+};

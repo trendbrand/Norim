@@ -36,6 +36,8 @@ import {
 import { CommandPalette } from "./CommandPalette";
 import { CopilotPanel } from "./CopilotPanel";
 import { BrandLogo } from "./BrandLogo";
+import { useLocale } from "./LocaleProvider";
+import { APP_STRINGS } from "@/lib/i18n";
 
 export interface AppSession {
   user: {
@@ -83,6 +85,8 @@ export function useAppSession() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { locale } = useLocale();
+  const t = APP_STRINGS[locale];
   const [session, setSession] = useState<AppSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -147,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-canvas">
         <div className="flex items-center gap-2.5 text-sm font-bold text-navy-800">
-          <Loader2 className="h-4 w-4 animate-spin text-accent-500" /> Loading secure workspace…
+          <Loader2 className="h-4 w-4 animate-spin text-accent-500" /> {t.loadingWorkspace}
         </div>
       </div>
     );
@@ -165,7 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onClick={() => void logout()}
                 className="text-xs font-bold text-slate-500 hover:text-red-600"
               >
-                Sign out
+                {t.signOut}
               </button>
             </div>
           </header>
@@ -217,7 +221,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setCmdOpen(true)}
           className="flex w-full items-center justify-between rounded-xl border border-navy-700 bg-navy-800/80 px-3 py-2 text-xs text-navy-200 transition hover:border-navy-500 hover:text-white"
         >
-          <span className="flex items-center gap-2"><Search className="h-3.5 w-3.5 text-accent-400" /> Search…</span>
+          <span className="flex items-center gap-2"><Search className="h-3.5 w-3.5 text-accent-400" /> {t.search}</span>
           <kbd className="rounded bg-navy-700 px-1.5 py-0.5 font-mono text-[10px] text-navy-200">Ctrl K</kbd>
         </button>
         <button
@@ -225,14 +229,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setCopilotOpen(true)}
           className="flex w-full items-center gap-2 rounded-xl border border-accent-500/35 bg-accent-500/15 px-3 py-2 text-xs font-bold text-accent-200 transition hover:bg-accent-500/25 hover:text-white"
         >
-          <Sparkles className="h-3.5 w-3.5 text-accent-400" /> Compliance Copilot
+          <Sparkles className="h-3.5 w-3.5 text-accent-400" /> {t.copilot}
         </button>
       </div>
 
       {/* Primary Navigation */}
       <nav aria-label="Workspace navigation" className="flex-1 space-y-1 overflow-y-auto px-3.5 pb-3">
         <Link href="/dashboard" className={navItemCls(pathname === "/dashboard")}>
-          <LayoutDashboard className="h-4 w-4 shrink-0" /> Dashboard
+          <LayoutDashboard className="h-4 w-4 shrink-0" /> {t.navDashboard}
         </Link>
 
         {/* Collapsible Invoices Group (Matches Approved Design) */}
@@ -243,41 +247,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-navy-100 hover:bg-navy-800 hover:text-white"
           >
             <span className="flex items-center gap-3">
-              <FileText className="h-4 w-4 shrink-0" /> Invoices
+              <FileText className="h-4 w-4 shrink-0" /> {t.navInvoices}
             </span>
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${invoicesExpanded ? "rotate-180" : ""}`} />
           </button>
           {invoicesExpanded && (
             <div className="mt-0.5 space-y-0.5">
               <Link href="/invoices" className={subItemCls(pathname === "/invoices")}>
-                All Invoices
+                {t.navAllInvoices}
               </Link>
               <Link href="/invoices/new" className={subItemCls(pathname === "/invoices/new")}>
-                Create Invoice
+                {t.navCreateInvoice}
               </Link>
               <Link href="/recurring" className={subItemCls(pathname.startsWith("/recurring"))}>
-                <Repeat className="h-3.5 w-3.5" /> Recurring Invoices
+                <Repeat className="h-3.5 w-3.5" /> {t.navRecurring}
               </Link>
               <Link href="/inbox" className={subItemCls(pathname.startsWith("/inbox"))}>
-                <Inbox className="h-3.5 w-3.5" /> Incoming Inbox
+                <Inbox className="h-3.5 w-3.5" /> {t.navInbox}
               </Link>
               <Link href="/batch" className={subItemCls(pathname.startsWith("/batch"))}>
-                <UploadCloud className="h-3.5 w-3.5" /> Batch CSV
+                <UploadCloud className="h-3.5 w-3.5" /> {t.navBatch}
               </Link>
             </div>
           )}
         </div>
 
         <Link href="/customers" className={navItemCls(pathname.startsWith("/customers"))}>
-          <Users className="h-4 w-4 shrink-0" /> Customers
+          <Users className="h-4 w-4 shrink-0" /> {t.navCustomers}
         </Link>
 
         <Link href="/catalog" className={navItemCls(pathname.startsWith("/catalog"))}>
-          <Package className="h-4 w-4 shrink-0" /> Products &amp; Services
+          <Package className="h-4 w-4 shrink-0" /> {t.navProducts}
         </Link>
 
         <Link href="/payments" className={navItemCls(pathname.startsWith("/payments"))}>
-          <CreditCard className="h-4 w-4 shrink-0" /> Payments
+          <CreditCard className="h-4 w-4 shrink-0" /> {t.navPayments}
         </Link>
 
         {/* Collapsible Reports Group */}
@@ -288,41 +292,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-navy-100 hover:bg-navy-800 hover:text-white"
           >
             <span className="flex items-center gap-3">
-              <BarChart3 className="h-4 w-4 shrink-0" /> Reports
+              <BarChart3 className="h-4 w-4 shrink-0" /> {t.navReports}
             </span>
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${reportsExpanded ? "rotate-180" : ""}`} />
           </button>
           {reportsExpanded && (
             <div className="mt-0.5 space-y-0.5">
               <Link href="/reports" className={subItemCls(pathname.startsWith("/reports"))}>
-                Analytics &amp; VAT
+                {t.navAnalytics}
               </Link>
               <Link href="/exports" className={subItemCls(pathname.startsWith("/exports"))}>
-                <FileArchive className="h-3.5 w-3.5" /> Exports &amp; GoBD Audit
+                <FileArchive className="h-3.5 w-3.5" /> {t.navExports}
               </Link>
             </div>
           )}
         </div>
 
         <Link href="/compliance" className={navItemCls(pathname.startsWith("/compliance"))}>
-          <Globe2 className="h-4 w-4 shrink-0" /> Compliance (13 EU)
+          <Globe2 className="h-4 w-4 shrink-0" /> {t.navCompliance}
         </Link>
 
         <Link href="/automations" className={navItemCls(pathname.startsWith("/automations"))}>
-          <Zap className="h-4 w-4 shrink-0" /> Automations
+          <Zap className="h-4 w-4 shrink-0" /> {t.navAutomations}
         </Link>
 
         <Link href="/accountant" className={navItemCls(pathname.startsWith("/accountant"))}>
-          <Briefcase className="h-4 w-4 shrink-0" /> Accountant Portal
+          <Briefcase className="h-4 w-4 shrink-0" /> {t.navAccountant}
         </Link>
 
         <Link href="/settings" className={navItemCls(pathname.startsWith("/settings"))}>
-          <Settings className="h-4 w-4 shrink-0" /> Settings
+          <Settings className="h-4 w-4 shrink-0" /> {t.navSettings}
         </Link>
 
         {session.isSuperAdmin && (
           <Link href="/admin" className={navItemCls(pathname.startsWith("/admin"))}>
-            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-300" /> Super Admin
+            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-300" /> {t.navSuperAdmin}
           </Link>
         )}
       </nav>
@@ -332,24 +336,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {!isPaidTier ? (
           <div className="rounded-2xl border border-navy-700 bg-navy-800/90 p-3.5">
             <p className="flex items-center gap-1.5 text-xs font-extrabold text-white">
-              <Crown className="h-4 w-4 text-accent-500" /> Upgrade to <span className="text-accent-400">Solo</span>
+              <Crown className="h-4 w-4 text-accent-500" /> {t.upgradeTo} <span className="text-accent-400">Solo</span>
             </p>
             <ul className="mt-2 space-y-1 text-[11px] text-navy-200">
-              <li>✓ 150 e-invoices / month</li>
-              <li>✓ Recurring &amp; DATEV / FEC</li>
-              <li>✓ $39/month · Cancel anytime</li>
+              {t.upgradeBullets.map((b) => (
+                <li key={b}>✓ {b}</li>
+              ))}
             </ul>
             <Link
               href="/settings?tab=billing"
               className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-accent-500 px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-accent-600"
             >
-              Upgrade Now <ArrowRight className="h-3.5 w-3.5" />
+              {t.upgradeNow} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         ) : (
           <Link href="/settings?tab=billing" className="block rounded-2xl border border-navy-700 bg-navy-800/80 p-3.5 hover:bg-navy-800">
             <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wide text-navy-200">
-              <span>{q.tier} plan</span>
+              <span>{t.planName(q.tier)} {t.planSuffix}</span>
               <span className={q.exceeded ? "text-amber-400" : "text-accent-400"}>
                 {q.usedThisMonth}/{q.monthlyLimit}
               </span>
@@ -357,12 +361,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-700">
               <div className={`h-full rounded-full ${pct >= 90 ? "bg-amber-400" : "bg-accent-500"}`} style={{ width: `${pct}%` }} />
             </div>
-            <p className="mt-1.5 text-[10.5px] text-navy-300">Finalized e-invoices this month</p>
+            <p className="mt-1.5 text-[10.5px] text-navy-300">{t.finalizedThisMonth}</p>
           </Link>
         )}
 
         <p className="flex items-center gap-1.5 px-1 text-[10px] text-navy-300">
-          <ShieldCheck className="h-3 w-3 text-emerald-400" /> GoBD SHA-256 hash-chained
+          <ShieldCheck className="h-3 w-3 text-emerald-400" /> {t.hashChained}
         </p>
       </div>
     </div>
@@ -395,10 +399,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-extrabold text-navy-900 sm:text-base">
-                    Welcome back, {firstName}
+                    {t.welcomeBack(firstName)}
                   </p>
                   <p className="hidden truncate text-xs text-slate-500 sm:block">
-                    {session.user.orgName} · Here&apos;s what&apos;s happening with your business today.
+                    {session.user.orgName} · {t.orgSubtitle}
                   </p>
                 </div>
               </div>
@@ -411,10 +415,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     className="hidden items-center gap-1.5 rounded-xl border border-accent-200 bg-accent-50 px-3 py-1.5 text-xs font-bold text-navy-900 hover:bg-accent-100 md:inline-flex"
                   >
                     <Gift className="h-3.5 w-3.5 text-accent-500" />
-                    <span>Free Trial Active</span>
+                    <span>{t.freeTrialActive}</span>
                     <span className="text-slate-300">|</span>
                     <span className="text-accent-700">
-                      {sub.trialDaysRemaining} day{sub.trialDaysRemaining === 1 ? "" : "s"} left
+                      {t.daysLeftShort(sub.trialDaysRemaining ?? 0)}
                     </span>
                   </Link>
                 )}
@@ -425,7 +429,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     href="/settings?tab=billing"
                     className="hidden items-center gap-1.5 rounded-xl border border-accent-400 bg-white px-3.5 py-1.5 text-xs font-extrabold text-accent-700 transition hover:bg-accent-50 sm:inline-flex"
                   >
-                    <Crown className="h-3.5 w-3.5 text-accent-500" /> Upgrade to Solo
+                    <Crown className="h-3.5 w-3.5 text-accent-500" /> {t.upgradeToSolo}
                   </Link>
                 )}
 
@@ -448,12 +452,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {notifOpen && (
                     <div className="animate-scale-in absolute right-0 top-full mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-xs font-extrabold text-navy-900">Workspace Activity</span>
-                        <span className="text-[10px] font-semibold text-slate-400">{notifications.length} items</span>
+                        <span className="text-xs font-extrabold text-navy-900">{t.workspaceActivity}</span>
+                        <span className="text-[10px] font-semibold text-slate-400">{t.itemsCount(notifications.length)}</span>
                       </div>
                       <div className="mt-2 max-h-72 space-y-1.5 overflow-y-auto">
                         {notifications.length === 0 ? (
-                          <p className="py-6 text-center text-xs text-slate-400">All clear — no pending alerts.</p>
+                          <p className="py-6 text-center text-xs text-slate-400">{t.allClear}</p>
                         ) : (
                           notifications.map((n) => (
                             <Link
@@ -477,8 +481,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {/* Help Link */}
                 <Link
                   href="/help"
-                  title="Help Center"
-                  aria-label="Help Center"
+                  title={t.helpCenter}
+                  aria-label={t.helpCenter}
                   className="hidden rounded-xl border border-slate-200 p-2 text-navy-800 hover:bg-slate-50 sm:inline-flex"
                 >
                   <HelpCircle className="h-4 w-4" />
@@ -510,14 +514,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </div>
                       <div className="mt-1 space-y-0.5 text-xs font-semibold">
                         <Link href="/settings" className="block rounded-xl px-3 py-2 text-navy-800 hover:bg-canvas">
-                          Workspace Settings
+                          {t.menuWorkspaceSettings}
                         </Link>
                         <Link href="/settings?tab=billing" className="block rounded-xl px-3 py-2 text-navy-800 hover:bg-canvas">
-                          Plan &amp; Billing
+                          {t.menuPlanBilling}
                         </Link>
                         {session.isSuperAdmin && (
                           <Link href="/admin" className="block rounded-xl px-3 py-2 text-amber-800 hover:bg-amber-50">
-                            Super Admin Panel
+                            {t.menuSuperAdmin}
                           </Link>
                         )}
                         <button
@@ -525,7 +529,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           onClick={() => void logout()}
                           className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 hover:bg-red-50"
                         >
-                          <LogOut className="h-3.5 w-3.5" /> Sign out
+                          <LogOut className="h-3.5 w-3.5" /> {t.signOut}
                         </button>
                       </div>
                     </div>

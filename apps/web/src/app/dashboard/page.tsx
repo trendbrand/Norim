@@ -36,6 +36,8 @@ import {
   formatMoney,
 } from "@/components/ui";
 import { useAppSession } from "@/components/AppShell";
+import { useLocale } from "@/components/LocaleProvider";
+import { DASHBOARD_STRINGS, type DashboardStrings } from "@/lib/i18n";
 
 interface DashboardPayload {
   days: number;
@@ -85,8 +87,10 @@ interface DashboardPayload {
 
 function InvoiceTrendChart({
   series,
+  t,
 }: {
   series: DashboardPayload["trendSeries"];
+  t: DashboardStrings;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const w = 520;
@@ -122,13 +126,13 @@ function InvoiceTrendChart({
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-[11px]">
         <div className="flex items-center gap-4 font-bold text-slate-600">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Created</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-accent-500" /> Sent</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Paid</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> {t.legendCreated}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-accent-500" /> {t.legendSent}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> {t.legendPaid}</span>
         </div>
         {activePt && (
           <span className="rounded-lg bg-canvas px-2.5 py-1 font-mono text-[11px] font-bold text-navy-900">
-            {activePt.label}: {activePt.created} created · {activePt.sent} sent · {activePt.paid} paid
+            {activePt.label}: {activePt.created} {t.legendCreated.toLowerCase()} · {activePt.sent} {t.legendSent.toLowerCase()} · {activePt.paid} {t.legendPaid.toLowerCase()}
           </span>
         )}
       </div>
@@ -175,13 +179,13 @@ function InvoiceTrendChart({
   );
 }
 
-function StatusDonutChart({ breakdown }: { breakdown: DashboardPayload["statusBreakdown"] }) {
+function StatusDonutChart({ breakdown, t }: { breakdown: DashboardPayload["statusBreakdown"]; t: DashboardStrings }) {
   const total = breakdown.total;
   const segments = [
-    { label: "Paid", count: breakdown.paid, color: "#16A34A" },
-    { label: "Sent", count: breakdown.sent, color: "#2563EB" },
-    { label: "Draft / Review", count: breakdown.draft, color: "#FD7C05" },
-    { label: "Overdue", count: breakdown.overdue, color: "#DC2626" },
+    { label: t.statusPaid, count: breakdown.paid, color: "#16A34A" },
+    { label: t.statusSent, count: breakdown.sent, color: "#2563EB" },
+    { label: t.statusDraft, count: breakdown.draft, color: "#FD7C05" },
+    { label: t.statusOverdue, count: breakdown.overdue, color: "#DC2626" },
   ];
 
   const r = 46;
@@ -217,7 +221,7 @@ function StatusDonutChart({ breakdown }: { breakdown: DashboardPayload["statusBr
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-xl font-extrabold text-navy-900 tabular-money">{total}</span>
-          <span className="text-[10px] font-semibold text-slate-500">Invoices</span>
+          <span className="text-[10px] font-semibold text-slate-500">{t.invoicesWord}</span>
         </div>
       </div>
 
@@ -244,6 +248,8 @@ function StatusDonutChart({ breakdown }: { breakdown: DashboardPayload["statusBr
 export default function DashboardPage() {
   const router = useRouter();
   const { reload } = useAppSession();
+  const { locale } = useLocale();
+  const t = DASHBOARD_STRINGS[locale];
   const [days, setDays] = useState(30);
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -272,10 +278,10 @@ export default function DashboardPage() {
         method: "POST",
         body: JSON.stringify({ provider }),
       });
-      setToast({ kind: "success", text: `Test ${provider} event processed → ${r.invoice.invoiceNumber} (${r.invoice.status}).` });
+      setToast({ kind: "success", text: t.toastOk(provider, r.invoice.invoiceNumber, r.invoice.status) });
       await Promise.all([refresh(days), reload()]);
     } catch (e) {
-      setToast({ kind: "error", text: e instanceof Error ? e.message : "Simulation failed" });
+      setToast({ kind: "error", text: e instanceof Error ? e.message : t.toastFail });
     } finally {
       setSimulating(null);
     }
@@ -327,30 +333,30 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
-            label: "Total Invoices",
+            label: t.kpiTotal,
             value: String(k.totalInvoices),
-            hint: `${formatMoney(k.invoicedThisMonth)} invoiced this mo.`,
+            hint: t.kpiTotalHint(formatMoney(k.invoicedThisMonth)),
             icon: FileText,
             iconCls: "bg-blue-50 text-blue-600",
           },
           {
-            label: "Sent",
+            label: t.kpiSent,
             value: String(k.sentCount),
-            hint: `${k.draftCount} draft · ${k.totalCustomers} customers`,
+            hint: t.kpiSentHint(k.draftCount, k.totalCustomers),
             icon: Send,
             iconCls: "bg-emerald-50 text-emerald-600",
           },
           {
-            label: "Paid",
+            label: t.kpiPaid,
             value: String(k.paidCount),
-            hint: "Settled & recorded",
+            hint: t.kpiPaidHint,
             icon: CheckCircle2,
             iconCls: "bg-accent-50 text-accent-600",
           },
           {
-            label: "Overdue",
+            label: t.kpiOverdue,
             value: String(k.overdueCount),
-            hint: k.overdueCount > 0 ? "Past due date (BT-9)" : "All receivables current",
+            hint: k.overdueCount > 0 ? t.kpiOverdueDue : t.kpiOverdueClear,
             icon: Clock,
             iconCls: k.overdueCount > 0 ? "bg-red-50 text-red-600" : "bg-slate-100 text-slate-600",
             danger: k.overdueCount > 0,
@@ -379,10 +385,10 @@ export default function DashboardPage() {
         <Card
           title={
             <span className="flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="h-4 w-4" /> Invoices That Need Attention ({data.actionRequired.length})
+              <AlertTriangle className="h-4 w-4" /> {t.attentionTitle(data.actionRequired.length)}
             </span>
           }
-          description="Halted before delivery due to missing mandatory EN 16931 / XRechnung fields. Open to fix in 1 click."
+          description={t.attentionDesc}
         >
           <ul className="divide-y divide-slate-100">
             {data.actionRequired.map((inv) => (
@@ -394,7 +400,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <Link href={`/invoices/${inv.id}`} className={btnSecondary}>
-                  Fix now <ArrowRight className="h-3.5 w-3.5" />
+                  {t.fixNow} <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </li>
             ))}
@@ -406,50 +412,50 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <Card
           className="lg:col-span-5"
-          title="Invoice Trend"
-          description="Invoices created, sent, and paid over time."
+          title={t.trendTitle}
+          description={t.trendDesc}
           actions={
             <select
-              aria-label="Trend timeframe"
+              aria-label={t.trendTitle}
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
               className="rounded-lg border border-slate-200 bg-canvas px-2.5 py-1 text-xs font-bold text-navy-900"
             >
-              <option value={7}>Last 7 Days</option>
-              <option value={14}>Last 14 Days</option>
-              <option value={30}>Last 30 Days</option>
-              <option value={90}>Last 90 Days</option>
+              <option value={7}>{t.tfLast(7)}</option>
+              <option value={14}>{t.tfLast(14)}</option>
+              <option value={30}>{t.tfLast(30)}</option>
+              <option value={90}>{t.tfLast(90)}</option>
             </select>
           }
         >
-          {data && <InvoiceTrendChart series={data.trendSeries} />}
+          {data && <InvoiceTrendChart series={data.trendSeries} t={t} />}
         </Card>
 
         <Card
           className="lg:col-span-4"
-          title="Invoice Status"
-          description="Current live breakdown across your workspace."
+          title={t.statusTitle}
+          description={t.statusDesc}
         >
-          {data && <StatusDonutChart breakdown={data.statusBreakdown} />}
+          {data && <StatusDonutChart breakdown={data.statusBreakdown} t={t} />}
         </Card>
 
         <Card
           className="lg:col-span-3"
           title={
             <span className="flex items-center gap-1.5">
-              <Crown className="h-4 w-4 text-accent-500" /> Your Plan
+              <Crown className="h-4 w-4 text-accent-500" /> {t.yourPlan}
             </span>
           }
         >
           <div className="space-y-3">
             <div>
               <p className="text-lg font-extrabold capitalize text-navy-900">
-                {sub?.trialActive ? "Free Trial" : `${sub?.planTier || "free"} Plan`}
+                {sub?.trialActive ? t.freeTrial : `${(sub?.planTier || "free").charAt(0).toUpperCase() + (sub?.planTier || "free").slice(1)} ${t.planWord}`}
               </p>
               <p className="text-xs font-semibold text-accent-700">
                 {sub?.trialActive
-                  ? `${sub.trialDaysRemaining} day${sub.trialDaysRemaining === 1 ? "" : "s"} remaining`
-                  : `${quota?.usedThisMonth ?? 0} / ${quota?.monthlyLimit ?? 5} invoices used this mo.`}
+                  ? t.daysRemaining(sub.trialDaysRemaining ?? 0)
+                  : t.invoicesUsed(quota?.usedThisMonth ?? 0, quota?.monthlyLimit ?? 5)}
               </p>
             </div>
 
@@ -460,15 +466,15 @@ export default function DashboardPage() {
             <ul className="space-y-1.5 text-xs text-slate-600">
               <li className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                Up to {quota?.monthlyLimit ?? 15} invoices / month
+                {t.upToInvoices(quota?.monthlyLimit ?? 15)}
               </li>
               <li className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                EN 16931 &amp; GoBD audit chain
+                {t.enGoBD}
               </li>
               <li className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                {isPaidTier ? "Active subscription" : "No credit card required"}
+                {isPaidTier ? t.activeSub : t.noCard}
               </li>
             </ul>
 
@@ -476,7 +482,7 @@ export default function DashboardPage() {
               href="/settings?tab=billing"
               className={`${btnPrimary} w-full py-2.5`}
             >
-              {isPaidTier ? "Manage Subscription" : "Upgrade to Solo — $39/month"}
+              {isPaidTier ? t.manageSub : t.upgradeSoloPrice}
             </Link>
           </div>
         </Card>
@@ -486,21 +492,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <Card
           className="lg:col-span-8"
-          title="Recent Invoices"
-          description="Your latest outgoing e-invoices at a glance."
+          title={t.recentTitle}
+          description={t.recentDesc}
           actions={
             <Link href="/invoices" className="text-xs font-extrabold text-accent-700 hover:underline">
-              View All Invoices →
+              {t.viewAll}
             </Link>
           }
         >
           {!data || data.recentInvoices.length === 0 ? (
             <EmptyState
-              title="No invoices yet"
-              text="Create your first compliant ZUGFeRD, Factur-X, or XRechnung e-invoice in under a minute."
+              title={t.emptyTitle}
+              text={t.emptyText}
               action={
                 <Link href="/invoices/new" className={btnPrimary}>
-                  <FilePlus2 className="h-4 w-4" /> Create First Invoice
+                  <FilePlus2 className="h-4 w-4" /> {t.createFirst}
                 </Link>
               }
             />
@@ -509,12 +515,12 @@ export default function DashboardPage() {
               <table className="min-w-full text-xs">
                 <thead className="border-b border-slate-100 bg-canvas text-[11px] font-bold uppercase text-slate-500">
                   <tr>
-                    <th className="px-6 py-3 text-left">Invoice No.</th>
-                    <th className="px-4 py-3 text-left">Customer</th>
-                    <th className="px-4 py-3 text-left">Date</th>
-                    <th className="px-4 py-3 text-right">Amount</th>
-                    <th className="px-4 py-3 text-right">Status</th>
-                    <th className="px-6 py-3 text-right">View</th>
+                    <th className="px-6 py-3 text-left">{t.thInvoiceNo}</th>
+                    <th className="px-4 py-3 text-left">{t.thCustomer}</th>
+                    <th className="px-4 py-3 text-left">{t.thDate}</th>
+                    <th className="px-4 py-3 text-right">{t.thAmount}</th>
+                    <th className="px-4 py-3 text-right">{t.thStatus}</th>
+                    <th className="px-6 py-3 text-right">{t.thView}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -562,16 +568,16 @@ export default function DashboardPage() {
           <Card
             title={
               <span className="flex items-center gap-1.5">
-                <Zap className="h-4 w-4 text-accent-500" /> Quick Actions
+                <Zap className="h-4 w-4 text-accent-500" /> {t.quickActions}
               </span>
             }
           >
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { href: "/invoices/new", icon: FilePlus2, label: "Create Invoice", cls: "bg-accent-50 text-accent-600" },
-                { href: "/inbox", icon: Inbox, label: "Incoming Inbox", cls: "bg-blue-50 text-blue-600" },
-                { href: "/customers", icon: Users, label: "Add Customer", cls: "bg-emerald-50 text-emerald-600" },
-                { href: "/catalog", icon: Package, label: "Add Product", cls: "bg-navy-50 text-navy-800" },
+                { href: "/invoices/new", icon: FilePlus2, label: t.qaCreate, cls: "bg-accent-50 text-accent-600" },
+                { href: "/inbox", icon: Inbox, label: t.qaInbox, cls: "bg-blue-50 text-blue-600" },
+                { href: "/customers", icon: Users, label: t.qaCustomer, cls: "bg-emerald-50 text-emerald-600" },
+                { href: "/catalog", icon: Package, label: t.qaProduct, cls: "bg-navy-50 text-navy-800" },
               ].map((qa) => (
                 <Link
                   key={qa.label}
@@ -591,8 +597,7 @@ export default function DashboardPage() {
           <Card
             title={
               <span className="flex items-center gap-1.5">
-                <Rocket className="h-4 w-4 text-accent-500" /> Get Started ({completedSteps}/
-                {data?.getStarted.length ?? 4})
+                <Rocket className="h-4 w-4 text-accent-500" /> {t.getStarted(completedSteps, data?.getStarted.length ?? 4)}
               </span>
             }
           >
@@ -618,7 +623,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Preserved Integration Webhook Tests */}
-          <Card title="Test Your Integrations" description="Sends a realistic event into your workspace only.">
+          <Card title={t.testIntegrations} description={t.testIntegrationsDesc}>
             <div className="space-y-2">
               <button
                 type="button"
@@ -627,7 +632,7 @@ export default function DashboardPage() {
                 className={`${btnSecondary} w-full`}
               >
                 {simulating === "stripe" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Webhook className="h-4 w-4 text-accent-500" />}
-                Test Stripe Invoice Event
+                {t.testStripe}
               </button>
               <button
                 type="button"
@@ -636,7 +641,7 @@ export default function DashboardPage() {
                 className={`${btnSecondary} w-full`}
               >
                 {simulating === "woocommerce" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4 text-accent-500" />}
-                Test WooCommerce Order
+                {t.testWoo}
               </button>
             </div>
           </Card>
@@ -647,22 +652,19 @@ export default function DashboardPage() {
       {!isPaidTier && (
         <div className="flex flex-col justify-between gap-4 rounded-2xl border border-navy-800 bg-navy-900 p-6 text-white sm:flex-row sm:items-center">
           <div>
-            <p className="text-base font-extrabold">Need more power for your business?</p>
-            <p className="mt-1 text-xs text-navy-200">
-              Upgrade to Solo ($39/month) and unlock 150 monthly invoices, recurring automation, incoming approvals, and
-              accountant DATEV/FEC exports.
-            </p>
+            <p className="text-base font-extrabold">{t.promoTitle}</p>
+            <p className="mt-1 text-xs text-navy-200">{t.promoText}</p>
             <div className="mt-2.5 flex flex-wrap gap-4 text-[11px] font-semibold text-navy-100">
-              <span>✓ 150 invoices / month</span>
-              <span>✓ Advanced VAT &amp; AR reports</span>
-              <span>✓ Cancel renewal anytime</span>
+              {t.promoBullets.map((b) => (
+                <span key={b}>✓ {b}</span>
+              ))}
             </div>
           </div>
           <Link
             href="/settings?tab=billing"
             className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-accent-500 px-5 py-3 text-xs font-extrabold text-white shadow-sm hover:bg-accent-600"
           >
-            <Crown className="h-4 w-4" /> Upgrade to Solo — $39/month
+            <Crown className="h-4 w-4" /> {t.promoCta}
           </Link>
         </div>
       )}
