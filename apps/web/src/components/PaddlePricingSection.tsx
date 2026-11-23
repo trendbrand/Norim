@@ -23,6 +23,9 @@ export const PRICING_PLANS = [
     name: "Free",
     price: "$0",
     period: "/ forever",
+    annualPrice: "$0",
+    annualMonthly: "",
+    annualSave: "",
     badge: "Always Free",
     desc: "Ideal for testing EN 16931 validation, inspecting supplier invoices, and occasional invoicing.",
     features: [
@@ -40,6 +43,9 @@ export const PRICING_PLANS = [
     name: "Solo",
     price: "$39",
     period: "/ month",
+    annualPrice: "$390",
+    annualMonthly: "≈ $32.50/mo, billed yearly",
+    annualSave: "Save $78",
     badge: "Most Popular",
     desc: "Main plan for solo founders, consultants, and growing businesses automating European e-invoicing.",
     features: [
@@ -57,6 +63,9 @@ export const PRICING_PLANS = [
     name: "Business",
     price: "$49",
     period: "/ month",
+    annualPrice: "$490",
+    annualMonthly: "≈ $40.83/mo, billed yearly",
+    annualSave: "Save $98",
     badge: "Teams & Bridges",
     desc: "Complete Stripe & WooCommerce automation with multi-user approvals and EU archival.",
     features: [
@@ -74,6 +83,9 @@ export const PRICING_PLANS = [
     name: "Agency & API",
     price: "$129",
     period: "/ month",
+    annualPrice: "$1,290",
+    annualMonthly: "≈ $107.50/mo, billed yearly",
+    annualSave: "Save $258",
     badge: "High Volume",
     desc: "Built for accounting firms, high-volume merchants, and ERP / SaaS developer teams.",
     features: [
@@ -92,6 +104,7 @@ export function PaddlePricingSection() {
   const router = useRouter();
   const [busyTier, setBusyTier] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [cycle, setCycle] = useState<"monthly" | "annual">("annual");
 
   async function launchCheckout(tier: string) {
     setBusyTier(tier);
@@ -100,11 +113,11 @@ export function PaddlePricingSection() {
       const res = await fetch("/api/v1/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planTier: tier }),
+        body: JSON.stringify({ planTier: tier, billingCycle: cycle }),
       });
 
       if (res.status === 401) {
-        router.push(`/login?mode=register&plan=${encodeURIComponent(tier)}`);
+        router.push(`/login?mode=register&plan=${encodeURIComponent(tier)}&cycle=${cycle}`);
         return;
       }
 
@@ -147,9 +160,30 @@ export function PaddlePricingSection() {
             Transparent Plans for Every Stage of E-Invoicing
           </h2>
           <p className="mt-2.5 text-sm leading-relaxed text-slate-600 sm:text-base">
-            Start free or evaluate full automation with a real 15-day free trial. Upgrade to Solo ($39/month) or higher
-            tiers whenever your volume grows — cancel renewal anytime.
+            Start free or evaluate full automation with a real 15-day free trial. Pay monthly, or save ~17% with annual
+            billing (2 months free) — cancel renewal anytime.
           </p>
+        </div>
+
+        {/* Monthly / Annual billing toggle */}
+        <div className="mt-7 flex items-center justify-center">
+          <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setCycle("monthly")}
+              className={`rounded-lg px-4 py-1.5 transition ${cycle === "monthly" ? "bg-white text-navy-900 shadow-sm" : "text-slate-500 hover:text-navy-800"}`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setCycle("annual")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 transition ${cycle === "annual" ? "bg-white text-navy-900 shadow-sm" : "text-slate-500 hover:text-navy-800"}`}
+            >
+              Annual
+              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">2 months free</span>
+            </button>
+          </div>
         </div>
 
         {banner && (
@@ -187,10 +221,20 @@ export function PaddlePricingSection() {
                 </div>
                 <p className="mt-4 flex items-baseline gap-1">
                   <span className="tabular-money text-3xl font-extrabold tracking-tight text-navy-900">
-                    {plan.price}
+                    {cycle === "annual" ? plan.annualPrice : plan.price}
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">{plan.period}</span>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {plan.tier === "free" ? plan.period : cycle === "annual" ? "/ year" : plan.period}
+                  </span>
+                  {cycle === "annual" && plan.annualSave && (
+                    <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                      {plan.annualSave}
+                    </span>
+                  )}
                 </p>
+                {cycle === "annual" && plan.annualMonthly && (
+                  <p className="mt-1 text-[11px] font-semibold text-slate-400">{plan.annualMonthly}</p>
+                )}
                 <p className="mt-2 text-xs leading-relaxed text-slate-600">{plan.desc}</p>
                 <ul className="mt-5 space-y-2.5 text-xs leading-relaxed text-slate-700">
                   {plan.features.map((feat) => (
