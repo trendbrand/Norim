@@ -9,6 +9,8 @@
  * - Zero unverified certifications (ISO 27001, SOC 2), zero fabricated SLAs, zero fake testimonials.
  */
 
+import type { AppLocale } from "./i18n";
+
 export interface LegalSection {
   id: string;
   heading: string;
@@ -822,5 +824,56 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
         ],
       },
     ],
+  },
+};
+
+// ── Legal-page localization (Phase 1 infra) ──
+// English is the canonical, binding fallback. Translated locales are added
+// per-slug under de/fr; any missing slug falls back to the English document,
+// so a half-finished language never renders a blank page.
+export const LEGAL_DOCUMENTS_I18N: Record<AppLocale, Record<string, LegalDocument>> = {
+  en: LEGAL_DOCUMENTS,
+  de: {},
+  fr: {},
+};
+
+export function resolveLocale(raw: string | undefined | null): AppLocale {
+  return raw === "de" || raw === "fr" ? raw : "en";
+}
+
+export function resolveLegalDoc(slug: string, locale: AppLocale): LegalDocument {
+  return LEGAL_DOCUMENTS_I18N[locale]?.[slug] ?? LEGAL_DOCUMENTS[slug]!;
+}
+
+// UI chrome around every legal document (safe to translate now — not legal text).
+export interface LegalChrome {
+  back: string;
+  onThisPage: string;
+  contactForm: string;
+  proposedEntity: string;
+  relatedEntity: string;
+}
+
+export const LEGAL_CHROME: Record<AppLocale, LegalChrome> = {
+  en: {
+    back: "Back to NormInvoice",
+    onThisPage: "On this page",
+    contactForm: "Contact Form →",
+    proposedEntity: "Proposed contracting entity:",
+    relatedEntity: "Related group entity:",
+  },
+  de: {
+    back: "Zurück zu NormInvoice",
+    onThisPage: "Auf dieser Seite",
+    contactForm: "Kontaktformular →",
+    proposedEntity: "Vorgesehene Vertragspartei:",
+    relatedEntity: "Verbundenes Konzernunternehmen:",
+  },
+  fr: {
+    back: "Retour à NormInvoice",
+    onThisPage: "Sur cette page",
+    contactForm: "Formulaire de contact →",
+    proposedEntity: "Entité contractante proposée :",
+    relatedEntity: "Entité de groupe liée :",
   },
 };
