@@ -4,7 +4,7 @@ import {
   serializeToCiiXml,
   serializeToUblXml,
 } from "@norminvoice/einvoice-core";
-import { getInvoiceForOrg } from "@/lib/db-store";
+import { getInvoiceForOrg, getInvoiceDesignForOrg } from "@/lib/db-store";
 import { requireTenantAuth, sanitizeSafeFilename } from "@/lib/security";
 
 export async function GET(
@@ -50,7 +50,7 @@ export async function GET(
     });
   }
 
-  const { pdfBytes } = await generateHybridEInvoicePdf(record.canonical, xml);
+  const { pdfBytes } = await generateHybridEInvoicePdf(record.canonical, xml, getInvoiceDesignForOrg(access.ctx.orgId));
   return new NextResponse(Buffer.from(pdfBytes), {
     status: 200,
     headers: {

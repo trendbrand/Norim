@@ -467,6 +467,49 @@ function SettingsInner() {
                 )}
               </div>
             </div>
+
+            {/* Invoice design / PDF branding */}
+            <div className="sm:col-span-2 mt-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <p className="text-xs font-bold text-navy-900">{t.designHeading}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">{t.designHint}</p>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className={labelCls}>
+                  {t.fAccentColor}
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      aria-label={t.fAccentColor}
+                      value={/^#[0-9a-fA-F]{6}$/.test(s.brandAccentColor || "") ? s.brandAccentColor : "#011D42"}
+                      onChange={(e) => setS({ ...s, brandAccentColor: e.target.value })}
+                      className="h-9 w-12 shrink-0 rounded border border-slate-300 bg-white p-0.5"
+                    />
+                    <input
+                      className={`${inputCls} mt-0 font-mono uppercase`}
+                      value={s.brandAccentColor || ""}
+                      onChange={(e) => setS({ ...s, brandAccentColor: e.target.value })}
+                      placeholder="#011D42"
+                    />
+                  </div>
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:mt-7">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(s.invoiceAccentBand)}
+                    onChange={(e) => setS({ ...s, invoiceAccentBand: e.target.checked })}
+                  />
+                  {t.fAccentBand}
+                </label>
+                <label className={`${labelCls} sm:col-span-2`}>
+                  {t.fFooterText}
+                  <input
+                    className={inputCls}
+                    value={s.invoiceFooterText || ""}
+                    onChange={(e) => setS({ ...s, invoiceFooterText: e.target.value })}
+                    placeholder="EN 16931 Electronic Invoice — structured XML embedded."
+                  />
+                </label>
+              </div>
+            </div>
           </div>
         </Card>
       )}

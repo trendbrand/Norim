@@ -12,6 +12,7 @@ import {
   getInvoiceForOrg,
   getOrgById,
   getSellerSettings,
+  getInvoiceDesignForOrg,
   getSubscriptionForOrg,
   listInvoicesForOrg,
   patchInvoiceForOrg,
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
 
     let pdfBase64: string | null = null;
     if (!isUbl) {
-      const hybrid = await generateHybridEInvoicePdf(normalized, xml);
+      const hybrid = await generateHybridEInvoicePdf(normalized, xml, getInvoiceDesignForOrg(access.ctx.orgId));
       pdfBase64 = Buffer.from(hybrid.pdfBytes).toString("base64");
     }
 

@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import {
   CanonicalInvoice,
   GOLDEN_FIXTURES,
+  InvoiceDesign,
   ValidationDiagnostic,
   computeCanonicalTotals,
   serializeToCiiXml,
@@ -67,6 +68,9 @@ export interface SellerSettingsRecord {
   contactPhone: string;
   contactEmail: string;
   logoDataUrl: string;
+  brandAccentColor: string;
+  invoiceFooterText: string;
+  invoiceAccentBand: boolean;
   invoicePrefix: string;
   creditNotePrefix: string;
   nextInvoiceSeq: number;
@@ -482,6 +486,9 @@ function getDb(): DatabaseSync {
       contact_phone TEXT NOT NULL DEFAULT '',
       contact_email TEXT NOT NULL DEFAULT '',
       logo_data_url TEXT NOT NULL DEFAULT '',
+      brand_accent_color TEXT NOT NULL DEFAULT '',
+      invoice_footer_text TEXT NOT NULL DEFAULT '',
+      invoice_accent_band INTEGER NOT NULL DEFAULT 0,
       invoice_prefix TEXT NOT NULL DEFAULT 'RE-2026-',
       credit_note_prefix TEXT NOT NULL DEFAULT 'GS-2026-',
       next_invoice_seq INTEGER NOT NULL DEFAULT 1,
@@ -861,6 +868,16 @@ function getDb(): DatabaseSync {
   }
   if (!subCols.some((c) => c.name === "currency")) {
     db.exec("ALTER TABLE subscriptions ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD';");
+  }
+  const spCols = db.prepare("PRAGMA table_info(seller_profiles)").all() as Array<{ name: string }>;
+  if (!spCols.some((c) => c.name === "brand_accent_color")) {
+    db.exec("ALTER TABLE seller_profiles ADD COLUMN brand_accent_color TEXT NOT NULL DEFAULT '';");
+  }
+  if (!spCols.some((c) => c.name === "invoice_footer_text")) {
+    db.exec("ALTER TABLE seller_profiles ADD COLUMN invoice_footer_text TEXT NOT NULL DEFAULT '';");
+  }
+  if (!spCols.some((c) => c.name === "invoice_accent_band")) {
+    db.exec("ALTER TABLE seller_profiles ADD COLUMN invoice_accent_band INTEGER NOT NULL DEFAULT 0;");
   }
 
   globalSqlite.__normInvoiceSqlite = db;
@@ -1297,6 +1314,9 @@ export function getSellerSettings(orgId: string): SellerSettingsRecord | null {
     contactPhone: r.contact_phone,
     contactEmail: r.contact_email,
     logoDataUrl: r.logo_data_url,
+    brandAccentColor: r.brand_accent_color ?? "",
+    invoiceFooterText: r.invoice_footer_text ?? "",
+    invoiceAccentBand: Boolean(r.invoice_accent_band),
     invoicePrefix: r.invoice_prefix,
     creditNotePrefix: r.credit_note_prefix,
     nextInvoiceSeq: Number(r.next_invoice_seq),
@@ -1311,6 +1331,18 @@ export function getSellerSettings(orgId: string): SellerSettingsRecord | null {
     accountantCcEmail: r.accountant_cc_email,
     retentionYears: r.retention_years === 10 ? 10 : 8,
     updatedAt: r.updated_at,
+  };
+}
+
+/** Build the per-workspace PDF branding (applied to the human-readable layer only). */
+export function getInvoiceDesignForOrg(orgId: string): InvoiceDesign | undefined {
+  const s = getSellerSettings(orgId);
+  if (!s) return undefined;
+  return {
+    accentColor: s.brandAccentColor || undefined,
+    logoDataUrl: s.logoDataUrl || undefined,
+    footerText: s.invoiceFooterText || undefined,
+    accentBand: s.invoiceAccentBand,
   };
 }
 
@@ -1335,6 +1367,7 @@ export function updateSellerSettings(orgId: string, patch: Partial<SellerSetting
        vat_id = ?, vat_verified_at = ?, tax_number = ?, is_kleinunternehmer = ?,
        electronic_address = ?, electronic_scheme_id = ?,
        contact_name = ?, contact_phone = ?, contact_email = ?, logo_data_url = ?,
+       brand_accent_color = ?, invoice_footer_text = ?, invoice_accent_band = ?,
        invoice_prefix = ?, credit_note_prefix = ?, next_invoice_seq = ?,
        default_format = ?, default_locale = ?, default_due_days = ?,
        default_payment_terms = ?, default_notes = ?,
@@ -1359,6 +1392,9 @@ export function updateSellerSettings(orgId: string, patch: Partial<SellerSetting
     next.contactPhone,
     next.contactEmail,
     next.logoDataUrl.slice(0, 250_000),
+    (next.brandAccentColor || "").slice(0, 9),
+    (next.invoiceFooterText || "").slice(0, 400),
+    next.invoiceAccentBand ? 1 : 0,
     next.invoicePrefix,
     next.creditNotePrefix,
     Math.max(1, Number(next.nextInvoiceSeq) || 1),

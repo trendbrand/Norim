@@ -3117,6 +3117,11 @@ export interface SettingsStrings {
   fLogo: string;
   noLogo: string;
   removeLogo: string;
+  designHeading: string;
+  fAccentColor: string;
+  fAccentBand: string;
+  fFooterText: string;
+  designHint: string;
   // invoicing tab
   invoicingTitle: string;
   invoicingDesc: string;
@@ -3293,6 +3298,11 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     fLogo: "Company Logo (for PDF/A-3 header, max 180 KB)",
     noLogo: "No logo",
     removeLogo: "Remove",
+    designHeading: "Invoice Design (PDF branding)",
+    fAccentColor: "Accent color",
+    fAccentBand: "Show an accent band under the header",
+    fFooterText: "Custom invoice footer line",
+    designHint: "Branding applies to the human-readable PDF only — the embedded EN 16931 XML is never changed.",
     invoicingTitle: "Invoicing Defaults, Sequential Numbering & SEPA Banking (BG-16)",
     invoicingDesc: "IBAN is validated using ISO 13616 MOD-97 on both client and server.",
     fIban: "IBAN (BT-84)",
@@ -3460,6 +3470,11 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     fLogo: "Firmenlogo (für PDF/A-3-Kopf, max. 180 KB)",
     noLogo: "Kein Logo",
     removeLogo: "Entfernen",
+    designHeading: "Rechnungsdesign (PDF-Branding)",
+    fAccentColor: "Akzentfarbe",
+    fAccentBand: "Akzentleiste unter der Kopfzeile anzeigen",
+    fFooterText: "Eigene Fußzeile der Rechnung",
+    designHint: "Das Branding gilt nur für das lesbare PDF — die eingebettete EN-16931-XML wird nie verändert.",
     invoicingTitle: "Rechnungsvorgaben, fortlaufende Nummerierung & SEPA-Bankdaten (BG-16)",
     invoicingDesc: "Die IBAN wird per ISO 13616 MOD-97 auf Client und Server geprüft.",
     fIban: "IBAN (BT-84)",
@@ -3627,6 +3642,11 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     fLogo: "Logo de l'entreprise (en-tête PDF/A-3, max 180 Ko)",
     noLogo: "Aucun logo",
     removeLogo: "Supprimer",
+    designHeading: "Design de facture (branding PDF)",
+    fAccentColor: "Couleur d'accent",
+    fAccentBand: "Afficher une bande d'accent sous l'en-tête",
+    fFooterText: "Ligne de pied de page personnalisée",
+    designHint: "Le branding s'applique uniquement au PDF lisible — le XML EN 16931 intégré n'est jamais modifié.",
     invoicingTitle: "Valeurs par défaut de facturation, numérotation séquentielle & banque SEPA (BG-16)",
     invoicingDesc: "L'IBAN est validé via ISO 13616 MOD-97 côté client et serveur.",
     fIban: "IBAN (BT-84)",

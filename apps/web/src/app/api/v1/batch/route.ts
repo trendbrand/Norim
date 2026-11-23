@@ -10,6 +10,7 @@ import {
 } from "@norminvoice/einvoice-core";
 import {
   getSellerSettings,
+  getInvoiceDesignForOrg,
   saveInvoiceForOrg,
   sellerSettingsToCanonicalParty,
 } from "@/lib/db-store";
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     const settings = getSellerSettings(access.ctx.orgId);
+    const design = getInvoiceDesignForOrg(access.ctx.orgId);
     if (!settings) {
       return NextResponse.json({ error: "Complete your Seller Settings before running Batch CSV." }, { status: 400 });
     }
@@ -116,7 +118,7 @@ export async function POST(req: NextRequest) {
       zip.file(`xml/${safeBase}.xml`, xml);
 
       if (!isUbl) {
-        const { pdfBytes } = await generateHybridEInvoicePdf(r.invoice, xml);
+        const { pdfBytes } = await generateHybridEInvoicePdf(r.invoice, xml, design);
         zip.file(`pdf/${safeBase}_ZUGFeRD.pdf`, pdfBytes);
       }
     }

@@ -25,6 +25,7 @@ import {
   claimTransmissionJob,
   getInvoiceForOrg,
   getSellerSettings,
+  getInvoiceDesignForOrg,
   getTransmissionJob,
   listDueTransmissionJobIds,
   markInvoiceDelivered,
@@ -125,7 +126,7 @@ export async function processTransmissionJobOnce(jobId: string): Promise<Process
 
     let pdfAttachment: { filename: string; contentBase64: string } | undefined;
     if (!isUbl) {
-      const { pdfBytes } = await generateHybridEInvoicePdf(record.canonical, xml);
+      const { pdfBytes } = await generateHybridEInvoicePdf(record.canonical, xml, getInvoiceDesignForOrg(existing.orgId));
       pdfAttachment = {
         filename: `${record.invoiceNumber}_ZUGFeRD.pdf`,
         contentBase64: Buffer.from(pdfBytes).toString("base64"),

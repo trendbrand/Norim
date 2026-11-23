@@ -9,6 +9,7 @@ import {
 } from "@norminvoice/einvoice-core";
 import {
   appendOrgAuditEvent,
+  getInvoiceDesignForOrg,
   listInvoicesForOrg,
   verifyOrgAuditHashChain,
 } from "@/lib/db-store";
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
     (r) => r.validationPassed && r.status !== "DRAFT"
   );
 
+  const design = getInvoiceDesignForOrg(access.ctx.orgId);
   const zip = new JSZip();
   for (const r of records) {
     const safeBase = sanitizeSafeFilename(r.invoiceNumber, r.id);
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
     const xml = isUbl ? serializeToUblXml(r.canonical) : serializeToCiiXml(r.canonical);
     zip.file(`xml/${safeBase}.xml`, xml);
     if (!isUbl) {
-      const { pdfBytes } = await generateHybridEInvoicePdf(r.canonical, xml);
+      const { pdfBytes } = await generateHybridEInvoicePdf(r.canonical, xml, design);
       zip.file(`pdf/${safeBase}_ZUGFeRD.pdf`, pdfBytes);
     }
   }

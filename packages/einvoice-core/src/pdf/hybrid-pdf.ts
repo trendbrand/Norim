@@ -137,13 +137,33 @@ const LABELS = {
 };
 
 /**
+ * Per-workspace invoice branding applied to the human-readable PDF layer only.
+ * The embedded EN 16931 XML (the legally structured data) is never affected.
+ */
+export interface InvoiceDesign {
+  accentColor?: string; // hex "#RRGGBB" — doc title, amount-due, optional band
+  logoDataUrl?: string; // data:image/png|jpeg;base64,… (SVG is ignored for PDF)
+  footerText?: string; // overrides the default compliance footer line
+  accentBand?: boolean; // draw a thin accent rule under the header
+}
+
+function hexToPdfColor(hex: string | undefined, fallback: ReturnType<typeof rgb>): ReturnType<typeof rgb> {
+  if (!hex) return fallback;
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return fallback;
+  const n = parseInt(m[1]!, 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+
+/**
  * Generates a hybrid ZUGFeRD 2.3 / Factur-X 1.07 PDF with embedded factur-x.xml,
  * /AFRelationship /Alternative, and PDF/A-3b + Factur-X XMP metadata.
  * (In Docker production mode, einvoice-engine pipes this through Ghostscript + veraPDF for strict ISO 19005-3 ICC locking.)
  */
 export async function generateHybridEInvoicePdf(
   invoice: CanonicalInvoice,
-  providedXml?: string
+  providedXml?: string,
+  design?: InvoiceDesign
 ): Promise<{ pdfBytes: Uint8Array; xml: string; xmlFilename: string }> {
   const { normalized, vatBreakdown, totals } = computeCanonicalTotals(invoice);
   const xml = providedXml ?? serializeToCiiXml(normalized);
@@ -165,11 +185,35 @@ export async function generateHybridEInvoicePdf(
   const slate600 = rgb(0.35, 0.4, 0.48);
   const slate200 = rgb(0.88, 0.9, 0.94);
   const brandBlue = rgb(0.08, 0.32, 0.65);
+  const accent = hexToPdfColor(design?.accentColor, brandBlue);
 
   // Header bar
   page.drawRectangle({ x: 0, y: 785, width: 595.28, height: 56.89, color: rgb(0.96, 0.97, 0.99) });
+  if (design?.accentBand) {
+    page.drawRectangle({ x: 0, y: 781, width: 595.28, height: 4, color: accent });
+  }
+
+  // Optional workspace logo (top-left); shifts the seller name to its right.
+  let sellerX = 44;
+  if (design?.logoDataUrl) {
+    try {
+      const m = /^data:(image\/(png|jpe?g));base64,(.+)$/i.exec(design.logoDataUrl);
+      if (m) {
+        const bytes = Uint8Array.from(Buffer.from(m[3]!, "base64"));
+        const img = m[2]!.toLowerCase() === "png" ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+        const scale = Math.min(34 / img.height, 90 / img.width);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        page.drawImage(img, { x: 44, y: 797, width: w, height: h });
+        sellerX = 44 + w + 12;
+      }
+    } catch {
+      // Bad/unsupported logo bytes — keep the plain text header.
+    }
+  }
+
   page.drawText(sanitizeWinAnsi(normalized.seller.name), {
-    x: 44,
+    x: sellerX,
     y: 812,
     size: 15,
     font: fontBold,
@@ -179,7 +223,7 @@ export async function generateHybridEInvoicePdf(
     sanitizeWinAnsi(
       `${normalized.seller.address.street}, ${normalized.seller.address.postalCode} ${normalized.seller.address.city} (${normalized.seller.address.countryCode})`
     ),
-    { x: 44, y: 796, size: 8.5, font: fontRegular, color: slate600 }
+    { x: sellerX, y: 796, size: 8.5, font: fontRegular, color: slate600 }
   );
 
   const docTitle = normalized.typeCode === 381 ? t.creditNote : t.invoice;
@@ -188,7 +232,7 @@ export async function generateHybridEInvoicePdf(
     y: 810,
     size: 16,
     font: fontBold,
-    color: brandBlue,
+    color: accent,
   });
   page.drawText("EN 16931 · ZUGFeRD 2.3 / Factur-X", {
     x: 375,
@@ -321,13 +365,13 @@ export async function generateHybridEInvoicePdf(
   }
 
   page.drawRectangle({ x: 332, y: y - 10, width: 219, height: 24, color: rgb(0.93, 0.96, 1) });
-  page.drawText(sanitizeWinAnsi(t.payable), { x: 340, y: y - 2, size: 10, font: fontBold, color: brandBlue });
+  page.drawText(sanitizeWinAnsi(t.payable), { x: 340, y: y - 2, size: 10, font: fontBold, color: accent });
   page.drawText(sanitizeWinAnsi(formatPdfMoney(totals.payableAmount, normalized.locale, normalized.currency)), {
     x: 460,
     y: y - 2,
     size: 10.5,
     font: fontBold,
-    color: brandBlue,
+    color: accent,
   });
 
   // Payment Instructions Footer Box
@@ -363,7 +407,8 @@ export async function generateHybridEInvoicePdf(
     .filter(Boolean)
     .join("  |  ");
   page.drawText(sanitizeWinAnsi(legalFoot), { x: 44, y: 54, size: 7.5, font: fontBold, color: slate600 });
-  page.drawText(sanitizeWinAnsi(t.footer), { x: 44, y: 40, size: 7.5, font: fontRegular, color: slate600 });
+  const footerLine = (design?.footerText && design.footerText.trim()) || t.footer;
+  page.drawText(sanitizeWinAnsi(footerLine.slice(0, 160)), { x: 44, y: 40, size: 7.5, font: fontRegular, color: slate600 });
 
   // Attach factur-x.xml with /AFRelationship /Alternative per ZUGFeRD / Factur-X spec
   const xmlBytes = new TextEncoder().encode(xml);
