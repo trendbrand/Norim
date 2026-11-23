@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Download, Loader2 } from "lucide-react";
+import { BarChart3, Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Card, PageHeader, apiJson, btnSecondary, formatMoney } from "@/components/ui";
 
 interface AnalyticsReport {
@@ -49,9 +49,17 @@ export default function ReportsPage() {
         title="Financial, Receivables Ageing & VAT Analytics"
         subtitle="100% live metrics computed directly from your organization's GoBD-archived invoices and incoming payables."
         actions={
-          <Link href="/exports" className={btnSecondary}>
-            <Download className="h-4 w-4" /> DATEV / FEC Exports
-          </Link>
+          <>
+            <a href="/api/v1/reports/export?format=csv" className={btnSecondary}>
+              <FileSpreadsheet className="h-4 w-4" /> Export CSV
+            </a>
+            <a href="/api/v1/reports/export?format=json" className={btnSecondary}>
+              <Download className="h-4 w-4" /> Export JSON
+            </a>
+            <Link href="/exports" className={btnSecondary}>
+              <Download className="h-4 w-4" /> DATEV / FEC
+            </Link>
+          </>
         }
       />
 
