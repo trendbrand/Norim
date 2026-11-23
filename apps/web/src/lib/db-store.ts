@@ -110,7 +110,7 @@ export interface InvoiceRecord {
   id: string;
   orgId: string;
   customerId: string | null;
-  source: "stripe" | "woocommerce" | "api" | "manual" | "csv";
+  source: "stripe" | "woocommerce" | "shopify" | "api" | "manual" | "csv";
   sourceRef: string;
   invoiceNumber: string;
   typeCode: 380 | 381;
@@ -260,7 +260,7 @@ export interface AutomationRuleRecord {
 }
 
 export interface IntegrationConfigRecord {
-  provider: "stripe" | "woocommerce" | "smtp" | "outbound_webhook";
+  provider: "stripe" | "woocommerce" | "shopify" | "smtp" | "outbound_webhook";
   enabled: boolean;
   secretMasked: string;
   hasSecret: boolean;
@@ -2210,7 +2210,7 @@ export function getIntegrationSecretDecrypted(orgId: string, provider: string): 
 
 export function upsertIntegrationForOrg(
   orgId: string,
-  provider: "stripe" | "woocommerce" | "smtp" | "outbound_webhook",
+  provider: "stripe" | "woocommerce" | "shopify" | "smtp" | "outbound_webhook",
   input: { enabled?: boolean; newSecret?: string; rotateSecret?: boolean; config?: Record<string, unknown> }
 ): { record: IntegrationConfigRecord; rotatedPlaintext?: string } {
   const db = getDb();

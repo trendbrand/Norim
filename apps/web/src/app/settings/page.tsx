@@ -76,11 +76,12 @@ function SettingsInner() {
   const [viesLoading, setViesLoading] = useState(false);
 
   // Integrations
-  const [webhookUrls, setWebhookUrls] = useState<{ stripe: string; woocommerce: string }>({ stripe: "", woocommerce: "" });
+  const [webhookUrls, setWebhookUrls] = useState<{ stripe: string; woocommerce: string; shopify: string }>({ stripe: "", woocommerce: "", shopify: "" });
   const [integrations, setIntegrations] = useState<Array<any>>([]);
   const [webhookLogs, setWebhookLogs] = useState<Array<any>>([]);
   const [stripeSecretInput, setStripeSecretInput] = useState("");
   const [wooSecretInput, setWooSecretInput] = useState("");
+  const [shopifySecretInput, setShopifySecretInput] = useState("");
   const [rotatedSecret, setRotatedSecret] = useState<{ provider: string; secret: string } | null>(null);
 
   // Team
@@ -193,7 +194,7 @@ function SettingsInner() {
     reader.readAsDataURL(file);
   }
 
-  async function updateIntegration(provider: "stripe" | "woocommerce", payload: { enabled?: boolean; newSecret?: string; rotateSecret?: boolean }) {
+  async function updateIntegration(provider: "stripe" | "woocommerce" | "shopify", payload: { enabled?: boolean; newSecret?: string; rotateSecret?: boolean }) {
     setSaving(true);
     setToast(null);
     setRotatedSecret(null);
@@ -344,6 +345,7 @@ function SettingsInner() {
 
   const stripeInteg = integrations.find((i) => i.provider === "stripe");
   const wooInteg = integrations.find((i) => i.provider === "woocommerce");
+  const shopifyInteg = integrations.find((i) => i.provider === "shopify");
 
   return (
     <div className="space-y-6">
@@ -664,6 +666,35 @@ function SettingsInner() {
                   </button>
                 </div>
                 <button type="button" disabled={saving} onClick={() => void updateIntegration("woocommerce", { enabled: true, rotateSecret: true })} className={btnSecondary}>
+                  <RefreshCw className="h-3.5 w-3.5" /> {t.rotateSecret}
+                </button>
+              </div>
+            </Card>
+
+            <Card title={t.shopifyTitle} description={t.shopifyDesc}>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="font-semibold text-slate-700">{t.shopifyUrlLabel}</span>
+                  <div className="mt-1 flex gap-2">
+                    <input readOnly value={webhookUrls.shopify} className={`${inputCls} mt-0 bg-slate-50 font-mono text-[11px]`} />
+                    <button type="button" onClick={() => copy(webhookUrls.shopify)} className={btnSecondary}><Copy className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+                <p className="text-slate-500">
+                  {t.storedSecret} <code className="font-mono font-semibold text-slate-800">{shopifyInteg?.hasSecret ? shopifyInteg.secretMasked : t.notSet}</code>
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    value={shopifySecretInput}
+                    onChange={(e) => setShopifySecretInput(e.target.value)}
+                    placeholder={t.shopifyPlaceholder}
+                    className={`${inputCls} mt-0 font-mono text-xs`}
+                  />
+                  <button type="button" disabled={!shopifySecretInput.trim() || saving} onClick={() => void updateIntegration("shopify", { enabled: true, newSecret: shopifySecretInput })} className={btnPrimary}>
+                    {t.save}
+                  </button>
+                </div>
+                <button type="button" disabled={saving} onClick={() => void updateIntegration("shopify", { enabled: true, rotateSecret: true })} className={btnSecondary}>
                   <RefreshCw className="h-3.5 w-3.5" /> {t.rotateSecret}
                 </button>
               </div>

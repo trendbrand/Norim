@@ -1242,6 +1242,7 @@ export interface DashboardStrings {
   testIntegrationsDesc: string;
   testStripe: string;
   testWoo: string;
+  testShopify: string;
   toastOk: (provider: string, num: string, status: string) => string;
   toastFail: string;
   promoTitle: string;
@@ -1310,6 +1311,7 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     testIntegrationsDesc: "Sends a realistic event into your workspace only.",
     testStripe: "Test Stripe Invoice Event",
     testWoo: "Test WooCommerce Order",
+    testShopify: "Test Shopify Order",
     toastOk: (provider, num, status) => `Test ${provider} event processed → ${num} (${status}).`,
     toastFail: "Simulation failed",
     promoTitle: "Need more power for your business?",
@@ -1376,6 +1378,7 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     testIntegrationsDesc: "Sendet ein realistisches Ereignis ausschließlich in Ihren Workspace.",
     testStripe: "Stripe-Rechnungsereignis testen",
     testWoo: "WooCommerce-Bestellung testen",
+    testShopify: "Shopify-Bestellung testen",
     toastOk: (provider, num, status) => `Test-${provider}-Ereignis verarbeitet → ${num} (${status}).`,
     toastFail: "Simulation fehlgeschlagen",
     promoTitle: "Mehr Leistung für Ihr Unternehmen?",
@@ -1442,6 +1445,7 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     testIntegrationsDesc: "Envoie un événement réaliste uniquement dans votre espace.",
     testStripe: "Tester un événement de facture Stripe",
     testWoo: "Tester une commande WooCommerce",
+    testShopify: "Tester une commande Shopify",
     toastOk: (provider, num, status) => `Événement test ${provider} traité → ${num} (${status}).`,
     toastFail: "Échec de la simulation",
     promoTitle: "Besoin de plus de puissance pour votre activité ?",
@@ -3149,6 +3153,10 @@ export interface SettingsStrings {
   stripeDesc: string;
   wooTitle: string;
   wooDesc: string;
+  shopifyTitle: string;
+  shopifyDesc: string;
+  shopifyUrlLabel: string;
+  shopifyPlaceholder: string;
   stripeUrlLabel: string;
   wooUrlLabel: string;
   storedSecret: string;
@@ -3328,6 +3336,10 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     stripeDesc: "Tenant-scoped endpoint. Every request is verified with HMAC-SHA256 + 5-min replay protection.",
     wooTitle: "WooCommerce Plugin Bridge",
     wooDesc: "Paste this URL & signing secret into WooCommerce → NormInvoice EU E-Invoice.",
+    shopifyTitle: "Shopify Order Bridge",
+    shopifyDesc: "Add this URL as an orders/paid webhook in Shopify; verified with the app's HMAC-SHA256 signing secret.",
+    shopifyUrlLabel: "Your Shopify Webhook URL",
+    shopifyPlaceholder: "Paste Shopify webhook secret…",
     stripeUrlLabel: "Your Stripe Webhook URL",
     wooUrlLabel: "Your WooCommerce Webhook URL",
     storedSecret: "Stored secret:",
@@ -3500,6 +3512,10 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     stripeDesc: "Mandantenbezogener Endpunkt. Jede Anfrage wird mit HMAC-SHA256 + 5-Min-Replay-Schutz geprüft.",
     wooTitle: "WooCommerce-Plugin-Bridge",
     wooDesc: "Fügen Sie diese URL & das Signaturgeheimnis in WooCommerce → NormInvoice EU E-Invoice ein.",
+    shopifyTitle: "Shopify-Bestell-Bridge",
+    shopifyDesc: "Fügen Sie diese URL als orders/paid-Webhook in Shopify hinzu; verifiziert mit dem HMAC-SHA256-Signaturgeheimnis der App.",
+    shopifyUrlLabel: "Ihre Shopify-Webhook-URL",
+    shopifyPlaceholder: "Shopify-Webhook-Geheimnis einfügen…",
     stripeUrlLabel: "Ihre Stripe-Webhook-URL",
     wooUrlLabel: "Ihre WooCommerce-Webhook-URL",
     storedSecret: "Gespeichertes Geheimnis:",
@@ -3672,6 +3688,10 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     stripeDesc: "Point de terminaison par locataire. Chaque requête est vérifiée avec HMAC-SHA256 + protection anti-rejeu de 5 min.",
     wooTitle: "Passerelle plugin WooCommerce",
     wooDesc: "Collez cette URL & ce secret de signature dans WooCommerce → NormInvoice EU E-Invoice.",
+    shopifyTitle: "Passerelle de commandes Shopify",
+    shopifyDesc: "Ajoutez cette URL comme webhook orders/paid dans Shopify ; vérifiée avec le secret de signature HMAC-SHA256 de l'app.",
+    shopifyUrlLabel: "Votre URL de webhook Shopify",
+    shopifyPlaceholder: "Coller le secret du webhook Shopify…",
     stripeUrlLabel: "Votre URL de webhook Stripe",
     wooUrlLabel: "Votre URL de webhook WooCommerce",
     storedSecret: "Secret stocké :",

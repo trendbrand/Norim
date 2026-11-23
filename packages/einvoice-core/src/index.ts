@@ -8,6 +8,7 @@ export * from "./parsers/xml-parser.js";
 export * from "./pdf/hybrid-pdf.js";
 export * from "./integrations/stripe-mapper.js";
 export * from "./integrations/woocommerce-mapper.js";
+export * from "./integrations/shopify-mapper.js";
 export * from "./integrations/csv-batch-importer.js";
 export * from "./integrations/datev-exporter.js";
 export * from "./integrations/fec-exporter.js";

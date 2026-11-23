@@ -253,7 +253,7 @@ export default function DashboardPage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [simulating, setSimulating] = useState<"stripe" | "woocommerce" | null>(null);
+  const [simulating, setSimulating] = useState<"stripe" | "woocommerce" | "shopify" | null>(null);
   const [toast, setToast] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const refresh = useCallback(async (windowDays = days) => {
@@ -270,7 +270,7 @@ export default function DashboardPage() {
     void refresh(days);
   }, [days, refresh]);
 
-  async function simulate(provider: "stripe" | "woocommerce") {
+  async function simulate(provider: "stripe" | "woocommerce" | "shopify") {
     setSimulating(provider);
     setToast(null);
     try {
@@ -642,6 +642,15 @@ export default function DashboardPage() {
               >
                 {simulating === "woocommerce" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4 text-accent-500" />}
                 {t.testWoo}
+              </button>
+              <button
+                type="button"
+                disabled={simulating !== null}
+                onClick={() => void simulate("shopify")}
+                className={`${btnSecondary} w-full`}
+              >
+                {simulating === "shopify" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4 text-accent-500" />}
+                {t.testShopify}
               </button>
             </div>
           </Card>

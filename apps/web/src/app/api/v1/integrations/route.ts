@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  ShopifyOrderPayload,
   StripeInvoiceLike,
   WooCommerceOrderPayload,
+  mapShopifyOrderToCanonical,
   mapStripeInvoiceToCanonical,
   mapWooOrderToCanonical,
 } from "@norminvoice/einvoice-core";
@@ -28,6 +30,7 @@ export async function GET(req: NextRequest) {
     webhookUrls: {
       stripe: `${origin}/api/webhooks/stripe/${access.ctx.orgId}`,
       woocommerce: `${origin}/api/webhooks/woocommerce/${access.ctx.orgId}`,
+      shopify: `${origin}/api/webhooks/shopify/${access.ctx.orgId}`,
     },
     integrations: listIntegrationsForOrg(access.ctx.orgId),
     webhookLogs: listWebhookLogsForOrg(access.ctx.orgId),
@@ -40,14 +43,14 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = (await req.json()) as {
-      provider: "stripe" | "woocommerce" | "smtp" | "outbound_webhook";
+      provider: "stripe" | "woocommerce" | "shopify" | "smtp" | "outbound_webhook";
       enabled?: boolean;
       newSecret?: string;
       rotateSecret?: boolean;
       config?: Record<string, unknown>;
     };
 
-    if (!["stripe", "woocommerce", "smtp", "outbound_webhook"].includes(body.provider)) {
+    if (!["stripe", "woocommerce", "shopify", "smtp", "outbound_webhook"].includes(body.provider)) {
       return NextResponse.json({ error: "Invalid integration provider" }, { status: 400 });
     }
 
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
   if (!quota.allowed) return quota.response;
 
   try {
-    const body = (await req.json()) as { provider: "stripe" | "woocommerce" };
+    const body = (await req.json()) as { provider: "stripe" | "woocommerce" | "shopify" };
     const settings = getSellerSettings(access.ctx.orgId);
     if (!settings) {
       return NextResponse.json({ error: "Complete seller settings first." }, { status: 400 });
@@ -174,6 +177,48 @@ export async function POST(req: NextRequest) {
       });
       recordWebhookDeliveryLog(access.ctx.orgId, "woocommerce", "order.completed (test)", 200, `Created ${stored.invoiceNumber} (${stored.status})`);
       return NextResponse.json({ simulated: true, provider: "woocommerce", invoice: stored });
+    }
+
+    if (body.provider === "shopify") {
+      const orderNum = 1000 + (Date.now() % 500);
+      const mockOrder: ShopifyOrderPayload = {
+        id: orderNum,
+        order_number: orderNum,
+        name: `#${orderNum}`,
+        created_at: new Date().toISOString(),
+        currency: "EUR",
+        total_price: "238.00",
+        total_tax: "38.00",
+        taxes_included: false,
+        financial_status: "paid",
+        gateway: "shopify_payments",
+        email: "accounts@novatext-studio.de",
+        note_attributes: [{ name: "eu_vat_id", value: "DE147852369" }],
+        billing_address: {
+          first_name: "Katrin",
+          last_name: "Hoffmann",
+          company: "NovaText Studio GmbH",
+          address1: "Medienpark 12",
+          city: "Köln",
+          zip: "50670",
+          country_code: "DE",
+        },
+        line_items: [
+          { id: 1, title: "Premium Content Licensing Pack", quantity: 2, price: "100.00", tax_lines: [{ price: "38.00", rate: 0.19 }] },
+        ],
+      };
+      const mapped = mapShopifyOrderToCanonical(mockOrder, seller, {
+        iban: settings.iban || "DE89370400440532013000",
+        bic: settings.bic || "COBADEFFXXX",
+        buyerVatVerified: true,
+      });
+      const stored = saveInvoiceForOrg(access.ctx.orgId, mapped.invoice, {
+        source: "shopify",
+        sourceRef: `SH-${orderNum}`,
+        actorEmail: access.ctx.actorEmail,
+      });
+      recordWebhookDeliveryLog(access.ctx.orgId, "shopify", "orders/paid (test)", 200, `Created ${stored.invoiceNumber} (${stored.status})`);
+      return NextResponse.json({ simulated: true, provider: "shopify", invoice: stored });
     }
 
     return NextResponse.json({ error: "Unsupported provider for test simulation" }, { status: 400 });
