@@ -1927,6 +1927,12 @@ export interface InvoiceDetailStrings {
   noComments: string;
   commentPlaceholder: string;
   post: string;
+  payLinkTitle: string;
+  payLinkDesc: string;
+  payLinkCreate: string;
+  payLinkCopy: string;
+  payLinkOpen: string;
+  toastLinkCopied: string;
   // audit
   auditTitle: string;
   auditDesc: string;
@@ -2041,6 +2047,12 @@ export const INVOICE_DETAIL_STRINGS: Record<AppLocale, InvoiceDetailStrings> = {
     noComments: "No internal comments yet.",
     commentPlaceholder: "Add review note or @mention…",
     post: "Post",
+    payLinkTitle: "Payment link",
+    payLinkDesc: "Share a secure pay page (scan-to-pay SEPA) with your customer.",
+    payLinkCreate: "Create payment link",
+    payLinkCopy: "Copy link",
+    payLinkOpen: "Open",
+    toastLinkCopied: "Payment link copied to clipboard.",
     auditTitle: "GoBD Audit Trail",
     auditDesc: "Append-only SHA-256 hash-chained events for this document.",
     noAudit: "No audit events recorded yet.",
@@ -2147,6 +2159,12 @@ export const INVOICE_DETAIL_STRINGS: Record<AppLocale, InvoiceDetailStrings> = {
     noComments: "Noch keine internen Kommentare.",
     commentPlaceholder: "Prüfnotiz oder @Erwähnung hinzufügen…",
     post: "Senden",
+    payLinkTitle: "Zahlungslink",
+    payLinkDesc: "Teilen Sie eine sichere Zahlungsseite (Scan-to-Pay SEPA) mit Ihrem Kunden.",
+    payLinkCreate: "Zahlungslink erstellen",
+    payLinkCopy: "Link kopieren",
+    payLinkOpen: "Öffnen",
+    toastLinkCopied: "Zahlungslink in die Zwischenablage kopiert.",
     auditTitle: "GoBD-Audit-Trail",
     auditDesc: "Nur anfügbare SHA-256-hashverkettete Ereignisse für dieses Dokument.",
     noAudit: "Noch keine Audit-Ereignisse erfasst.",
@@ -2253,6 +2271,12 @@ export const INVOICE_DETAIL_STRINGS: Record<AppLocale, InvoiceDetailStrings> = {
     noComments: "Aucun commentaire interne pour l'instant.",
     commentPlaceholder: "Ajouter une note de revue ou une @mention…",
     post: "Publier",
+    payLinkTitle: "Lien de paiement",
+    payLinkDesc: "Partagez une page de paiement sécurisée (payer en scannant, SEPA) avec votre client.",
+    payLinkCreate: "Créer un lien de paiement",
+    payLinkCopy: "Copier le lien",
+    payLinkOpen: "Ouvrir",
+    toastLinkCopied: "Lien de paiement copié dans le presse-papiers.",
     auditTitle: "Piste d'audit GoBD",
     auditDesc: "Événements chaînés SHA-256 en ajout seul pour ce document.",
     noAudit: "Aucun événement d'audit enregistré pour l'instant.",

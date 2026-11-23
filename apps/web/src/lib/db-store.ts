@@ -550,6 +550,7 @@ function getDb(): DatabaseSync {
       archive_locked_until TEXT NOT NULL,
       delivered_to TEXT,
       delivered_at TEXT,
+      payment_token TEXT,
       canonical_json TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -827,6 +828,11 @@ function getDb(): DatabaseSync {
   if (!invCols.some((c) => c.name === "accounting_status")) {
     db.exec("ALTER TABLE invoices ADD COLUMN accounting_status TEXT NOT NULL DEFAULT 'UNPOSTED';");
   }
+  if (!invCols.some((c) => c.name === "payment_token")) {
+    db.exec("ALTER TABLE invoices ADD COLUMN payment_token TEXT;");
+  }
+  // Safe in both paths (fresh schema already has the column; existing DBs just added it).
+  db.exec("CREATE INDEX IF NOT EXISTS idx_invoices_pay_token ON invoices(payment_token);");
   const inCols = db.prepare("PRAGMA table_info(incoming_invoices)").all() as Array<{ name: string }>;
   if (!inCols.some((c) => c.name === "approval_status")) {
     db.exec("ALTER TABLE incoming_invoices ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'PENDING_REVIEW';");
@@ -1643,6 +1649,31 @@ export function listInvoicesForOrg(
 export function getInvoiceForOrg(orgId: string, invoiceId: string): InvoiceRecord | null {
   const db = getDb();
   const r = db.prepare("SELECT * FROM invoices WHERE id = ? AND org_id = ?").get(invoiceId, orgId) as Record<string, any> | undefined;
+  return r ? mapInvoiceRow(r) : null;
+}
+
+/**
+ * Returns the invoice's shareable payment-link token, creating a random
+ * capability token on first request. The token is an unguessable secret that
+ * grants read-only access to the public pay page (like a Stripe payment link).
+ */
+export function getOrCreatePaymentToken(orgId: string, invoiceId: string): string | null {
+  const db = getDb();
+  const row = db.prepare("SELECT payment_token, status FROM invoices WHERE id = ? AND org_id = ?").get(invoiceId, orgId) as
+    | { payment_token: string | null; status: string }
+    | undefined;
+  if (!row || row.status === "DRAFT") return null;
+  if (row.payment_token) return row.payment_token;
+  const token = `pay_${crypto.randomBytes(24).toString("base64url")}`;
+  db.prepare("UPDATE invoices SET payment_token = ? WHERE id = ? AND org_id = ?").run(token, invoiceId, orgId);
+  return token;
+}
+
+/** Public, org-agnostic lookup by capability token (for the unauthenticated pay page). */
+export function getInvoiceByPaymentToken(token: string): InvoiceRecord | null {
+  if (!token || token.length < 8) return null;
+  const db = getDb();
+  const r = db.prepare("SELECT * FROM invoices WHERE payment_token = ?").get(token) as Record<string, any> | undefined;
   return r ? mapInvoiceRow(r) : null;
 }
 

@@ -14,6 +14,7 @@ import {
   FileCode2,
   FileText,
   Loader2,
+  CreditCard,
   Mail,
   Network,
   RotateCcw,
@@ -123,6 +124,10 @@ export default function InvoiceDetailPage() {
 
   // Email modal/inline state
   const [recipientEmail, setRecipientEmail] = useState("");
+
+  // Shareable payment link
+  const [payLink, setPayLink] = useState<string | null>(null);
+  const [payLinkBusy, setPayLinkBusy] = useState(false);
 
   // Credit note reason
   const [cnReason, setCnReason] = useState("");
@@ -355,6 +360,26 @@ export default function InvoiceDetailPage() {
     } catch (err) {
       setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastCnFailed });
       setBusy(null);
+    }
+  }
+
+  async function createPayLink() {
+    if (!inv) return;
+    setPayLinkBusy(true);
+    setToast(null);
+    try {
+      const r = await apiJson<{ url: string }>(`/api/v1/invoices/${inv.id}/payment-link`, { method: "POST" });
+      setPayLink(r.url);
+      try {
+        await navigator.clipboard.writeText(r.url);
+        setToast({ kind: "success", text: t.toastLinkCopied });
+      } catch {
+        /* clipboard blocked — the link is shown inline to copy manually */
+      }
+    } catch (err) {
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastCnFailed });
+    } finally {
+      setPayLinkBusy(false);
     }
   }
 
@@ -678,6 +703,34 @@ export default function InvoiceDetailPage() {
                   </p>
                 )}
               </form>
+            </Card>
+          )}
+
+          {inv.status !== "DRAFT" && (
+            <Card title={t.payLinkTitle} description={t.payLinkDesc}>
+              <button type="button" disabled={payLinkBusy} onClick={() => void createPayLink()} className={`${btnPrimary} w-full`}>
+                {payLinkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />} {t.payLinkCreate}
+              </button>
+              {payLink && (
+                <div className="mt-3 space-y-2">
+                  <input readOnly value={payLink} className={`${inputCls} mt-0 bg-slate-50 font-mono text-[11px]`} />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(payLink);
+                        setToast({ kind: "success", text: t.toastLinkCopied });
+                      }}
+                      className={`${btnSecondary} flex-1`}
+                    >
+                      {t.payLinkCopy}
+                    </button>
+                    <a href={payLink} target="_blank" rel="noopener noreferrer" className={`${btnSecondary} flex-1`}>
+                      {t.payLinkOpen}
+                    </a>
+                  </div>
+                </div>
+              )}
             </Card>
           )}
 

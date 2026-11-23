@@ -50,6 +50,11 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
     );
   }
 
+  // Public hosted payment page (shared with external buyers): standalone, no nav.
+  if (pathname.startsWith("/pay/")) {
+    return <main className="flex-1">{children}</main>;
+  }
+
   if (isAppRoute(pathname)) {
     return <AppShell>{children}</AppShell>;
   }
