@@ -26,6 +26,8 @@ import {
   inputCls,
   labelCls,
 } from "@/components/ui";
+import { useLocale } from "@/components/LocaleProvider";
+import { CUSTOMERS_STRINGS } from "@/lib/i18n";
 
 interface Customer {
   id: string;
@@ -58,6 +60,8 @@ const EMPTY_FORM = {
 };
 
 export default function CustomersPage() {
+  const { locale } = useLocale();
+  const t = CUSTOMERS_STRINGS[locale];
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -128,9 +132,9 @@ export default function CustomersPage() {
         vatStatus: r.status,
         legalName: prev.legalName || r.traderName || prev.legalName,
       }));
-      setViesNote(`${r.status}${r.traderName ? ` · ${r.traderName}` : ""}${r.note ? ` (${r.note})` : ""}`);
+      setViesNote(`${t.vatStatus(r.status)}${r.traderName ? ` · ${r.traderName}` : ""}${r.note ? ` (${r.note})` : ""}`);
     } catch (e) {
-      setViesNote(e instanceof Error ? e.message : "VIES lookup failed");
+      setViesNote(e instanceof Error ? e.message : t.viesFailed);
     } finally {
       setViesLoading(false);
     }
@@ -149,7 +153,7 @@ export default function CustomersPage() {
             vatCheckedAt: form.vatStatus !== "UNCHECKED" ? new Date().toISOString() : null,
           }),
         });
-        setToast({ kind: "success", text: `Updated customer "${form.legalName}".` });
+        setToast({ kind: "success", text: t.toastUpdated(form.legalName) });
       } else {
         await apiJson("/api/v1/customers", {
           method: "POST",
@@ -158,36 +162,36 @@ export default function CustomersPage() {
             vatCheckedAt: form.vatStatus !== "UNCHECKED" ? new Date().toISOString() : null,
           }),
         });
-        setToast({ kind: "success", text: `Added customer "${form.legalName}".` });
+        setToast({ kind: "success", text: t.toastAdded(form.legalName) });
       }
       setShowForm(false);
       await load(search);
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Save failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastSaveFailed });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(c: Customer) {
-    if (!confirm(`Delete customer "${c.legalName}"? Existing invoices are unaffected.`)) return;
+    if (!confirm(t.deletePrompt(c.legalName))) return;
     try {
       await apiJson(`/api/v1/customers/${c.id}`, { method: "DELETE" });
-      setToast({ kind: "success", text: `Removed "${c.legalName}".` });
+      setToast({ kind: "success", text: t.toastRemoved(c.legalName) });
       await load(search);
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Delete failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastDeleteFailed });
     }
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Customers (BG-7)"
-        subtitle="Manage your B2B & B2G buyers with live EU VIES VAT verification, Leitweg-ID routing, and default e-invoice formats."
+        title={t.title}
+        subtitle={t.subtitle}
         actions={
           <button type="button" onClick={openNew} className={btnPrimary}>
-            <Plus className="h-4 w-4" /> Add customer
+            <Plus className="h-4 w-4" /> {t.addCustomer}
           </button>
         }
       />
@@ -196,7 +200,7 @@ export default function CustomersPage() {
 
       {showForm && (
         <Card
-          title={editingId ? "Edit customer" : "New customer"}
+          title={editingId ? t.formEdit : t.formNew}
           actions={
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
               <X className="h-4 w-4" />
@@ -205,11 +209,11 @@ export default function CustomersPage() {
         >
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className={`${labelCls} sm:col-span-2`}>
-              Legal Name (BT-44) *
+              {t.fLegalName}
               <input required className={inputCls} value={form.legalName} onChange={(e) => setForm({ ...form, legalName: e.target.value })} placeholder="AlpenWerk Maschinenbau GmbH" />
             </label>
             <label className={labelCls}>
-              EU VAT ID (BT-48)
+              {t.fVatId}
               <div className="flex gap-2">
                 <input
                   className={`${inputCls} font-mono uppercase`}
@@ -218,21 +222,21 @@ export default function CustomersPage() {
                   placeholder="DE198765431"
                 />
                 <button type="button" disabled={viesLoading} onClick={() => void verifyVies()} className="mt-1 whitespace-nowrap rounded-lg border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                  {viesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify VIES"}
+                  {viesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.verifyVies}
                 </button>
               </div>
               {viesNote && <span className="mt-1 block text-[11px] font-semibold text-brand-700">{viesNote}</span>}
             </label>
             <label className={labelCls}>
-              Leitweg-ID / Buyer Ref (BT-10)
+              {t.fLeitweg}
               <input className={`${inputCls} font-mono`} value={form.leitwegId} onChange={(e) => setForm({ ...form, leitwegId: e.target.value })} placeholder="04011000-1234512345-06 (German B2G)" />
             </label>
             <label className={labelCls}>
-              Invoice Email (BT-49)
+              {t.fInvoiceEmail}
               <input type="email" className={inputCls} value={form.electronicAddress} onChange={(e) => setForm({ ...form, electronicAddress: e.target.value })} placeholder="rechnungen@buyer.de" />
             </label>
             <label className={labelCls}>
-              Default E-Invoice Format
+              {t.fDefaultFormat}
               <select className={inputCls} value={form.defaultFormat} onChange={(e) => setForm({ ...form, defaultFormat: e.target.value })}>
                 <option value="ZUGFERD_EN16931">ZUGFeRD 2.3 (PDF + XML)</option>
                 <option value="FACTURX_EN16931">Factur-X 1.07 (PDF + XML)</option>
@@ -242,18 +246,18 @@ export default function CustomersPage() {
               </select>
             </label>
             <label className={`${labelCls} sm:col-span-2`}>
-              Street & Number (BT-50)
+              {t.fStreet}
               <input className={inputCls} value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />
             </label>
             <div className="grid grid-cols-3 gap-2 sm:col-span-2">
-              <label className={labelCls}>Postal code<input className={inputCls} value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} /></label>
-              <label className={labelCls}>City<input className={inputCls} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
-              <label className={labelCls}>Country<input maxLength={2} className={`${inputCls} font-mono uppercase`} value={form.countryCode} onChange={(e) => setForm({ ...form, countryCode: e.target.value.toUpperCase() })} /></label>
+              <label className={labelCls}>{t.fPostalCode}<input className={inputCls} value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} /></label>
+              <label className={labelCls}>{t.fCity}<input className={inputCls} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></label>
+              <label className={labelCls}>{t.fCountry}<input maxLength={2} className={`${inputCls} font-mono uppercase`} value={form.countryCode} onChange={(e) => setForm({ ...form, countryCode: e.target.value.toUpperCase() })} /></label>
             </div>
             <div className="flex justify-end gap-2 sm:col-span-2">
-              <button type="button" onClick={() => setShowForm(false)} className={btnSecondary}>Cancel</button>
+              <button type="button" onClick={() => setShowForm(false)} className={btnSecondary}>{t.cancel}</button>
               <button type="submit" disabled={saving} className={btnPrimary}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {editingId ? "Update customer" : "Save customer"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {editingId ? t.updateCustomer : t.saveCustomer}
               </button>
             </div>
           </form>
@@ -264,19 +268,19 @@ export default function CustomersPage() {
         <div className="mb-4 max-w-md">
           <label className="relative block">
             <Search className="absolute left-3 top-1/2 mt-0.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input className={`${inputCls} pl-9`} placeholder="Search customer name, VAT ID, or city…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className={`${inputCls} pl-9`} placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
           </label>
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-sm text-slate-400">Loading customers…</div>
+          <div className="py-10 text-center text-sm text-slate-400">{t.loading}</div>
         ) : customers.length === 0 ? (
           <EmptyState
-            title="No customers yet"
-            text="Save your B2B/B2G buyers once to auto-fill invoices, VAT Reverse Charge rules, and Leitweg-IDs."
+            title={t.emptyTitle}
+            text={t.emptyText}
             action={
               <button type="button" onClick={openNew} className={btnPrimary}>
-                <Plus className="h-4 w-4" /> Add your first customer
+                <Plus className="h-4 w-4" /> {t.addFirst}
               </button>
             }
           />
@@ -285,10 +289,10 @@ export default function CustomersPage() {
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold">Company</th>
-                  <th className="px-6 py-3 text-left font-semibold">EU VAT / VIES</th>
-                  <th className="px-6 py-3 text-left font-semibold">Routing & Format</th>
-                  <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t.thCompany}</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t.thVat}</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t.thRouting}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t.thActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -314,7 +318,7 @@ export default function CustomersPage() {
                                   : "bg-slate-100 text-slate-600"
                           }`}
                         >
-                          <ShieldCheck className="h-3 w-3" /> {c.vatStatus}
+                          <ShieldCheck className="h-3 w-3" /> {t.vatStatus(c.vatStatus)}
                         </span>
                       )}
                     </td>
@@ -328,12 +332,12 @@ export default function CustomersPage() {
                           href={`/invoices/new?customerId=${c.id}`}
                           className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-brand-700"
                         >
-                          <FilePlus2 className="h-3.5 w-3.5" /> Invoice
+                          <FilePlus2 className="h-3.5 w-3.5" /> {t.invoiceBtn}
                         </Link>
-                        <button type="button" onClick={() => openEdit(c)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100" title="Edit">
+                        <button type="button" onClick={() => openEdit(c)} className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100" title={t.editTitle}>
                           <Edit3 className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" onClick={() => void handleDelete(c)} className="rounded-lg border border-red-200 p-1.5 text-red-600 hover:bg-red-50" title="Delete">
+                        <button type="button" onClick={() => void handleDelete(c)} className="rounded-lg border border-red-200 p-1.5 text-red-600 hover:bg-red-50" title={t.deleteTitle}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>

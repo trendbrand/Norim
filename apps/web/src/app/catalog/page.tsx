@@ -14,6 +14,8 @@ import {
   inputCls,
   labelCls,
 } from "@/components/ui";
+import { useLocale } from "@/components/LocaleProvider";
+import { CATALOG_STRINGS } from "@/lib/i18n";
 
 interface Product {
   id: string;
@@ -37,6 +39,8 @@ const EMPTY = {
 };
 
 export default function CatalogPage() {
+  const { locale } = useLocale();
+  const t = CATALOG_STRINGS[locale];
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -86,35 +90,35 @@ export default function CatalogPage() {
     try {
       if (editingId) {
         await apiJson(`/api/v1/catalog/${editingId}`, { method: "PUT", body: JSON.stringify(form) });
-        setToast({ kind: "success", text: `Updated "${form.name}".` });
+        setToast({ kind: "success", text: t.toastUpdated(form.name) });
       } else {
         await apiJson("/api/v1/catalog", { method: "POST", body: JSON.stringify(form) });
-        setToast({ kind: "success", text: `Added "${form.name}" to your catalog.` });
+        setToast({ kind: "success", text: t.toastAdded(form.name) });
       }
       setShowForm(false);
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Save failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastSaveFailed });
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(p: Product) {
-    if (!confirm(`Delete "${p.name}" from catalog?`)) return;
+    if (!confirm(t.deletePrompt(p.name))) return;
     await apiJson(`/api/v1/catalog/${p.id}`, { method: "DELETE" });
-    setToast({ kind: "success", text: `Removed "${p.name}".` });
+    setToast({ kind: "success", text: t.toastRemoved(p.name) });
     await load();
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Products & Service Rates Catalog"
-        subtitle="Save reusable services, hourly rates, and SaaS SKUs to insert them into invoices with one click."
+        title={t.title}
+        subtitle={t.subtitle}
         actions={
           <button type="button" onClick={openNew} className={btnPrimary}>
-            <Plus className="h-4 w-4" /> Add item
+            <Plus className="h-4 w-4" /> {t.addItem}
           </button>
         }
       />
@@ -123,7 +127,7 @@ export default function CatalogPage() {
 
       {showForm && (
         <Card
-          title={editingId ? "Edit catalog item" : "New catalog item"}
+          title={editingId ? t.formEdit : t.formNew}
           actions={
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
               <X className="h-4 w-4" />
@@ -132,34 +136,34 @@ export default function CatalogPage() {
         >
           <form onSubmit={save} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className={labelCls}>
-              Item / Service Name *
+              {t.fName}
               <input required className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Senior Engineering Consulting" />
             </label>
             <label className={labelCls}>
-              SKU / Code
+              {t.fSku}
               <input className={`${inputCls} font-mono uppercase`} value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="CONS-01" />
             </label>
             <label className={`${labelCls} sm:col-span-2`}>
-              Description
+              {t.fDescription}
               <input className={inputCls} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
             <div className="grid grid-cols-3 gap-2 sm:col-span-2">
               <label className={labelCls}>
-                Unit (UN/ECE)
+                {t.fUnit}
                 <select className={inputCls} value={form.unitCode} onChange={(e) => setForm({ ...form, unitCode: e.target.value })}>
-                  <option value="HUR">Hour (HUR)</option>
-                  <option value="DAY">Day (DAY)</option>
-                  <option value="MON">Month (MON)</option>
-                  <option value="H87">Piece (H87)</option>
-                  <option value="C62">Unit (C62)</option>
+                  <option value="HUR">{t.unitHour}</option>
+                  <option value="DAY">{t.unitDay}</option>
+                  <option value="MON">{t.unitMonth}</option>
+                  <option value="H87">{t.unitPiece}</option>
+                  <option value="C62">{t.unitUnit}</option>
                 </select>
               </label>
               <label className={labelCls}>
-                Net Unit Price (€)
+                {t.fNetPrice}
                 <input type="number" step="0.01" className={`${inputCls} font-mono`} value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) || 0 })} />
               </label>
               <label className={labelCls}>
-                Default VAT
+                {t.fDefaultVat}
                 <select
                   className={inputCls}
                   value={`${form.vatCategory}:${form.vatRate}`}
@@ -178,34 +182,34 @@ export default function CatalogPage() {
               </label>
             </div>
             <div className="flex justify-end gap-2 sm:col-span-2">
-              <button type="button" onClick={() => setShowForm(false)} className={btnSecondary}>Cancel</button>
+              <button type="button" onClick={() => setShowForm(false)} className={btnSecondary}>{t.cancel}</button>
               <button type="submit" disabled={saving} className={btnPrimary}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Save item
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} {t.saveItem}
               </button>
             </div>
           </form>
         </Card>
       )}
 
-      <Card title={`Saved Items (${products.length})`}>
+      <Card title={t.savedItems(products.length)}>
         {loading ? (
-          <div className="py-10 text-center text-sm text-slate-400">Loading catalog…</div>
+          <div className="py-10 text-center text-sm text-slate-400">{t.loading}</div>
         ) : products.length === 0 ? (
           <EmptyState
-            title="No products or rates saved yet"
-            text="Add your recurring services, hourly rates, or SKUs to speed up invoicing."
-            action={<button type="button" onClick={openNew} className={btnPrimary}><Plus className="h-4 w-4" /> Add first item</button>}
+            title={t.emptyTitle}
+            text={t.emptyText}
+            action={<button type="button" onClick={openNew} className={btnPrimary}><Plus className="h-4 w-4" /> {t.addFirst}</button>}
           />
         ) : (
           <div className="-mx-6 -my-6 overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-xs">
               <thead className="bg-slate-50 uppercase text-slate-500">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold">SKU / Item</th>
-                  <th className="px-6 py-3 text-left font-semibold">Unit</th>
-                  <th className="px-6 py-3 text-right font-semibold">Net Price</th>
-                  <th className="px-6 py-3 text-right font-semibold">VAT</th>
-                  <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t.thSkuItem}</th>
+                  <th className="px-6 py-3 text-left font-semibold">{t.thUnit}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t.thNetPrice}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t.thVat}</th>
+                  <th className="px-6 py-3 text-right font-semibold">{t.thActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

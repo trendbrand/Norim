@@ -14,6 +14,8 @@ import {
   inputCls,
   labelCls,
 } from "@/components/ui";
+import { useLocale } from "@/components/LocaleProvider";
+import { PAYMENTS_STRINGS } from "@/lib/i18n";
 
 interface ReceivableRow {
   id: string;
@@ -56,6 +58,8 @@ interface ReconcilePreview {
 }
 
 export default function PaymentsPage() {
+  const { locale } = useLocale();
+  const t = PAYMENTS_STRINGS[locale];
   const [invoices, setInvoices] = useState<ReceivableRow[]>([]);
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +88,7 @@ export default function PaymentsPage() {
       });
       setRecon(data);
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Could not parse CSV" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastCsvFailed });
     } finally {
       setReconBusy(null);
     }
@@ -101,13 +105,13 @@ export default function PaymentsPage() {
       );
       setToast({
         kind: "success",
-        text: `Recorded ${data.recordedCount} matched payment(s)${data.skippedCount ? `, skipped ${data.skippedCount} already-reconciled` : ""}.`,
+        text: t.toastRecorded(data.recordedCount, data.skippedCount),
       });
       setRecon(null);
       setCsvText("");
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Reconciliation failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastReconFailed });
     } finally {
       setReconBusy(null);
     }
@@ -162,11 +166,11 @@ export default function PaymentsPage() {
           valueDate,
         }),
       });
-      setToast({ kind: "success", text: "Payment recorded and reconciled against invoice balance (GoBD logged)." });
+      setToast({ kind: "success", text: t.toastPaymentRecorded });
       setReference("");
       await load();
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Payment failed" });
+      setToast({ kind: "error", text: err instanceof Error ? err.message : t.toastPaymentFailed });
     } finally {
       setSaving(false);
     }
@@ -178,36 +182,33 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Payments & Receivables Reconciliation"
-        subtitle="Payment state is tracked independently from e-invoice delivery. Record full or partial SEPA transfers and monitor open balances."
-      />
+      <PageHeader title={t.title} subtitle={t.subtitle} />
 
       {toast && <Alert kind={toast.kind}>{toast.text}</Alert>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase text-slate-500">Total Collected</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">{t.statCollected}</p>
           <p className="mt-2 text-2xl font-extrabold tabular-money text-emerald-700">{formatMoney(paidTotal)}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase text-slate-500">Open Balance Due</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">{t.statOpen}</p>
           <p className="mt-2 text-2xl font-extrabold tabular-money text-amber-600">{formatMoney(openTotal)}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase text-slate-500">Recorded Settlements</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">{t.statSettlements}</p>
           <p className="mt-2 text-2xl font-extrabold text-slate-900">{payments.length}</p>
         </div>
       </div>
 
-      <Card title="Receivables Ageing" description="Open balance by days overdue (relative to each invoice's due date).">
+      <Card title={t.ageingTitle} description={t.ageingDesc}>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
-            { label: "Current / not due", value: ageing.current, tone: "text-emerald-700" },
-            { label: "1–30 days", value: ageing.d30, tone: "text-amber-600" },
-            { label: "31–60 days", value: ageing.d60, tone: "text-orange-600" },
-            { label: "61–90 days", value: ageing.d90, tone: "text-red-600" },
-            { label: "90+ days", value: ageing.d90plus, tone: "text-red-700" },
+            { label: t.ageCurrent, value: ageing.current, tone: "text-emerald-700" },
+            { label: t.age30, value: ageing.d30, tone: "text-amber-600" },
+            { label: t.age60, value: ageing.d60, tone: "text-orange-600" },
+            { label: t.age90, value: ageing.d90, tone: "text-red-600" },
+            { label: t.age90plus, value: ageing.d90plus, tone: "text-red-700" },
           ].map((b) => (
             <div key={b.label} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center">
               <p className="text-[10px] font-semibold uppercase text-slate-400">{b.label}</p>
@@ -218,10 +219,10 @@ export default function PaymentsPage() {
       </Card>
 
       {openInvoices.length > 0 && (
-        <Card title="Record Full or Partial Payment" description="Automatically updates invoice payment status (UNPAID -> PARTIAL -> PAID).">
+        <Card title={t.recordTitle} description={t.recordDesc}>
           <form onSubmit={recordPayment} className="grid grid-cols-1 gap-3 sm:grid-cols-5 sm:items-end">
             <label className={`${labelCls} sm:col-span-2`}>
-              Open Invoice
+              {t.fOpenInvoice}
               <select
                 className={inputCls}
                 value={selectedInvoiceId}
@@ -233,33 +234,33 @@ export default function PaymentsPage() {
               >
                 {openInvoices.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {i.invoiceNumber} — {i.buyerName} (Due: {formatMoney(i.balanceDue, i.currency)})
+                    {i.invoiceNumber} — {i.buyerName} ({t.optDue(formatMoney(i.balanceDue, i.currency))})
                   </option>
                 ))}
               </select>
             </label>
             <label className={labelCls}>
-              Amount (€)
+              {t.fAmount}
               <input type="number" step="0.01" required className={`${inputCls} font-mono`} value={amount} onChange={(e) => setAmount(e.target.value)} />
             </label>
             <label className={labelCls}>
-              Method
+              {t.fMethod}
               <select className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>
-                <option value="SEPA_TRANSFER">SEPA Bank Transfer</option>
-                <option value="SEPA_DEBIT">SEPA Direct Debit</option>
-                <option value="STRIPE_CARD">Stripe / Card</option>
-                <option value="OTHER">Other</option>
+                <option value="SEPA_TRANSFER">{t.mSepaTransfer}</option>
+                <option value="SEPA_DEBIT">{t.mSepaDebit}</option>
+                <option value="STRIPE_CARD">{t.mStripe}</option>
+                <option value="OTHER">{t.mOther}</option>
               </select>
             </label>
             <button type="submit" disabled={saving} className={btnPrimary}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Record Payment
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} {t.recordPayment}
             </button>
             <label className={`${labelCls} sm:col-span-3`}>
-              Bank Remittance Reference (optional)
+              {t.fRemittance}
               <input className={inputCls} value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. SEPA-20261122-991" />
             </label>
             <label className={`${labelCls} sm:col-span-2`}>
-              Value Date
+              {t.fValueDate}
               <input type="date" className={inputCls} value={valueDate} onChange={(e) => setValueDate(e.target.value)} />
             </label>
           </form>
@@ -269,10 +270,10 @@ export default function PaymentsPage() {
       <Card
         title={
           <span className="flex items-center gap-2">
-            <Banknote className="h-4 w-4 text-brand-600" /> Bank Statement Reconciliation
+            <Banknote className="h-4 w-4 text-brand-600" /> {t.reconTitle}
           </span>
         }
-        description="Paste bank CSV (date, amount, reference). Matches credits to open invoices by remittance reference or unique amount — preview before recording."
+        description={t.reconDesc}
       >
         <textarea
           className={`${inputCls} h-28 font-mono text-[11px]`}
@@ -285,7 +286,7 @@ export default function PaymentsPage() {
         />
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" onClick={() => void previewReconcile()} disabled={reconBusy !== null || !csvText.trim()} className={btnPrimary}>
-            {reconBusy === "preview" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Preview matches
+            {reconBusy === "preview" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {t.previewMatches}
           </button>
           {recon && recon.matched.length > 0 && (
             <button
@@ -295,7 +296,7 @@ export default function PaymentsPage() {
               className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
             >
               {reconBusy === "commit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Record {recon.matched.length} matched payment{recon.matched.length === 1 ? "" : "s"}
+              {t.recordMatched(recon.matched.length)}
             </button>
           )}
         </div>
@@ -303,7 +304,7 @@ export default function PaymentsPage() {
         {recon && (
           <div className="mt-4 space-y-3">
             <p className="text-[11px] text-slate-500">
-              Parsed {recon.parsed} transaction(s) · {recon.matched.length} matched · {recon.unmatched.length} unmatched
+              {t.parsedSummary(recon.parsed, recon.matched.length, recon.unmatched.length)}
             </p>
             {recon.matched.map((m, idx) => (
               <div key={idx} className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs">
@@ -311,7 +312,7 @@ export default function PaymentsPage() {
                   <span className="font-mono font-bold text-slate-900">{m.invoiceNumber}</span>
                   <span className="text-slate-500"> · {m.buyerName} · {m.txn.date}</span>
                   <span className="ml-2 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                    {m.confidence === "reference" ? "reference match" : "amount match"}
+                    {m.confidence === "reference" ? t.referenceMatch : t.amountMatch}
                   </span>
                 </div>
                 <span className="font-mono font-bold text-emerald-700">{formatMoney(m.appliedAmount)}</span>
@@ -319,7 +320,7 @@ export default function PaymentsPage() {
             ))}
             {recon.unmatched.map((u, idx) => (
               <div key={`u${idx}`} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
-                <span className="truncate text-slate-500">Unmatched · {u.reference || "(no reference)"} · {u.date}</span>
+                <span className="truncate text-slate-500">{t.unmatched} · {u.reference || t.noReference} · {u.date}</span>
                 <span className="font-mono font-bold text-slate-600">{formatMoney(u.amount)}</span>
               </div>
             ))}
@@ -327,22 +328,22 @@ export default function PaymentsPage() {
         )}
       </Card>
 
-      <Card title="Receivables Ledger">
+      <Card title={t.ledgerTitle}>
         {loading ? (
-          <div className="py-10 text-center text-sm text-slate-400">Loading receivables…</div>
+          <div className="py-10 text-center text-sm text-slate-400">{t.loading}</div>
         ) : invoices.length === 0 ? (
-          <EmptyState title="No finalized invoices yet" text="Finalized invoices will appear here for payment reconciliation." />
+          <EmptyState title={t.emptyTitle} text={t.emptyText} />
         ) : (
           <div className="-mx-6 -my-6 overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-xs">
               <thead className="bg-slate-50 uppercase text-slate-500">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Invoice</th>
-                  <th className="px-5 py-3 text-left font-semibold">Customer</th>
-                  <th className="px-5 py-3 text-right font-semibold">Gross</th>
-                  <th className="px-5 py-3 text-right font-semibold">Paid</th>
-                  <th className="px-5 py-3 text-right font-semibold">Balance Due</th>
-                  <th className="px-5 py-3 text-left font-semibold">Payment State</th>
+                  <th className="px-5 py-3 text-left font-semibold">{t.thInvoice}</th>
+                  <th className="px-5 py-3 text-left font-semibold">{t.thCustomer}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t.thGross}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t.thPaid}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t.thBalance}</th>
+                  <th className="px-5 py-3 text-left font-semibold">{t.thPayState}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -352,7 +353,7 @@ export default function PaymentsPage() {
                       <Link href={`/invoices/${i.id}`} className="font-mono font-bold text-brand-700 hover:underline">
                         {i.invoiceNumber}
                       </Link>
-                      <p className="text-[11px] text-slate-400">Due: {i.dueDate || i.issueDate}</p>
+                      <p className="text-[11px] text-slate-400">{t.dueLabel} {i.dueDate || i.issueDate}</p>
                     </td>
                     <td className="px-5 py-3 font-semibold text-slate-800">{i.buyerName}</td>
                     <td className="px-5 py-3 text-right font-mono">{formatMoney(i.grossAmount, i.currency)}</td>
@@ -369,7 +370,7 @@ export default function PaymentsPage() {
                         }`}
                       >
                         {i.paymentStatus === "PAID" ? <CheckCircle2 className="h-3 w-3" /> : i.paymentStatus === "PARTIAL" ? <CreditCard className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                        {i.paymentStatus}
+                        {t.payStatus(i.paymentStatus)}
                       </span>
                     </td>
                   </tr>

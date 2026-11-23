@@ -2546,3 +2546,538 @@ export const INVOICE_FORM_STRINGS: Record<AppLocale, InvoiceFormStrings> = {
     noIban: "Pas d'IBAN",
   },
 };
+
+// ── Payments & receivables translations ──
+export interface PaymentsStrings {
+  title: string;
+  subtitle: string;
+  statCollected: string;
+  statOpen: string;
+  statSettlements: string;
+  ageingTitle: string;
+  ageingDesc: string;
+  ageCurrent: string;
+  age30: string;
+  age60: string;
+  age90: string;
+  age90plus: string;
+  recordTitle: string;
+  recordDesc: string;
+  fOpenInvoice: string;
+  optDue: (money: string) => string;
+  fAmount: string;
+  fMethod: string;
+  mSepaTransfer: string;
+  mSepaDebit: string;
+  mStripe: string;
+  mOther: string;
+  recordPayment: string;
+  fRemittance: string;
+  fValueDate: string;
+  reconTitle: string;
+  reconDesc: string;
+  previewMatches: string;
+  recordMatched: (n: number) => string;
+  parsedSummary: (parsed: number, matched: number, unmatched: number) => string;
+  referenceMatch: string;
+  amountMatch: string;
+  unmatched: string;
+  noReference: string;
+  ledgerTitle: string;
+  loading: string;
+  emptyTitle: string;
+  emptyText: string;
+  thInvoice: string;
+  thCustomer: string;
+  thGross: string;
+  thPaid: string;
+  thBalance: string;
+  thPayState: string;
+  dueLabel: string;
+  payStatus: (v: string) => string;
+  toastRecorded: (count: number, skipped: number) => string;
+  toastReconFailed: string;
+  toastCsvFailed: string;
+  toastPaymentRecorded: string;
+  toastPaymentFailed: string;
+}
+
+const PAY_EN: Record<string, string> = { UNPAID: "Unpaid", PARTIAL: "Partial", PAID: "Paid" };
+const PAY_DE: Record<string, string> = { UNPAID: "Offen", PARTIAL: "Teilweise", PAID: "Bezahlt" };
+const PAY_FR: Record<string, string> = { UNPAID: "Impayée", PARTIAL: "Partielle", PAID: "Payée" };
+
+export const PAYMENTS_STRINGS: Record<AppLocale, PaymentsStrings> = {
+  en: {
+    title: "Payments & Receivables Reconciliation",
+    subtitle: "Payment state is tracked independently from e-invoice delivery. Record full or partial SEPA transfers and monitor open balances.",
+    statCollected: "Total Collected",
+    statOpen: "Open Balance Due",
+    statSettlements: "Recorded Settlements",
+    ageingTitle: "Receivables Ageing",
+    ageingDesc: "Open balance by days overdue (relative to each invoice's due date).",
+    ageCurrent: "Current / not due",
+    age30: "1–30 days",
+    age60: "31–60 days",
+    age90: "61–90 days",
+    age90plus: "90+ days",
+    recordTitle: "Record Full or Partial Payment",
+    recordDesc: "Automatically updates invoice payment status (UNPAID -> PARTIAL -> PAID).",
+    fOpenInvoice: "Open Invoice",
+    optDue: (money) => `Due: ${money}`,
+    fAmount: "Amount (€)",
+    fMethod: "Method",
+    mSepaTransfer: "SEPA Bank Transfer",
+    mSepaDebit: "SEPA Direct Debit",
+    mStripe: "Stripe / Card",
+    mOther: "Other",
+    recordPayment: "Record Payment",
+    fRemittance: "Bank Remittance Reference (optional)",
+    fValueDate: "Value Date",
+    reconTitle: "Bank Statement Reconciliation",
+    reconDesc: "Paste bank CSV (date, amount, reference). Matches credits to open invoices by remittance reference or unique amount — preview before recording.",
+    previewMatches: "Preview matches",
+    recordMatched: (n) => `Record ${n} matched payment${n === 1 ? "" : "s"}`,
+    parsedSummary: (parsed, matched, unmatched) => `Parsed ${parsed} transaction(s) · ${matched} matched · ${unmatched} unmatched`,
+    referenceMatch: "reference match",
+    amountMatch: "amount match",
+    unmatched: "Unmatched",
+    noReference: "(no reference)",
+    ledgerTitle: "Receivables Ledger",
+    loading: "Loading receivables…",
+    emptyTitle: "No finalized invoices yet",
+    emptyText: "Finalized invoices will appear here for payment reconciliation.",
+    thInvoice: "Invoice",
+    thCustomer: "Customer",
+    thGross: "Gross",
+    thPaid: "Paid",
+    thBalance: "Balance Due",
+    thPayState: "Payment State",
+    dueLabel: "Due:",
+    payStatus: (v) => PAY_EN[v] ?? v,
+    toastRecorded: (count, skipped) => `Recorded ${count} matched payment(s)${skipped ? `, skipped ${skipped} already-reconciled` : ""}.`,
+    toastReconFailed: "Reconciliation failed",
+    toastCsvFailed: "Could not parse CSV",
+    toastPaymentRecorded: "Payment recorded and reconciled against invoice balance (GoBD logged).",
+    toastPaymentFailed: "Payment failed",
+  },
+  de: {
+    title: "Zahlungen & Forderungsabgleich",
+    subtitle: "Der Zahlungsstatus wird unabhängig von der E-Rechnungszustellung geführt. Erfassen Sie vollständige oder Teilzahlungen (SEPA) und überwachen Sie offene Salden.",
+    statCollected: "Gesamt eingenommen",
+    statOpen: "Offener Saldo",
+    statSettlements: "Erfasste Zahlungen",
+    ageingTitle: "Forderungsalterung",
+    ageingDesc: "Offener Saldo nach überfälligen Tagen (relativ zum Fälligkeitsdatum jeder Rechnung).",
+    ageCurrent: "Aktuell / nicht fällig",
+    age30: "1–30 Tage",
+    age60: "31–60 Tage",
+    age90: "61–90 Tage",
+    age90plus: "90+ Tage",
+    recordTitle: "Voll- oder Teilzahlung erfassen",
+    recordDesc: "Aktualisiert automatisch den Zahlungsstatus der Rechnung (OFFEN -> TEILWEISE -> BEZAHLT).",
+    fOpenInvoice: "Offene Rechnung",
+    optDue: (money) => `Fällig: ${money}`,
+    fAmount: "Betrag (€)",
+    fMethod: "Methode",
+    mSepaTransfer: "SEPA-Überweisung",
+    mSepaDebit: "SEPA-Lastschrift",
+    mStripe: "Stripe / Karte",
+    mOther: "Sonstige",
+    recordPayment: "Zahlung erfassen",
+    fRemittance: "Bank-Verwendungszweck (optional)",
+    fValueDate: "Wertstellungsdatum",
+    reconTitle: "Kontoauszugsabgleich",
+    reconDesc: "Bank-CSV einfügen (Datum, Betrag, Verwendungszweck). Ordnet Gutschriften offenen Rechnungen über Verwendungszweck oder eindeutigen Betrag zu — vor der Erfassung in der Vorschau.",
+    previewMatches: "Treffer-Vorschau",
+    recordMatched: (n) => `${n} zugeordnete Zahlung${n === 1 ? "" : "en"} erfassen`,
+    parsedSummary: (parsed, matched, unmatched) => `${parsed} Transaktion(en) erkannt · ${matched} zugeordnet · ${unmatched} nicht zugeordnet`,
+    referenceMatch: "Referenz-Treffer",
+    amountMatch: "Betrags-Treffer",
+    unmatched: "Nicht zugeordnet",
+    noReference: "(kein Verwendungszweck)",
+    ledgerTitle: "Forderungsbuch",
+    loading: "Forderungen werden geladen…",
+    emptyTitle: "Noch keine finalisierten Rechnungen",
+    emptyText: "Finalisierte Rechnungen erscheinen hier zum Zahlungsabgleich.",
+    thInvoice: "Rechnung",
+    thCustomer: "Kunde",
+    thGross: "Brutto",
+    thPaid: "Bezahlt",
+    thBalance: "Offener Betrag",
+    thPayState: "Zahlungsstatus",
+    dueLabel: "Fällig:",
+    payStatus: (v) => PAY_DE[v] ?? v,
+    toastRecorded: (count, skipped) => `${count} zugeordnete Zahlung(en) erfasst${skipped ? `, ${skipped} bereits abgeglichen übersprungen` : ""}.`,
+    toastReconFailed: "Abgleich fehlgeschlagen",
+    toastCsvFailed: "CSV konnte nicht gelesen werden",
+    toastPaymentRecorded: "Zahlung erfasst und mit dem Rechnungssaldo abgeglichen (GoBD protokolliert).",
+    toastPaymentFailed: "Zahlung fehlgeschlagen",
+  },
+  fr: {
+    title: "Paiements & rapprochement des créances",
+    subtitle: "Le statut de paiement est suivi indépendamment de la livraison de la facture. Enregistrez des virements SEPA complets ou partiels et surveillez les soldes ouverts.",
+    statCollected: "Total encaissé",
+    statOpen: "Solde ouvert dû",
+    statSettlements: "Règlements enregistrés",
+    ageingTitle: "Ancienneté des créances",
+    ageingDesc: "Solde ouvert par jours de retard (par rapport à la date d'échéance de chaque facture).",
+    ageCurrent: "À jour / non échu",
+    age30: "1–30 jours",
+    age60: "31–60 jours",
+    age90: "61–90 jours",
+    age90plus: "90+ jours",
+    recordTitle: "Enregistrer un paiement total ou partiel",
+    recordDesc: "Met à jour automatiquement le statut de paiement de la facture (IMPAYÉE -> PARTIELLE -> PAYÉE).",
+    fOpenInvoice: "Facture ouverte",
+    optDue: (money) => `Dû : ${money}`,
+    fAmount: "Montant (€)",
+    fMethod: "Méthode",
+    mSepaTransfer: "Virement SEPA",
+    mSepaDebit: "Prélèvement SEPA",
+    mStripe: "Stripe / carte",
+    mOther: "Autre",
+    recordPayment: "Enregistrer le paiement",
+    fRemittance: "Référence de remise bancaire (facultatif)",
+    fValueDate: "Date de valeur",
+    reconTitle: "Rapprochement du relevé bancaire",
+    reconDesc: "Collez le CSV bancaire (date, montant, référence). Rapproche les crédits des factures ouvertes par référence de remise ou montant unique — aperçu avant enregistrement.",
+    previewMatches: "Aperçu des correspondances",
+    recordMatched: (n) => `Enregistrer ${n} paiement${n === 1 ? "" : "s"} rapproché${n === 1 ? "" : "s"}`,
+    parsedSummary: (parsed, matched, unmatched) => `${parsed} transaction(s) analysée(s) · ${matched} rapprochée(s) · ${unmatched} non rapprochée(s)`,
+    referenceMatch: "correspondance par référence",
+    amountMatch: "correspondance par montant",
+    unmatched: "Non rapprochée",
+    noReference: "(aucune référence)",
+    ledgerTitle: "Grand livre des créances",
+    loading: "Chargement des créances…",
+    emptyTitle: "Aucune facture finalisée pour l'instant",
+    emptyText: "Les factures finalisées apparaîtront ici pour le rapprochement des paiements.",
+    thInvoice: "Facture",
+    thCustomer: "Client",
+    thGross: "Brut",
+    thPaid: "Payé",
+    thBalance: "Solde dû",
+    thPayState: "Statut de paiement",
+    dueLabel: "Dû :",
+    payStatus: (v) => PAY_FR[v] ?? v,
+    toastRecorded: (count, skipped) => `${count} paiement(s) rapproché(s) enregistré(s)${skipped ? `, ${skipped} déjà rapproché(s) ignoré(s)` : ""}.`,
+    toastReconFailed: "Échec du rapprochement",
+    toastCsvFailed: "Impossible d'analyser le CSV",
+    toastPaymentRecorded: "Paiement enregistré et rapproché du solde de la facture (consigné GoBD).",
+    toastPaymentFailed: "Échec du paiement",
+  },
+};
+
+// ── Customers translations ──
+export interface CustomersStrings {
+  title: string;
+  subtitle: string;
+  addCustomer: string;
+  formEdit: string;
+  formNew: string;
+  fLegalName: string;
+  fVatId: string;
+  verifyVies: string;
+  viesFailed: string;
+  fLeitweg: string;
+  fInvoiceEmail: string;
+  fDefaultFormat: string;
+  fStreet: string;
+  fPostalCode: string;
+  fCity: string;
+  fCountry: string;
+  cancel: string;
+  updateCustomer: string;
+  saveCustomer: string;
+  searchPlaceholder: string;
+  loading: string;
+  emptyTitle: string;
+  emptyText: string;
+  addFirst: string;
+  thCompany: string;
+  thVat: string;
+  thRouting: string;
+  thActions: string;
+  invoiceBtn: string;
+  editTitle: string;
+  deleteTitle: string;
+  vatStatus: (v: string) => string;
+  toastUpdated: (name: string) => string;
+  toastAdded: (name: string) => string;
+  toastSaveFailed: string;
+  deletePrompt: (name: string) => string;
+  toastRemoved: (name: string) => string;
+  toastDeleteFailed: string;
+}
+
+const VAT_EN: Record<string, string> = { VERIFIED: "Verified", PROVISIONAL: "Provisional", INVALID: "Invalid", UNCHECKED: "Unchecked" };
+const VAT_DE: Record<string, string> = { VERIFIED: "Verifiziert", PROVISIONAL: "Vorläufig", INVALID: "Ungültig", UNCHECKED: "Ungeprüft" };
+const VAT_FR: Record<string, string> = { VERIFIED: "Vérifié", PROVISIONAL: "Provisoire", INVALID: "Invalide", UNCHECKED: "Non vérifié" };
+
+export const CUSTOMERS_STRINGS: Record<AppLocale, CustomersStrings> = {
+  en: {
+    title: "Customers (BG-7)",
+    subtitle: "Manage your B2B & B2G buyers with live EU VIES VAT verification, Leitweg-ID routing, and default e-invoice formats.",
+    addCustomer: "Add customer",
+    formEdit: "Edit customer",
+    formNew: "New customer",
+    fLegalName: "Legal Name (BT-44) *",
+    fVatId: "EU VAT ID (BT-48)",
+    verifyVies: "Verify VIES",
+    viesFailed: "VIES lookup failed",
+    fLeitweg: "Leitweg-ID / Buyer Ref (BT-10)",
+    fInvoiceEmail: "Invoice Email (BT-49)",
+    fDefaultFormat: "Default E-Invoice Format",
+    fStreet: "Street & Number (BT-50)",
+    fPostalCode: "Postal code",
+    fCity: "City",
+    fCountry: "Country",
+    cancel: "Cancel",
+    updateCustomer: "Update customer",
+    saveCustomer: "Save customer",
+    searchPlaceholder: "Search customer name, VAT ID, or city…",
+    loading: "Loading customers…",
+    emptyTitle: "No customers yet",
+    emptyText: "Save your B2B/B2G buyers once to auto-fill invoices, VAT Reverse Charge rules, and Leitweg-IDs.",
+    addFirst: "Add your first customer",
+    thCompany: "Company",
+    thVat: "EU VAT / VIES",
+    thRouting: "Routing & Format",
+    thActions: "Actions",
+    invoiceBtn: "Invoice",
+    editTitle: "Edit",
+    deleteTitle: "Delete",
+    vatStatus: (v) => VAT_EN[v] ?? v,
+    toastUpdated: (name) => `Updated customer "${name}".`,
+    toastAdded: (name) => `Added customer "${name}".`,
+    toastSaveFailed: "Save failed",
+    deletePrompt: (name) => `Delete customer "${name}"? Existing invoices are unaffected.`,
+    toastRemoved: (name) => `Removed "${name}".`,
+    toastDeleteFailed: "Delete failed",
+  },
+  de: {
+    title: "Kunden (BG-7)",
+    subtitle: "Verwalten Sie Ihre B2B- & B2G-Käufer mit Live-EU-VIES-USt-Prüfung, Leitweg-ID-Routing und Standard-E-Rechnungsformaten.",
+    addCustomer: "Kunde hinzufügen",
+    formEdit: "Kunde bearbeiten",
+    formNew: "Neuer Kunde",
+    fLegalName: "Firmenname (BT-44) *",
+    fVatId: "EU-USt-IdNr. (BT-48)",
+    verifyVies: "VIES prüfen",
+    viesFailed: "VIES-Abfrage fehlgeschlagen",
+    fLeitweg: "Leitweg-ID / Käuferref. (BT-10)",
+    fInvoiceEmail: "Rechnungs-E-Mail (BT-49)",
+    fDefaultFormat: "Standard-E-Rechnungsformat",
+    fStreet: "Straße & Hausnummer (BT-50)",
+    fPostalCode: "PLZ",
+    fCity: "Stadt",
+    fCountry: "Land",
+    cancel: "Abbrechen",
+    updateCustomer: "Kunde aktualisieren",
+    saveCustomer: "Kunde speichern",
+    searchPlaceholder: "Kundenname, USt-IdNr. oder Stadt suchen…",
+    loading: "Kunden werden geladen…",
+    emptyTitle: "Noch keine Kunden",
+    emptyText: "Speichern Sie Ihre B2B-/B2G-Käufer einmalig, um Rechnungen, Reverse-Charge-Regeln und Leitweg-IDs automatisch auszufüllen.",
+    addFirst: "Ersten Kunden hinzufügen",
+    thCompany: "Firma",
+    thVat: "EU-USt / VIES",
+    thRouting: "Routing & Format",
+    thActions: "Aktionen",
+    invoiceBtn: "Rechnung",
+    editTitle: "Bearbeiten",
+    deleteTitle: "Löschen",
+    vatStatus: (v) => VAT_DE[v] ?? v,
+    toastUpdated: (name) => `Kunde „${name}“ aktualisiert.`,
+    toastAdded: (name) => `Kunde „${name}“ hinzugefügt.`,
+    toastSaveFailed: "Speichern fehlgeschlagen",
+    deletePrompt: (name) => `Kunde „${name}“ löschen? Bestehende Rechnungen bleiben unberührt.`,
+    toastRemoved: (name) => `„${name}“ entfernt.`,
+    toastDeleteFailed: "Löschen fehlgeschlagen",
+  },
+  fr: {
+    title: "Clients (BG-7)",
+    subtitle: "Gérez vos acheteurs B2B & B2G avec vérification TVA VIES UE en direct, routage Leitweg-ID et formats de facture par défaut.",
+    addCustomer: "Ajouter un client",
+    formEdit: "Modifier le client",
+    formNew: "Nouveau client",
+    fLegalName: "Raison sociale (BT-44) *",
+    fVatId: "N° de TVA UE (BT-48)",
+    verifyVies: "Vérifier VIES",
+    viesFailed: "Échec de la recherche VIES",
+    fLeitweg: "Leitweg-ID / réf. acheteur (BT-10)",
+    fInvoiceEmail: "E-mail de facturation (BT-49)",
+    fDefaultFormat: "Format de facture par défaut",
+    fStreet: "Rue & numéro (BT-50)",
+    fPostalCode: "Code postal",
+    fCity: "Ville",
+    fCountry: "Pays",
+    cancel: "Annuler",
+    updateCustomer: "Mettre à jour le client",
+    saveCustomer: "Enregistrer le client",
+    searchPlaceholder: "Rechercher nom de client, n° de TVA ou ville…",
+    loading: "Chargement des clients…",
+    emptyTitle: "Aucun client pour l'instant",
+    emptyText: "Enregistrez vos acheteurs B2B/B2G une fois pour pré-remplir les factures, les règles d'autoliquidation et les Leitweg-ID.",
+    addFirst: "Ajouter votre premier client",
+    thCompany: "Entreprise",
+    thVat: "TVA UE / VIES",
+    thRouting: "Routage & format",
+    thActions: "Actions",
+    invoiceBtn: "Facturer",
+    editTitle: "Modifier",
+    deleteTitle: "Supprimer",
+    vatStatus: (v) => VAT_FR[v] ?? v,
+    toastUpdated: (name) => `Client « ${name} » mis à jour.`,
+    toastAdded: (name) => `Client « ${name} » ajouté.`,
+    toastSaveFailed: "Échec de l'enregistrement",
+    deletePrompt: (name) => `Supprimer le client « ${name} » ? Les factures existantes ne sont pas affectées.`,
+    toastRemoved: (name) => `« ${name} » supprimé.`,
+    toastDeleteFailed: "Échec de la suppression",
+  },
+};
+
+// ── Products & services catalog translations ──
+export interface CatalogStrings {
+  title: string;
+  subtitle: string;
+  addItem: string;
+  formEdit: string;
+  formNew: string;
+  fName: string;
+  fSku: string;
+  fDescription: string;
+  fUnit: string;
+  unitHour: string;
+  unitDay: string;
+  unitMonth: string;
+  unitPiece: string;
+  unitUnit: string;
+  fNetPrice: string;
+  fDefaultVat: string;
+  cancel: string;
+  saveItem: string;
+  savedItems: (n: number) => string;
+  loading: string;
+  emptyTitle: string;
+  emptyText: string;
+  addFirst: string;
+  thSkuItem: string;
+  thUnit: string;
+  thNetPrice: string;
+  thVat: string;
+  thActions: string;
+  toastUpdated: (name: string) => string;
+  toastAdded: (name: string) => string;
+  toastSaveFailed: string;
+  deletePrompt: (name: string) => string;
+  toastRemoved: (name: string) => string;
+}
+
+export const CATALOG_STRINGS: Record<AppLocale, CatalogStrings> = {
+  en: {
+    title: "Products & Service Rates Catalog",
+    subtitle: "Save reusable services, hourly rates, and SaaS SKUs to insert them into invoices with one click.",
+    addItem: "Add item",
+    formEdit: "Edit catalog item",
+    formNew: "New catalog item",
+    fName: "Item / Service Name *",
+    fSku: "SKU / Code",
+    fDescription: "Description",
+    fUnit: "Unit (UN/ECE)",
+    unitHour: "Hour (HUR)",
+    unitDay: "Day (DAY)",
+    unitMonth: "Month (MON)",
+    unitPiece: "Piece (H87)",
+    unitUnit: "Unit (C62)",
+    fNetPrice: "Net Unit Price (€)",
+    fDefaultVat: "Default VAT",
+    cancel: "Cancel",
+    saveItem: "Save item",
+    savedItems: (n) => `Saved Items (${n})`,
+    loading: "Loading catalog…",
+    emptyTitle: "No products or rates saved yet",
+    emptyText: "Add your recurring services, hourly rates, or SKUs to speed up invoicing.",
+    addFirst: "Add first item",
+    thSkuItem: "SKU / Item",
+    thUnit: "Unit",
+    thNetPrice: "Net Price",
+    thVat: "VAT",
+    thActions: "Actions",
+    toastUpdated: (name) => `Updated "${name}".`,
+    toastAdded: (name) => `Added "${name}" to your catalog.`,
+    toastSaveFailed: "Save failed",
+    deletePrompt: (name) => `Delete "${name}" from catalog?`,
+    toastRemoved: (name) => `Removed "${name}".`,
+  },
+  de: {
+    title: "Produkt- & Leistungskatalog",
+    subtitle: "Speichern Sie wiederverwendbare Leistungen, Stundensätze und SaaS-Artikel, um sie mit einem Klick in Rechnungen einzufügen.",
+    addItem: "Artikel hinzufügen",
+    formEdit: "Katalogartikel bearbeiten",
+    formNew: "Neuer Katalogartikel",
+    fName: "Artikel- / Leistungsname *",
+    fSku: "Artikelnr. / Code",
+    fDescription: "Beschreibung",
+    fUnit: "Einheit (UN/ECE)",
+    unitHour: "Stunde (HUR)",
+    unitDay: "Tag (DAY)",
+    unitMonth: "Monat (MON)",
+    unitPiece: "Stück (H87)",
+    unitUnit: "Einheit (C62)",
+    fNetPrice: "Netto-Einzelpreis (€)",
+    fDefaultVat: "Standard-USt.",
+    cancel: "Abbrechen",
+    saveItem: "Artikel speichern",
+    savedItems: (n) => `Gespeicherte Artikel (${n})`,
+    loading: "Katalog wird geladen…",
+    emptyTitle: "Noch keine Produkte oder Sätze gespeichert",
+    emptyText: "Fügen Sie Ihre wiederkehrenden Leistungen, Stundensätze oder Artikel hinzu, um die Rechnungsstellung zu beschleunigen.",
+    addFirst: "Ersten Artikel hinzufügen",
+    thSkuItem: "Artikelnr. / Artikel",
+    thUnit: "Einheit",
+    thNetPrice: "Nettopreis",
+    thVat: "USt.",
+    thActions: "Aktionen",
+    toastUpdated: (name) => `„${name}“ aktualisiert.`,
+    toastAdded: (name) => `„${name}“ zu Ihrem Katalog hinzugefügt.`,
+    toastSaveFailed: "Speichern fehlgeschlagen",
+    deletePrompt: (name) => `„${name}“ aus dem Katalog löschen?`,
+    toastRemoved: (name) => `„${name}“ entfernt.`,
+  },
+  fr: {
+    title: "Catalogue de produits & tarifs de services",
+    subtitle: "Enregistrez des services réutilisables, des tarifs horaires et des références SaaS pour les insérer dans les factures en un clic.",
+    addItem: "Ajouter un article",
+    formEdit: "Modifier l'article du catalogue",
+    formNew: "Nouvel article du catalogue",
+    fName: "Nom de l'article / du service *",
+    fSku: "Référence / code",
+    fDescription: "Description",
+    fUnit: "Unité (UN/ECE)",
+    unitHour: "Heure (HUR)",
+    unitDay: "Jour (DAY)",
+    unitMonth: "Mois (MON)",
+    unitPiece: "Pièce (H87)",
+    unitUnit: "Unité (C62)",
+    fNetPrice: "Prix unitaire net (€)",
+    fDefaultVat: "TVA par défaut",
+    cancel: "Annuler",
+    saveItem: "Enregistrer l'article",
+    savedItems: (n) => `Articles enregistrés (${n})`,
+    loading: "Chargement du catalogue…",
+    emptyTitle: "Aucun produit ou tarif enregistré pour l'instant",
+    emptyText: "Ajoutez vos services récurrents, tarifs horaires ou références pour accélérer la facturation.",
+    addFirst: "Ajouter le premier article",
+    thSkuItem: "Référence / article",
+    thUnit: "Unité",
+    thNetPrice: "Prix net",
+    thVat: "TVA",
+    thActions: "Actions",
+    toastUpdated: (name) => `« ${name} » mis à jour.`,
+    toastAdded: (name) => `« ${name} » ajouté à votre catalogue.`,
+    toastSaveFailed: "Échec de l'enregistrement",
+    deletePrompt: (name) => `Supprimer « ${name} » du catalogue ?`,
+    toastRemoved: (name) => `« ${name} » supprimé.`,
+  },
+};
