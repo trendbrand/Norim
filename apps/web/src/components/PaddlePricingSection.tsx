@@ -21,9 +21,9 @@ export const PRICING_PLANS = [
   {
     tier: "free",
     name: "Free",
-    price: "$0",
+    price: "€0",
     period: "/ forever",
-    annualPrice: "$0",
+    annualPrice: "€0",
     annualMonthly: "",
     annualSave: "",
     badge: "Always Free",
@@ -39,13 +39,33 @@ export const PRICING_PLANS = [
     highlighted: false,
   },
   {
+    tier: "starter",
+    name: "Starter",
+    price: "€12",
+    period: "/ month",
+    annualPrice: "€120",
+    annualMonthly: "≈ €10/mo, billed yearly",
+    annualSave: "Save €24",
+    badge: "For Freelancers",
+    desc: "For freelancers and Kleinunternehmer sending a handful of compliant invoices each month.",
+    features: [
+      "15-day free trial — no credit card required",
+      "Up to 40 finalized e-invoices / month",
+      "ZUGFeRD 2.3, Factur-X 1.07 & XRechnung XML",
+      "Incoming supplier inbox & SEPA pay links",
+      "VIES VAT verification & GoBD audit chain",
+    ],
+    cta: "Start 15-Day Free Trial",
+    highlighted: false,
+  },
+  {
     tier: "solo",
     name: "Solo",
-    price: "$39",
+    price: "€29",
     period: "/ month",
-    annualPrice: "$390",
-    annualMonthly: "≈ $32.50/mo, billed yearly",
-    annualSave: "Save $78",
+    annualPrice: "€290",
+    annualMonthly: "≈ €24.17/mo, billed yearly",
+    annualSave: "Save €58",
     badge: "Most Popular",
     desc: "Main plan for solo founders, consultants, and growing businesses automating European e-invoicing.",
     features: [
@@ -61,11 +81,11 @@ export const PRICING_PLANS = [
   {
     tier: "business",
     name: "Business",
-    price: "$49",
+    price: "€49",
     period: "/ month",
-    annualPrice: "$490",
-    annualMonthly: "≈ $40.83/mo, billed yearly",
-    annualSave: "Save $98",
+    annualPrice: "€490",
+    annualMonthly: "≈ €40.83/mo, billed yearly",
+    annualSave: "Save €98",
     badge: "Teams & Bridges",
     desc: "Complete Stripe & WooCommerce automation with multi-user approvals and EU archival.",
     features: [
@@ -81,11 +101,11 @@ export const PRICING_PLANS = [
   {
     tier: "agency",
     name: "Agency & API",
-    price: "$129",
+    price: "€129",
     period: "/ month",
-    annualPrice: "$1,290",
-    annualMonthly: "≈ $107.50/mo, billed yearly",
-    annualSave: "Save $258",
+    annualPrice: "€1,290",
+    annualMonthly: "≈ €107.50/mo, billed yearly",
+    annualSave: "Save €258",
     badge: "High Volume",
     desc: "Built for accounting firms, high-volume merchants, and ERP / SaaS developer teams.",
     features: [
@@ -196,7 +216,7 @@ export function PaddlePricingSection() {
           </div>
         )}
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {PRICING_PLANS.map((plan) => (
             <div
               key={plan.tier}

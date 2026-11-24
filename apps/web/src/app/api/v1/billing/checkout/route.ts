@@ -11,7 +11,7 @@ import { requireTenantAuth } from "@/lib/security";
 // Annual billing: customers pay for 10 months and get 12 (≈17% / "2 months free").
 // Monthly prices are unchanged; annualUsd = priceUsd * 10.
 const PLAN_CONFIG: Record<
-  "free" | "trial" | "solo" | "business" | "agency",
+  "free" | "trial" | "starter" | "solo" | "business" | "agency",
   {
     name: string;
     priceUsd: number;
@@ -46,15 +46,26 @@ const PLAN_CONFIG: Record<
     paddlePriceIdAnnual: "",
     description: "15-day full-feature evaluation with no credit card required.",
   },
+  starter: {
+    name: "Starter",
+    priceUsd: 12,
+    priceEur: 12,
+    annualUsd: 120,
+    annualEur: 120,
+    quota: 40,
+    paddlePriceId: process.env.PADDLE_PRICE_STARTER || "pri_norminvoice_starter_12eur",
+    paddlePriceIdAnnual: process.env.PADDLE_PRICE_STARTER_ANNUAL || "pri_norminvoice_starter_120eur_yr",
+    description: "Entry plan for freelancers & Kleinunternehmer: 40 invoices/mo, validation, supplier inbox & SEPA pay links.",
+  },
   solo: {
     name: "Solo",
-    priceUsd: 39,
-    priceEur: 39,
-    annualUsd: 390,
-    annualEur: 390,
+    priceUsd: 29,
+    priceEur: 29,
+    annualUsd: 290,
+    annualEur: 290,
     quota: 150,
-    paddlePriceId: process.env.PADDLE_PRICE_SOLO || "pri_norminvoice_solo_39usd",
-    paddlePriceIdAnnual: process.env.PADDLE_PRICE_SOLO_ANNUAL || "pri_norminvoice_solo_390usd_yr",
+    paddlePriceId: process.env.PADDLE_PRICE_SOLO || "pri_norminvoice_solo_29eur",
+    paddlePriceIdAnnual: process.env.PADDLE_PRICE_SOLO_ANNUAL || "pri_norminvoice_solo_290eur_yr",
     description: "Main individual & small-business plan: 150 invoices/mo, validation, recurring, automations & exports.",
   },
   business: {
@@ -148,7 +159,7 @@ export async function POST(req: NextRequest) {
     priceUsd: cycle === "annual" ? cfg.annualUsd : cfg.priceUsd,
   });
 
-  const priceLabel = cycle === "annual" ? `$${cfg.annualUsd}/year` : `$${cfg.priceUsd}/month`;
+  const priceLabel = cycle === "annual" ? `€${cfg.annualEur}/year` : `€${cfg.priceEur}/month`;
   return NextResponse.json({
     mode: "sandbox_activated",
     activePlan: updated,

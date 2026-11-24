@@ -292,7 +292,7 @@ export interface ApiKeyPublicRecord {
 
 export interface SubscriptionRecord {
   orgId: string;
-  planTier: "free" | "trial" | "solo" | "business" | "agency";
+  planTier: "free" | "trial" | "starter" | "solo" | "business" | "agency";
   status: string;
   monthlyQuota: number;
   billingEmail: string;

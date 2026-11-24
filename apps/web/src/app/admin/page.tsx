@@ -292,9 +292,10 @@ export default function SuperAdminPage() {
                         >
                           <option value="free">FREE</option>
                           <option value="trial">TRIAL (15d)</option>
-                          <option value="solo">SOLO ($39)</option>
-                          <option value="business">BUSINESS ($49)</option>
-                          <option value="agency">AGENCY ($129)</option>
+                          <option value="starter">STARTER (€12)</option>
+                          <option value="solo">SOLO (€29)</option>
+                          <option value="business">BUSINESS (€49)</option>
+                          <option value="agency">AGENCY (€129)</option>
                         </select>
                         <button
                           type="button"

@@ -814,7 +814,7 @@ export const HOME_STRINGS: Record<AppLocale, HomeStrings> = {
     ctaSignup: "Sign Up Free",
     ctaTrial: "Start 15-Day Free Trial",
     ctaExplore: "Explore the Platform",
-    trust: ["Free plan available ($0/mo)", "15-day trial · No credit card required", "Solo plan $39/month"],
+    trust: ["Free plan available (€0/mo)", "15-day trial · No credit card required", "Starter plan €12/month"],
     valEyebrow: "Try Immediately · No Account Required",
     valTitle: "Zero-Retention Dual E-Invoice Validator & Viewer",
     valSubtitle:
@@ -880,7 +880,7 @@ export const HOME_STRINGS: Record<AppLocale, HomeStrings> = {
     ctaSignup: "Kostenlos starten",
     ctaTrial: "15 Tage gratis testen",
     ctaExplore: "Plattform entdecken",
-    trust: ["Kostenloser Tarif (0 €/Mon.)", "15-Tage-Test · Keine Kreditkarte nötig", "Solo-Tarif 39 $/Monat"],
+    trust: ["Kostenloser Tarif (0 €/Mon.)", "15-Tage-Test · Keine Kreditkarte nötig", "Starter-Tarif 12 €/Monat"],
     valEyebrow: "Sofort testen · Kein Konto erforderlich",
     valTitle: "Dual-Validator & Viewer ohne Datenspeicherung",
     valSubtitle:
@@ -946,7 +946,7 @@ export const HOME_STRINGS: Record<AppLocale, HomeStrings> = {
     ctaSignup: "Inscription gratuite",
     ctaTrial: "Démarrer l'essai de 15 jours",
     ctaExplore: "Découvrir la plateforme",
-    trust: ["Offre gratuite disponible (0 $/mois)", "Essai de 15 jours · Sans carte bancaire", "Offre Solo 39 $/mois"],
+    trust: ["Offre gratuite disponible (0 €/mois)", "Essai de 15 jours · Sans carte bancaire", "Offre Starter 12 €/mois"],
     valEyebrow: "Essai immédiat · Sans compte requis",
     valTitle: "Validateur et visionneuse double sans conservation",
     valSubtitle:
@@ -1073,7 +1073,7 @@ export const APP_STRINGS: Record<AppLocale, AppStrings> = {
     navSettings: "Settings",
     navSuperAdmin: "Super Admin",
     upgradeTo: "Upgrade to",
-    upgradeBullets: ["150 e-invoices / month", "Recurring & DATEV / FEC", "$39/month · Cancel anytime"],
+    upgradeBullets: ["150 e-invoices / month", "Recurring & DATEV / FEC", "€29/month · Cancel anytime"],
     upgradeNow: "Upgrade Now",
     planSuffix: "plan",
     finalizedThisMonth: "Finalized e-invoices this month",
@@ -1288,7 +1288,7 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     activeSub: "Active subscription",
     noCard: "No credit card required",
     manageSub: "Manage Subscription",
-    upgradeSoloPrice: "Upgrade to Solo — $39/month",
+    upgradeSoloPrice: "Upgrade to Solo — €29/month",
     recentTitle: "Recent Invoices",
     recentDesc: "Your latest outgoing e-invoices at a glance.",
     viewAll: "View All Invoices →",
@@ -1315,9 +1315,9 @@ export const DASHBOARD_STRINGS: Record<AppLocale, DashboardStrings> = {
     toastOk: (provider, num, status) => `Test ${provider} event processed → ${num} (${status}).`,
     toastFail: "Simulation failed",
     promoTitle: "Need more power for your business?",
-    promoText: "Upgrade to Solo ($39/month) and unlock 150 monthly invoices, recurring automation, incoming approvals, and accountant DATEV/FEC exports.",
+    promoText: "Upgrade to Solo (€29/month) and unlock 150 monthly invoices, recurring automation, incoming approvals, and accountant DATEV/FEC exports.",
     promoBullets: ["150 invoices / month", "Advanced VAT & AR reports", "Cancel renewal anytime"],
-    promoCta: "Upgrade to Solo — $39/month",
+    promoCta: "Upgrade to Solo — €29/month",
   },
   de: {
     kpiTotal: "Rechnungen gesamt",
@@ -3247,6 +3247,7 @@ export interface SettingsStrings {
   currentPlan: string;
   switchTo: (name: string) => string;
   planFreeDesc: string;
+  planStarterDesc: string;
   planSoloDesc: string;
   planBusinessDesc: string;
   planAgencyDesc: string;
@@ -3427,6 +3428,7 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     currentPlan: "Current Plan",
     switchTo: (name) => `Switch to ${name}`,
     planFreeDesc: "Ongoing free validation & occasional invoices",
+    planStarterDesc: "Freelancers & Kleinunternehmer: inbox & SEPA pay links",
     planSoloDesc: "Main plan: recurring, inbox, automations & DATEV/FEC",
     planBusinessDesc: "Stripe, WooCommerce, multi-user RBAC & GoBD",
     planAgencyDesc: "High-volume, multi-client & REST API teams",
@@ -3603,6 +3605,7 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     currentPlan: "Aktueller Tarif",
     switchTo: (name) => `Zu ${name} wechseln`,
     planFreeDesc: "Dauerhaft kostenlose Prüfung & gelegentliche Rechnungen",
+    planStarterDesc: "Freiberufler & Kleinunternehmer: Posteingang & SEPA-Zahllinks",
     planSoloDesc: "Haupttarif: wiederkehrend, Posteingang, Automatisierung & DATEV/FEC",
     planBusinessDesc: "Stripe, WooCommerce, Mehrbenutzer-RBAC & GoBD",
     planAgencyDesc: "Hohes Volumen, Mehrmandanten & REST-API-Teams",
@@ -3779,6 +3782,7 @@ export const SETTINGS_STRINGS: Record<AppLocale, SettingsStrings> = {
     currentPlan: "Offre actuelle",
     switchTo: (name) => `Passer à ${name}`,
     planFreeDesc: "Validation gratuite permanente & factures occasionnelles",
+    planStarterDesc: "Indépendants & micro-entreprises : boîte de réception & liens SEPA",
     planSoloDesc: "Offre principale : récurrent, boîte de réception, automatisations & DATEV/FEC",
     planBusinessDesc: "Stripe, WooCommerce, RBAC multi-utilisateurs & GoBD",
     planAgencyDesc: "Gros volume, multi-clients & équipes API REST",

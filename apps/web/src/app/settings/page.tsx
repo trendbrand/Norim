@@ -969,12 +969,13 @@ function SettingsInner() {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {[
-              { id: "free", name: "Free", price: "$0", quota: t.quotaInvoices("5"), desc: t.planFreeDesc },
-              { id: "solo", name: "Solo", price: "$39", quota: t.quotaInvoices("150"), desc: t.planSoloDesc, featured: true },
-              { id: "business", name: "Business", price: "$49", quota: t.quotaInvoices("500"), desc: t.planBusinessDesc },
-              { id: "agency", name: "Agency", price: "$129", quota: t.quotaInvoices("2,500"), desc: t.planAgencyDesc },
+              { id: "free", name: "Free", price: "€0", quota: t.quotaInvoices("5"), desc: t.planFreeDesc },
+              { id: "starter", name: "Starter", price: "€12", quota: t.quotaInvoices("40"), desc: t.planStarterDesc },
+              { id: "solo", name: "Solo", price: "€29", quota: t.quotaInvoices("150"), desc: t.planSoloDesc, featured: true },
+              { id: "business", name: "Business", price: "€49", quota: t.quotaInvoices("500"), desc: t.planBusinessDesc },
+              { id: "agency", name: "Agency", price: "€129", quota: t.quotaInvoices("2,500"), desc: t.planAgencyDesc },
             ].map((p) => {
               const current = billing.activePlan.tier === p.id;
               return (
