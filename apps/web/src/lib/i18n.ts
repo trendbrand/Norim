@@ -3973,3 +3973,69 @@ export const TRUST_STRINGS: Record<AppLocale, TrustStrings> = {
     ],
   },
 };
+
+// ── Pricing page wrapper (hero + pre-checkout transparency) ──
+export interface PricingPageStrings {
+  badge: string;
+  title: string;
+  desc: string;
+  checkoutTitle: string;
+  checkoutIntroPre: string;
+  billingPolicyLabel: string;
+  checkoutIntroPost: string;
+  items: string[];
+}
+
+export const PRICING_PAGE_STRINGS: Record<AppLocale, PricingPageStrings> = {
+  en: {
+    badge: "Simple, Predictable Subscriptions",
+    title: "Plans for Every Stage of Your E-Invoicing Journey",
+    desc: "Start with our ongoing Free plan or test full workspace workflows with a 15-day free trial. No credit card is required to begin, and renewals can be cancelled anytime in Settings.",
+    checkoutTitle: "What Checkout Shows Before You Pay",
+    checkoutIntroPre: "In line with our ",
+    billingPolicyLabel: "Subscription & Billing Policy",
+    checkoutIntroPost: ", every paid upgrade transparently displays:",
+    items: [
+      "Contracting entity / Merchant of Record",
+      "Exact currency & billing interval",
+      "Applicable VAT or reverse-charge treatment",
+      "Included monthly document quota",
+      "Trial expiry & non-silent-billing behavior",
+      "Online cancellation & refund policy links",
+    ],
+  },
+  de: {
+    badge: "Einfache, planbare Abonnements",
+    title: "Tarife für jede Phase Ihrer E-Rechnungs-Reise",
+    desc: "Starten Sie mit unserem dauerhaft kostenlosen Tarif oder testen Sie die vollständigen Workspace-Abläufe mit einem 15-Tage-Test. Keine Kreditkarte zum Start erforderlich, und Verlängerungen können jederzeit in den Einstellungen gekündigt werden.",
+    checkoutTitle: "Was der Checkout vor der Zahlung anzeigt",
+    checkoutIntroPre: "Gemäß unserer ",
+    billingPolicyLabel: "Abonnement- & Abrechnungsrichtlinie",
+    checkoutIntroPost: " zeigt jedes kostenpflichtige Upgrade transparent an:",
+    items: [
+      "Vertragspartner / Merchant of Record",
+      "Genaue Währung & Abrechnungsintervall",
+      "Anwendbare MwSt. oder Reverse-Charge-Behandlung",
+      "Enthaltenes monatliches Belegkontingent",
+      "Testablauf & kein stilles Abbuchen",
+      "Links zur Online-Kündigung & Erstattungsrichtlinie",
+    ],
+  },
+  fr: {
+    badge: "Des abonnements simples et prévisibles",
+    title: "Des offres pour chaque étape de votre parcours de facturation électronique",
+    desc: "Commencez avec notre offre gratuite permanente ou testez les flux complets de l'espace de travail avec un essai de 15 jours. Aucune carte bancaire n'est requise pour commencer, et les renouvellements peuvent être annulés à tout moment dans les Paramètres.",
+    checkoutTitle: "Ce que le paiement affiche avant de payer",
+    checkoutIntroPre: "Conformément à notre ",
+    billingPolicyLabel: "Politique d'abonnement & de facturation",
+    checkoutIntroPost: ", chaque mise à niveau payante affiche de façon transparente :",
+    items: [
+      "Entité contractante / Merchant of Record",
+      "Devise exacte & intervalle de facturation",
+      "TVA applicable ou traitement en autoliquidation",
+      "Quota mensuel de documents inclus",
+      "Expiration de l'essai & absence de facturation silencieuse",
+      "Liens vers l'annulation en ligne & la politique de remboursement",
+    ],
+  },
+};

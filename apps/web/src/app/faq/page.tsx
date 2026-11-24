@@ -35,11 +35,11 @@ const FAQ_GROUPS = [
     items: [
       {
         q: "How do the Free plan and 15-day Free Trial work?",
-        a: "New accounts receive a real database-tracked 15-day Free Trial with no credit card required (up to 15 finalized invoices and full workspace access). When the trial ends without a paid upgrade, your workspace moves cleanly to our ongoing $0 Free plan (up to 5 invoices/month) — you are never silently billed.",
+        a: "New accounts receive a real database-tracked 15-day Free Trial with no credit card required (up to 15 finalized invoices and full workspace access). When the trial ends without a paid upgrade, your workspace moves cleanly to our ongoing €0 Free plan (up to 5 invoices/month) — you are never silently billed.",
       },
       {
-        q: "What does the Solo plan ($39/month) include?",
-        a: "Solo ($39/month) unlocks up to 150 finalized e-invoices per month, recurring invoice schedules, incoming supplier inbox, automation rules, VIES VAT checks, reporting, and DATEV/FEC accounting exports.",
+        q: "What does the Solo plan (€29/month) include?",
+        a: "Solo (€29/month) unlocks up to 150 finalized e-invoices per month, recurring invoice schedules, incoming supplier inbox, automation rules, VIES VAT checks, reporting, and DATEV/FEC accounting exports.",
       },
       {
         q: "Can I cancel my subscription online?",
