@@ -48,7 +48,10 @@ services:
       redis:
         condition: service_healthy
       einvoice-engine:
-        condition: service_healthy
+        # service_started (not _healthy): the app treats the engine as optional and
+        # falls back to its built-in EN 16931 + PDF/A-3b core, so a slow or unhealthy
+        # engine must never block the website from coming up.
+        condition: service_started
 
   # NOTE: services/worker (BullMQ) is a roadmap scaffold — it is NOT wired into the live
   # invoice path and is intentionally not run here. Running it would also have two processes
@@ -63,7 +66,10 @@ services:
     tmpfs:
       - /tmp/ephemeral:rw,noexec,nosuid,nodev,size=256m
     environment:
-      - KOSIT_VALIDATOR_URL=http://kosit-validator:8081
+      # kosit-validator disabled on ARM (upstream image is amd64-only); the engine
+      # still runs Ghostscript PDF/A-3b + veraPDF, and the app's built-in EN 16931
+      # core covers XRechnung schematron. Empty URL => engine skips the KoSIT call.
+      - KOSIT_VALIDATOR_URL=
       - EINVOICE_ENGINE_SHARED_SECRET=${EINVOICE_ENGINE_SHARED_SECRET}
     networks:
       - engine_sandbox # Strictly internal: true (zero outbound internet egress)
@@ -77,24 +83,12 @@ services:
         limits:
           cpus: "2.0"
           memory: 1536M
-    depends_on:
-      kosit-validator:
-        condition: service_healthy
 
-  kosit-validator:
-    build:
-      context: ../services/kosit-validator
-    restart: unless-stopped
-    read_only: true
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,size=128m
-    networks:
-      - engine_sandbox # Strictly internal: true (zero outbound internet egress)
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1536M
+  # kosit-validator (official KoSIT XRechnung daemon) is DISABLED on this ARM/Graviton
+  # host: the upstream image apps4everything/kosit-validator-xrechnung is amd64-only and
+  # crashes with exit 255 under ARM. The app falls back to its built-in deterministic
+  # EN 16931 / XRechnung core. To restore the official validator later, run it on an x86
+  # host (or an arm64 image) and point einvoice-engine's KOSIT_VALIDATOR_URL at it.
 
   # NOTE: This is a single-node SQLite MVP (see README + docs/PRODUCTION_AUDIT.md).
   # The source of truth is data/norminvoice.sqlite inside the web_data volume.
