@@ -4039,3 +4039,96 @@ export const PRICING_PAGE_STRINGS: Record<AppLocale, PricingPageStrings> = {
     ],
   },
 };
+
+// ── Features page (hero + capability modules + availability notice) ──
+export interface FeatureModule { title: string; text: string; phased?: boolean; }
+export interface FeaturesStrings {
+  badge: string;
+  title: string;
+  desc: string;
+  ctaPrimary: string;
+  ctaSecondary: string;
+  statusAvailable: string;
+  statusPhased: string;
+  noticeLabel: string;
+  noticeText: string;
+  modules: FeatureModule[];
+}
+
+export const FEATURES_STRINGS: Record<AppLocale, FeaturesStrings> = {
+  en: {
+    badge: "Platform Capabilities",
+    title: "Everything Your E-Invoice Workflow Needs, Connected",
+    desc: "From zero-retention validation to outgoing automation, incoming supplier approvals, and GoBD-aligned accountant exports — every feature below reflects real implemented product behavior.",
+    ctaPrimary: "Start Free or 15-Day Trial",
+    ctaSecondary: "See Supported Countries",
+    statusAvailable: "Available",
+    statusPhased: "Phased (13 Markets)",
+    noticeLabel: "Transparent Availability Notice:",
+    noticeText: " Features, integrations, and country modules are labeled Available, Partner-Operated, or Planned. Only features marked Available for your workspace should be treated as production-ready. Validation does not replace independent tax or legal advice.",
+    modules: [
+      { title: "Structured Invoice Creation & Credit Notes", text: "Issue sequential EN 16931 invoices and TypeCode 381 credit notes in ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 (CII & UBL), and Peppol BIS 3.0." },
+      { title: "Deterministic Pre-Send Validation & Repair", text: "Catch missing Leitweg-IDs (BR-DE-15), VAT breakdown mismatches (BR-CO-15), and malformed IBANs before delivery, with plain-language EN/DE/FR guidance." },
+      { title: "Incoming Supplier E-Invoice Inbox (AP)", text: "Upload, parse, validate, detect duplicates, approve supplier bills, and preserve original supplier XML alongside parsed views." },
+      { title: "Recurring Billing & Batch CSV Converter", text: "Automate monthly, quarterly, or annual invoice schedules and batch-convert CSV exports into validated PDF/A-3 + XML ZIP bundles." },
+      { title: "Payments, Partial Settlements & AR Ageing", text: "Record SEPA transfers and partial payments, track paid vs. overdue invoices, and monitor receivables ageing buckets." },
+      { title: "Workflow Automation Rules", text: "Configure organization-scoped automation triggers for pre-send validation gates, automatic accountant CC, and incoming approval holds." },
+      { title: "GoBD Audit Hash-Chain & DATEV / FEC Exports", text: "Every workspace mutation is cryptographically linked in an append-only SHA-256 chain. Export DATEV EXTF v700, French FEC, and GoBD dossiers." },
+      { title: "Delegated Accountant Portal & Team RBAC", text: "Grant time-bounded, revocable read/export access to external Steuerberater or finance reviewers with full access attestation." },
+      { title: "Stripe, WooCommerce, REST API & TypeScript SDK", text: "HMAC-SHA256 verified Stripe & WooCommerce webhooks (with HPOS WordPress plugin), Bearer API keys, and official SDK." },
+      { title: "Real-Time Analytics & VAT Reporting", text: "Track invoice trends, status distributions, VAT rate summaries, and country breakdowns directly from live workspace records." },
+      { title: "Country Compliance Modules & Network Routing", text: "Core EU formats are live; national clearance networks (Peppol Access Points, French PDP, Polish KSeF, Italian SdI) are transparently labeled Partner-Operated or Planned.", phased: true },
+      { title: "Multi-Tenant Security & GDPR Sovereignty", text: "Strict org-level isolation, AES-256-GCM secret encryption, scrypt auth, XXE XML defense, and self-service GDPR Art. 20 export & Art. 17 erasure." },
+    ],
+  },
+  de: {
+    badge: "Plattform-Funktionen",
+    title: "Alles, was Ihr E-Rechnungs-Workflow braucht — vernetzt",
+    desc: "Von der Prüfung ohne Datenspeicherung über ausgehende Automatisierung und eingehende Lieferantenfreigaben bis zu GoBD-konformen Steuerberater-Exporten — jede Funktion unten entspricht tatsächlich implementiertem Produktverhalten.",
+    ctaPrimary: "Kostenlos oder 15 Tage testen",
+    ctaSecondary: "Unterstützte Länder ansehen",
+    statusAvailable: "Verfügbar",
+    statusPhased: "Schrittweise (13 Märkte)",
+    noticeLabel: "Transparenzhinweis zur Verfügbarkeit:",
+    noticeText: " Funktionen, Integrationen und Ländermodule sind als Verfügbar, Partner-betrieben oder Geplant gekennzeichnet. Nur als Verfügbar markierte Funktionen sollten für Ihren Workspace als produktionsreif gelten. Die Validierung ersetzt keine unabhängige Steuer- oder Rechtsberatung.",
+    modules: [
+      { title: "Strukturierte Rechnungserstellung & Gutschriften", text: "Erstellen Sie fortlaufende EN-16931-Rechnungen und Gutschriften (TypeCode 381) in ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 (CII & UBL) und Peppol BIS 3.0." },
+      { title: "Deterministische Prüfung & Reparatur vor dem Versand", text: "Erkennen Sie fehlende Leitweg-IDs (BR-DE-15), USt-Aufschlüsselungsfehler (BR-CO-15) und fehlerhafte IBANs vor dem Versand — mit verständlicher Anleitung auf EN/DE/FR." },
+      { title: "Eingangsrechnungs-Posteingang für Lieferanten (AP)", text: "Hochladen, parsen, validieren, Dubletten erkennen, Lieferantenrechnungen freigeben und das originale Lieferanten-XML neben der geparsten Ansicht aufbewahren." },
+      { title: "Wiederkehrende Abrechnung & Batch-CSV-Konverter", text: "Automatisieren Sie monatliche, vierteljährliche oder jährliche Rechnungszeitpläne und konvertieren Sie CSV-Exporte stapelweise in validierte PDF/A-3- + XML-ZIP-Bündel." },
+      { title: "Zahlungen, Teilzahlungen & Forderungsalterung", text: "Erfassen Sie SEPA-Überweisungen und Teilzahlungen, verfolgen Sie bezahlte vs. überfällige Rechnungen und überwachen Sie die Alterung offener Forderungen." },
+      { title: "Workflow-Automatisierungsregeln", text: "Konfigurieren Sie organisationsbezogene Auslöser für Prüf-Gates vor dem Versand, automatisches Steuerberater-CC und Freigabe-Halts bei Eingangsrechnungen." },
+      { title: "GoBD-Audit-Hash-Kette & DATEV-/FEC-Exporte", text: "Jede Workspace-Änderung ist kryptografisch in einer nur anfügbaren SHA-256-Kette verknüpft. Exportieren Sie DATEV EXTF v700, französisches FEC und GoBD-Dossiers." },
+      { title: "Delegiertes Steuerberater-Portal & Team-RBAC", text: "Gewähren Sie externen Steuerberatern oder Finanzprüfern zeitlich begrenzten, widerrufbaren Lese-/Export-Zugriff mit vollständigem Zugriffsnachweis." },
+      { title: "Stripe, WooCommerce, REST-API & TypeScript-SDK", text: "HMAC-SHA256-verifizierte Stripe- & WooCommerce-Webhooks (mit HPOS-WordPress-Plugin), Bearer-API-Schlüssel und offizielles SDK." },
+      { title: "Echtzeit-Analysen & USt-Berichte", text: "Verfolgen Sie Rechnungstrends, Statusverteilungen, USt-Satz-Zusammenfassungen und Länderaufschlüsselungen direkt aus den Live-Workspace-Daten." },
+      { title: "Länder-Compliance-Module & Netzwerk-Routing", text: "Kern-EU-Formate sind live; nationale Clearing-Netze (Peppol Access Points, französisches PDP, polnisches KSeF, italienisches SdI) sind transparent als Partner-betrieben oder Geplant gekennzeichnet.", phased: true },
+      { title: "Mandantensicherheit & DSGVO-Souveränität", text: "Strikte Isolation auf Organisationsebene, AES-256-GCM-Verschlüsselung, scrypt-Auth, XXE-XML-Abwehr sowie Self-Service-DSGVO-Art.-20-Export & Art.-17-Löschung." },
+    ],
+  },
+  fr: {
+    badge: "Capacités de la plateforme",
+    title: "Tout ce dont votre flux de facturation électronique a besoin, connecté",
+    desc: "De la validation sans conservation à l'automatisation sortante, aux approbations fournisseurs entrantes et aux exports comptables conformes GoBD — chaque fonctionnalité ci-dessous reflète un comportement produit réellement implémenté.",
+    ctaPrimary: "Commencer gratuitement ou essai 15 jours",
+    ctaSecondary: "Voir les pays pris en charge",
+    statusAvailable: "Disponible",
+    statusPhased: "Progressif (13 marchés)",
+    noticeLabel: "Avis de disponibilité transparent :",
+    noticeText: " Les fonctionnalités, intégrations et modules pays sont étiquetés Disponible, Opéré par un partenaire ou Planifié. Seules les fonctionnalités marquées Disponible pour votre espace de travail doivent être considérées comme prêtes pour la production. La validation ne remplace pas un conseil fiscal ou juridique indépendant.",
+    modules: [
+      { title: "Création structurée de factures & avoirs", text: "Émettez des factures EN 16931 séquentielles et des avoirs (TypeCode 381) en ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 (CII & UBL) et Peppol BIS 3.0." },
+      { title: "Validation & réparation déterministes avant envoi", text: "Détectez les Leitweg-ID manquants (BR-DE-15), les écarts de ventilation de TVA (BR-CO-15) et les IBAN mal formés avant l'envoi, avec des explications claires en EN/DE/FR." },
+      { title: "Boîte de réception des factures fournisseurs (AP)", text: "Importez, analysez, validez, détectez les doublons, approuvez les factures fournisseurs et conservez le XML fournisseur d'origine aux côtés des vues analysées." },
+      { title: "Facturation récurrente & convertisseur CSV par lots", text: "Automatisez les échéanciers de factures mensuels, trimestriels ou annuels et convertissez par lots les exports CSV en bundles PDF/A-3 + ZIP XML validés." },
+      { title: "Paiements, règlements partiels & vieillissement des créances", text: "Enregistrez les virements SEPA et paiements partiels, suivez les factures payées vs en retard et surveillez les tranches de vieillissement des créances." },
+      { title: "Règles d'automatisation des flux", text: "Configurez des déclencheurs d'automatisation par organisation : contrôles de validation avant envoi, CC comptable automatique et mises en attente d'approbation entrante." },
+      { title: "Chaîne d'audit GoBD & exports DATEV / FEC", text: "Chaque modification de l'espace de travail est liée cryptographiquement dans une chaîne SHA-256 en ajout seul. Exportez DATEV EXTF v700, le FEC français et les dossiers GoBD." },
+      { title: "Portail comptable délégué & RBAC d'équipe", text: "Accordez à des Steuerberater externes ou à des réviseurs financiers un accès lecture/export limité dans le temps et révocable, avec attestation d'accès complète." },
+      { title: "Stripe, WooCommerce, API REST & SDK TypeScript", text: "Webhooks Stripe & WooCommerce vérifiés HMAC-SHA256 (avec plugin WordPress HPOS), clés API Bearer et SDK officiel." },
+      { title: "Analyses en temps réel & rapports de TVA", text: "Suivez les tendances des factures, les répartitions de statuts, les synthèses de taux de TVA et les ventilations par pays directement depuis les données en direct." },
+      { title: "Modules de conformité pays & routage réseau", text: "Les formats UE de base sont actifs ; les réseaux de clearance nationaux (Peppol Access Points, PDP français, KSeF polonais, SdI italien) sont étiquetés de façon transparente Opéré par un partenaire ou Planifié.", phased: true },
+      { title: "Sécurité multi-locataires & souveraineté RGPD", text: "Isolation stricte au niveau de l'organisation, chiffrement AES-256-GCM, auth scrypt, défense XXE XML et export RGPD Art. 20 & effacement Art. 17 en libre-service." },
+    ],
+  },
+};
