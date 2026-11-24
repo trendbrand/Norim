@@ -32,7 +32,9 @@ services:
     environment:
       - NODE_ENV=production
       - SQLITE_DATA_DIR=/app/data
-      - ENABLE_DEMO_LOGIN=false
+      # Public "Explore Demo" sandbox. Default off; set ENABLE_DEMO_LOGIN=true in
+      # the root .env to turn it on (a shared, isolated sample tenant — never admin).
+      - ENABLE_DEMO_LOGIN=${ENABLE_DEMO_LOGIN:-false}
       - EINVOICE_ENGINE_URL=http://einvoice-engine:8000
       - REDIS_URL=redis://redis:6379
     volumes:

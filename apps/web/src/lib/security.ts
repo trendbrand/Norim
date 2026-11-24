@@ -144,12 +144,19 @@ export async function requireTenantAuth(
 
 export function isSuperAdminEmail(email: string | undefined | null): boolean {
   if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  // Hardening: when the public demo is enabled, its well-known shared account can
+  // NEVER be super-admin — even if that address is mistakenly added to
+  // SUPERADMIN_EMAILS — so the demo password can never become a control-plane backdoor.
+  if (process.env.ENABLE_DEMO_LOGIN === "true" && normalized === "founder@nordcloud-gmbh.de") {
+    return false;
+  }
   // No hardcoded default: super-admin access requires explicit SUPERADMIN_EMAILS config.
   const configured = (process.env.SUPERADMIN_EMAILS || "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  return configured.includes(email.trim().toLowerCase());
+  return configured.includes(normalized);
 }
 
 /**

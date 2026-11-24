@@ -901,12 +901,15 @@ function getDb(): DatabaseSync {
 }
 
 function seedDemoWorkspaceIfEmpty(db: DatabaseSync) {
-  const existing = db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number };
+  const demoUserId = "usr_demo_founder_01";
+  // Seed the demo workspace whenever it is missing — not only on a brand-new DB —
+  // so the public "Explore Demo" sandbox also works on a server that already has
+  // real signups. The demo org stays fully isolated by per-tenant scoping.
+  const existing = db.prepare("SELECT COUNT(*) as c FROM users WHERE id = ?").get(demoUserId) as { c: number };
   if (existing.c > 0) return;
 
   const now = new Date().toISOString();
   const demoOrgId = "org_demo_nordcloud_01";
-  const demoUserId = "usr_demo_founder_01";
 
   db.prepare(
     `INSERT INTO organizations (id, name, slug, onboarding_completed, default_locale, retention_years, created_at)
