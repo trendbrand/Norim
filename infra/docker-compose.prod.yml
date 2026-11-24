@@ -9,6 +9,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      # Domain Caddy requests the TLS certificate for (resolved from the root .env).
+      # Without this the Caddyfile falls back to its default domain and ACME fails.
+      - APP_DOMAIN=${APP_DOMAIN:-norminvoice.eu}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
