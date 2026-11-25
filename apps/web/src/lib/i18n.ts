@@ -4448,3 +4448,254 @@ export const SECURITY_STRINGS: Record<AppLocale, SecurityStrings> = {
     privacyPolicy: "Politique de confidentialité", reportIssue: "Signaler un problème",
   },
 };
+
+// ── Integrations page ──
+export interface IntegrationsStrings {
+  badge: string; title: string; desc: string;
+  statusAvailable: string; statusPartner: string; authLabel: string; inspect: string;
+  items: { name: string; category: string; auth: string; desc: string; partner?: boolean }[];
+  ctaTitle: string; ctaDesc: string; ctaBtn: string;
+}
+
+export const INTEGRATIONS_STRINGS: Record<AppLocale, IntegrationsStrings> = {
+  en: {
+    badge: "Connector Directory", title: "Connect Invoicing to the Tools You Already Use",
+    desc: "Every integration displays its real operational status, authentication mechanism, and scope — with zero silent financial actions.",
+    statusAvailable: "Available", statusPartner: "Partner-Operated / Phased", authLabel: "Auth & Security:", inspect: "Inspect Integration Details",
+    items: [
+      { name: "Stripe E-Invoice Bridge", category: "Payments & Billing", auth: "Tenant-scoped HMAC-SHA256 webhook + 5-min replay protection", desc: "Convert finalized Stripe invoices and credit notes into validated ZUGFeRD / Factur-X / XRechnung files with BT-114 rounding reconciliation." },
+      { name: "WooCommerce WordPress Plugin (v1.1.0)", category: "E-Commerce", auth: "HMAC-SHA256 signed webhook, HPOS-compatible, TLS verified", desc: "Automatically issue EN 16931 B2B e-invoices from completed WooCommerce orders with idempotency protection." },
+      { name: "DATEV EXTF v700 & French DGFiP FEC", category: "Accounting Exports", auth: "Workspace RBAC / Delegated Accountant Portal", desc: "Export SKR03/SKR04 DATEV booking batches, French FEC ledgers, ZIP archives, and GoBD procedural dossiers." },
+      { name: "REST API & @norminvoice/sdk", category: "Developers & ERP", auth: "SHA-256 hashed Bearer API keys with granular scopes", desc: "Validate XML/PDF, generate EN 16931 invoices, manage customers, and download exports programmatically." },
+      { name: "Peppol Access Points & National Gateways", category: "Delivery Networks", auth: "External authorized provider credentials per tenant", desc: "Connect Belgian/Nordic Peppol BIS 3.0, French approved platforms (PDP), Polish KSeF, and Italian SdI through independent authorized providers.", partner: true },
+    ],
+    ctaTitle: "Need an ERP or country-gateway connector?", ctaDesc: "Tell us which ERP, accounting system, or Peppol provider your business relies on.", ctaBtn: "Request an Integration",
+  },
+  de: {
+    badge: "Konnektor-Verzeichnis", title: "Verbinden Sie die Rechnungsstellung mit Ihren bestehenden Tools",
+    desc: "Jede Integration zeigt ihren echten Betriebsstatus, den Authentifizierungsmechanismus und den Umfang — ohne stille Finanzaktionen.",
+    statusAvailable: "Verfügbar", statusPartner: "Partner-betrieben / Schrittweise", authLabel: "Auth & Sicherheit:", inspect: "Integrationsdetails ansehen",
+    items: [
+      { name: "Stripe-E-Rechnungs-Bridge", category: "Zahlungen & Abrechnung", auth: "Mandantenbezogener HMAC-SHA256-Webhook + 5-Min-Replay-Schutz", desc: "Wandeln Sie finalisierte Stripe-Rechnungen und -Gutschriften in validierte ZUGFeRD-/Factur-X-/XRechnung-Dateien mit BT-114-Rundungsabgleich um." },
+      { name: "WooCommerce-WordPress-Plugin (v1.1.0)", category: "E-Commerce", auth: "HMAC-SHA256-signierter Webhook, HPOS-kompatibel, TLS-verifiziert", desc: "Erstellen Sie automatisch EN-16931-B2B-E-Rechnungen aus abgeschlossenen WooCommerce-Bestellungen mit Idempotenzschutz." },
+      { name: "DATEV EXTF v700 & französisches DGFiP FEC", category: "Buchhaltungs-Exporte", auth: "Workspace-RBAC / delegiertes Steuerberater-Portal", desc: "Exportieren Sie SKR03/SKR04-DATEV-Buchungsstapel, französische FEC-Journale, ZIP-Archive und GoBD-Verfahrensdossiers." },
+      { name: "REST-API & @norminvoice/sdk", category: "Entwickler & ERP", auth: "SHA-256-gehashte Bearer-API-Schlüssel mit granularen Scopes", desc: "Validieren Sie XML/PDF, erstellen Sie EN-16931-Rechnungen, verwalten Sie Kunden und laden Sie Exporte programmatisch herunter." },
+      { name: "Peppol Access Points & nationale Gateways", category: "Zustellnetze", auth: "Zugangsdaten externer autorisierter Anbieter je Mandant", desc: "Verbinden Sie belgisches/nordisches Peppol BIS 3.0, französische zugelassene Plattformen (PDP), polnisches KSeF und italienisches SdI über unabhängige autorisierte Anbieter.", partner: true },
+    ],
+    ctaTitle: "ERP- oder Länder-Gateway-Konnektor benötigt?", ctaDesc: "Sagen Sie uns, auf welches ERP, Buchhaltungssystem oder welchen Peppol-Anbieter Ihr Unternehmen setzt.", ctaBtn: "Integration anfragen",
+  },
+  fr: {
+    badge: "Répertoire de connecteurs", title: "Connectez la facturation aux outils que vous utilisez déjà",
+    desc: "Chaque intégration affiche son statut opérationnel réel, son mécanisme d'authentification et sa portée — sans aucune action financière silencieuse.",
+    statusAvailable: "Disponible", statusPartner: "Opéré par un partenaire / Progressif", authLabel: "Auth & sécurité :", inspect: "Voir les détails de l'intégration",
+    items: [
+      { name: "Passerelle de facturation Stripe", category: "Paiements & facturation", auth: "Webhook HMAC-SHA256 par locataire + protection anti-rejeu 5 min", desc: "Convertissez les factures et avoirs Stripe finalisés en fichiers ZUGFeRD / Factur-X / XRechnung validés avec réconciliation d'arrondi BT-114." },
+      { name: "Plugin WordPress WooCommerce (v1.1.0)", category: "E-commerce", auth: "Webhook signé HMAC-SHA256, compatible HPOS, TLS vérifié", desc: "Émettez automatiquement des factures électroniques B2B EN 16931 à partir des commandes WooCommerce terminées, avec protection d'idempotence." },
+      { name: "DATEV EXTF v700 & FEC DGFiP français", category: "Exports comptables", auth: "RBAC de l'espace de travail / portail comptable délégué", desc: "Exportez des lots d'écritures DATEV SKR03/SKR04, des journaux FEC français, des archives ZIP et des dossiers de procédure GoBD." },
+      { name: "API REST & @norminvoice/sdk", category: "Développeurs & ERP", auth: "Clés API Bearer hachées en SHA-256 avec portées granulaires", desc: "Validez des XML/PDF, générez des factures EN 16931, gérez les clients et téléchargez des exports par programmation." },
+      { name: "Peppol Access Points & passerelles nationales", category: "Réseaux de livraison", auth: "Identifiants de prestataire autorisé externe par locataire", desc: "Connectez Peppol BIS 3.0 belge/nordique, les plateformes agréées françaises (PDP), le KSeF polonais et le SdI italien via des prestataires autorisés indépendants.", partner: true },
+    ],
+    ctaTitle: "Besoin d'un connecteur ERP ou passerelle pays ?", ctaDesc: "Dites-nous sur quel ERP, système comptable ou prestataire Peppol votre entreprise s'appuie.", ctaBtn: "Demander une intégration",
+  },
+};
+
+// ── Solutions pages (small-business, finance-teams, accountants) ──
+export interface SolutionPageStrings {
+  badge: string; title: string; desc: string; cta1: string; cta2: string;
+  cards: { title: string; text: string }[]; note?: string;
+}
+export interface SolutionsStrings {
+  smallBusiness: SolutionPageStrings;
+  financeTeams: SolutionPageStrings;
+  accountants: SolutionPageStrings;
+}
+
+export const SOLUTIONS_STRINGS: Record<AppLocale, SolutionsStrings> = {
+  en: {
+    smallBusiness: {
+      badge: "Solutions · Small Businesses & Solo Founders",
+      title: "Spend Less Time Managing Invoices",
+      desc: "Running a growing business means handling customers, due dates, VAT rules, and documentation without a full accounting department. NormInvoice simplifies daily invoicing with clear validation and guided workflows.",
+      cta1: "Sign Up Free · 15-Day Trial", cta2: "View Plans (from €0)",
+      cards: [
+        { title: "Guided EN 16931 Creation", text: "Save buyers, VAT IDs, IBAN details, and service rates once. Generate valid ZUGFeRD, Factur-X, or XRechnung files in seconds." },
+        { title: "Recurring & Payment Tracking", text: "Automate monthly retainers, monitor paid vs. overdue balances on your dashboard, and issue 1-click credit notes when needed." },
+        { title: "Cross-Border Ready", text: "Support Kleinunternehmer § 19 UStG, EU Reverse Charge with VIES verification, and clean DATEV/FEC exports for your tax advisor." },
+      ],
+      note: "Note: NormInvoice provides structured invoicing software tools and technical validation, not individualized accounting or tax advice.",
+    },
+    financeTeams: {
+      badge: "Solutions · Finance & Operations Teams",
+      title: "One Workspace for Finance Operations",
+      desc: "Organize outgoing and incoming invoices, manage exceptions, and track drafts, validations, approvals, deliveries, and payments as distinct, auditable lifecycle states.",
+      cta1: "Start 15-Day Free Trial", cta2: "Discuss Your Workflow",
+      cards: [
+        { title: "Incoming Supplier AP Inbox", text: "Ingest supplier XML/PDF e-invoices, run automatic duplicate detection, inspect original XML vs. parsed lines, and enforce Owner/Admin approval gates." },
+        { title: "Receivables, Payments & VAT Reports", text: "Record partial or full SEPA settlements, track 30/60+ day ageing buckets, and analyze monthly revenue, VAT categories, and country volume." },
+        { title: "Role-Based Access & GoBD Integrity", text: "Enforce Owner, Admin, Member, and Accountant RBAC roles with every invoice, payment, and comment sealed in a SHA-256 hash chain." },
+      ],
+    },
+    accountants: {
+      badge: "Solutions · Accountants & Tax Advisors",
+      title: "A Cleaner Handoff Between Businesses and Accountants",
+      desc: "Eliminate scattered email PDFs, missing Leitweg-IDs, and unvalidated totals. Review client exception queues and download structured DATEV EXTF or French FEC ledgers in one portal.",
+      cta1: "Discuss Accountant Partnerships", cta2: "Try Accountant Portal",
+      cards: [
+        { title: "Consent-Gated Multi-Client Access", text: "Clients grant time-bounded, revocable delegation to your firm email — every delegated review is attested in the client's audit trail." },
+        { title: "DATEV EXTF & French FEC Exports", text: "Download SKR03/SKR04 DATEV EXTF v700 CSVs, DGFiP FEC files, complete XML/PDF ZIP archives, and generated GoBD dossiers." },
+        { title: "Auto-CC & Exception Visibility", text: "Receive automatic copies of validated outgoing invoices and quickly spot overdue bills, pending AP approvals, or duplicate supplier uploads." },
+      ],
+    },
+  },
+  de: {
+    smallBusiness: {
+      badge: "Lösungen · Kleinunternehmen & Einzelgründer",
+      title: "Weniger Zeit für die Rechnungsverwaltung",
+      desc: "Ein wachsendes Unternehmen zu führen bedeutet, Kunden, Fälligkeiten, USt-Regeln und Dokumentation ohne eigene Buchhaltungsabteilung zu bewältigen. NormInvoice vereinfacht die tägliche Rechnungsstellung mit klarer Prüfung und geführten Abläufen.",
+      cta1: "Kostenlos registrieren · 15-Tage-Test", cta2: "Tarife ansehen (ab 0 €)",
+      cards: [
+        { title: "Geführte EN-16931-Erstellung", text: "Käufer, USt-IdNrn., IBAN-Daten und Leistungssätze einmal speichern. Erzeugen Sie in Sekunden gültige ZUGFeRD-, Factur-X- oder XRechnung-Dateien." },
+        { title: "Wiederkehrend & Zahlungsverfolgung", text: "Automatisieren Sie monatliche Pauschalen, überwachen Sie bezahlt vs. überfällig im Dashboard und erstellen Sie bei Bedarf Gutschriften mit einem Klick." },
+        { title: "Bereit für den grenzüberschreitenden Verkehr", text: "Unterstützung für Kleinunternehmer § 19 UStG, EU-Reverse-Charge mit VIES-Prüfung und saubere DATEV-/FEC-Exporte für Ihren Steuerberater." },
+      ],
+      note: "Hinweis: NormInvoice stellt strukturierte Rechnungssoftware und technische Prüfung bereit, keine individuelle Buchhaltungs- oder Steuerberatung.",
+    },
+    financeTeams: {
+      badge: "Lösungen · Finanz- & Operations-Teams",
+      title: "Ein Workspace für den Finanzbetrieb",
+      desc: "Organisieren Sie aus- und eingehende Rechnungen, verwalten Sie Ausnahmen und verfolgen Sie Entwürfe, Prüfungen, Freigaben, Zustellungen und Zahlungen als eigenständige, prüfbare Lebenszyklus-Zustände.",
+      cta1: "15 Tage gratis testen", cta2: "Ihren Workflow besprechen",
+      cards: [
+        { title: "Lieferanten-Posteingang (AP)", text: "Importieren Sie Lieferanten-XML-/PDF-E-Rechnungen, nutzen Sie automatische Dublettenerkennung, prüfen Sie Original-XML vs. geparste Zeilen und erzwingen Sie Owner-/Admin-Freigaben." },
+        { title: "Forderungen, Zahlungen & USt-Berichte", text: "Erfassen Sie Teil- oder Vollzahlungen per SEPA, verfolgen Sie 30/60+-Tage-Alterung und analysieren Sie Monatsumsatz, USt-Kategorien und Ländervolumen." },
+        { title: "Rollenbasierter Zugriff & GoBD-Integrität", text: "Erzwingen Sie Owner-, Admin-, Mitglieds- und Steuerberater-RBAC-Rollen, wobei jede Rechnung, Zahlung und Kommentar in einer SHA-256-Hash-Kette versiegelt wird." },
+      ],
+    },
+    accountants: {
+      badge: "Lösungen · Steuerberater & -berater",
+      title: "Eine sauberere Übergabe zwischen Unternehmen und Steuerberatern",
+      desc: "Schluss mit verstreuten E-Mail-PDFs, fehlenden Leitweg-IDs und ungeprüften Summen. Prüfen Sie Mandanten-Ausnahme-Warteschlangen und laden Sie strukturierte DATEV-EXTF- oder französische FEC-Journale in einem Portal herunter.",
+      cta1: "Steuerberater-Partnerschaften besprechen", cta2: "Steuerberater-Portal testen",
+      cards: [
+        { title: "Einwilligungsbasierter Mehrmandanten-Zugriff", text: "Mandanten gewähren Ihrer Kanzlei-E-Mail eine zeitlich begrenzte, widerrufbare Delegation — jede delegierte Prüfung wird im Audit-Trail des Mandanten nachgewiesen." },
+        { title: "DATEV-EXTF- & französische FEC-Exporte", text: "Laden Sie SKR03/SKR04-DATEV-EXTF-v700-CSVs, DGFiP-FEC-Dateien, vollständige XML-/PDF-ZIP-Archive und erzeugte GoBD-Dossiers herunter." },
+        { title: "Auto-CC & Ausnahmen-Übersicht", text: "Erhalten Sie automatische Kopien validierter ausgehender Rechnungen und erkennen Sie schnell überfällige Rechnungen, offene AP-Freigaben oder doppelte Lieferanten-Uploads." },
+      ],
+    },
+  },
+  fr: {
+    smallBusiness: {
+      badge: "Solutions · Petites entreprises & fondateurs solo",
+      title: "Passez moins de temps à gérer vos factures",
+      desc: "Diriger une entreprise en croissance implique de gérer clients, échéances, règles de TVA et documentation sans service comptable complet. NormInvoice simplifie la facturation quotidienne avec une validation claire et des flux guidés.",
+      cta1: "Inscription gratuite · essai 15 jours", cta2: "Voir les offres (à partir de 0 €)",
+      cards: [
+        { title: "Création EN 16931 guidée", text: "Enregistrez une fois les acheteurs, numéros de TVA, IBAN et tarifs de prestation. Générez des fichiers ZUGFeRD, Factur-X ou XRechnung valides en quelques secondes." },
+        { title: "Récurrent & suivi des paiements", text: "Automatisez les forfaits mensuels, suivez les soldes payés vs en retard sur votre tableau de bord et émettez des avoirs en 1 clic si nécessaire." },
+        { title: "Prêt pour le transfrontalier", text: "Prise en charge du Kleinunternehmer § 19 UStG, de l'autoliquidation UE avec vérification VIES et d'exports DATEV/FEC propres pour votre conseiller fiscal." },
+      ],
+      note: "Remarque : NormInvoice fournit des outils logiciels de facturation structurée et une validation technique, et non un conseil comptable ou fiscal individualisé.",
+    },
+    financeTeams: {
+      badge: "Solutions · Équipes finance & opérations",
+      title: "Un espace de travail unique pour les opérations financières",
+      desc: "Organisez les factures entrantes et sortantes, gérez les exceptions et suivez les brouillons, validations, approbations, livraisons et paiements comme des états de cycle de vie distincts et auditables.",
+      cta1: "Démarrer l'essai de 15 jours", cta2: "Discuter de votre flux",
+      cards: [
+        { title: "Boîte de réception fournisseurs (AP)", text: "Intégrez les factures électroniques fournisseurs XML/PDF, exécutez une détection automatique des doublons, comparez le XML d'origine aux lignes analysées et imposez des approbations Owner/Admin." },
+        { title: "Créances, paiements & rapports de TVA", text: "Enregistrez des règlements SEPA partiels ou complets, suivez les tranches de vieillissement 30/60+ jours et analysez le chiffre d'affaires mensuel, les catégories de TVA et le volume par pays." },
+        { title: "Accès par rôle & intégrité GoBD", text: "Imposez les rôles RBAC Owner, Admin, Membre et Comptable, chaque facture, paiement et commentaire étant scellé dans une chaîne de hachage SHA-256." },
+      ],
+    },
+    accountants: {
+      badge: "Solutions · Comptables & conseillers fiscaux",
+      title: "Une transmission plus propre entre entreprises et comptables",
+      desc: "Finis les PDF éparpillés par e-mail, les Leitweg-ID manquants et les totaux non validés. Examinez les files d'exceptions clients et téléchargez des journaux DATEV EXTF ou FEC français structurés dans un seul portail.",
+      cta1: "Discuter des partenariats comptables", cta2: "Essayer le portail comptable",
+      cards: [
+        { title: "Accès multi-clients avec consentement", text: "Les clients accordent à l'e-mail de votre cabinet une délégation limitée dans le temps et révocable — chaque revue déléguée est attestée dans la piste d'audit du client." },
+        { title: "Exports DATEV EXTF & FEC français", text: "Téléchargez des CSV DATEV EXTF v700 SKR03/SKR04, des fichiers FEC DGFiP, des archives ZIP XML/PDF complètes et des dossiers GoBD générés." },
+        { title: "Auto-CC & visibilité des exceptions", text: "Recevez des copies automatiques des factures sortantes validées et repérez rapidement les factures en retard, les approbations AP en attente ou les imports fournisseurs en double." },
+      ],
+    },
+  },
+};
+
+// ── FAQ page ──
+export interface FaqStrings {
+  heroBadge: string; heroTitle: string; heroDesc: string;
+  groups: { category: string; items: { q: string; a: string }[] }[];
+  ctaTitle: string; ctaDesc: string; ctaBtn: string;
+}
+
+export const FAQ_STRINGS: Record<AppLocale, FaqStrings> = {
+  en: {
+    heroBadge: "Clear Answers", heroTitle: "Frequently Asked Questions",
+    heroDesc: "Transparent details on NormInvoice capabilities, trials, pricing, and legal boundaries.",
+    groups: [
+      { category: "Product & Compliance", items: [
+        { q: "What is NormInvoice?", a: "NormInvoice (Product of Trend&Brand) is a subscription-based software platform for creating, validating, receiving, archiving, and exporting European electronic invoices (EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0)." },
+        { q: "Is NormInvoice a government agency or tax authority?", a: "No. NormInvoice is commercial SaaS software. We do not act as a bank, tax authority, or government-accredited clearance operator unless expressly authorized and verified." },
+        { q: "Does a passed validation automatically make every invoice legally compliant?", a: "No. Technical validation checks your document against supported EN 16931 and national rulesets, but final tax treatment, VAT categorization, and recipient or gateway acceptance remain the responsibility of the issuer and their qualified tax advisor." },
+        { q: "Which European countries are supported?", a: "See our live Countries & Standards page for all 13 European markets, where each country is clearly marked Available (Core), Partner-Operated, or Planned." },
+      ] },
+      { category: "Free Plan, 15-Day Trial & Subscriptions", items: [
+        { q: "How do the Free plan and 15-day Free Trial work?", a: "New accounts receive a real database-tracked 15-day Free Trial with no credit card required (up to 15 finalized invoices and full workspace access). When the trial ends without a paid upgrade, your workspace moves cleanly to our ongoing €0 Free plan (up to 5 invoices/month) — you are never silently billed." },
+        { q: "What does the Solo plan (€29/month) include?", a: "Solo (€29/month) unlocks up to 150 finalized e-invoices per month, recurring invoice schedules, incoming supplier inbox, automation rules, VIES VAT checks, reporting, and DATEV/FEC accounting exports." },
+        { q: "Can I cancel my subscription online?", a: "Yes. Workspace owners and admins can cancel upcoming renewal directly from Settings > Billing & Quota at any time, or by emailing official@trendandbrands.com." },
+      ] },
+      { category: "Privacy, Security & Operations", items: [
+        { q: "What happens to files uploaded to the free public validator?", a: "Public validator uploads are processed strictly in volatile RAM (zero-retention) and discarded immediately after your compliance report is generated." },
+        { q: "Can I export all my company invoices and audit logs?", a: "Yes. You can export individual XML/PDF files, monthly ZIP archives, DATEV EXTF, French FEC ledgers, GoBD procedural dossiers, and full GDPR Art. 20 JSON exports at any time." },
+        { q: "How do I contact NormInvoice?", a: "Email {email}, call {phone}, or submit the Contact form directly on this website." },
+      ] },
+    ],
+    ctaTitle: "Still have a specific question?", ctaDesc: "Our team is happy to help clarify country support, integrations, or enterprise terms.", ctaBtn: "Contact Us →",
+  },
+  de: {
+    heroBadge: "Klare Antworten", heroTitle: "Häufig gestellte Fragen",
+    heroDesc: "Transparente Details zu NormInvoice-Funktionen, Tests, Preisen und rechtlichen Grenzen.",
+    groups: [
+      { category: "Produkt & Compliance", items: [
+        { q: "Was ist NormInvoice?", a: "NormInvoice (ein Produkt von Trend&Brand) ist eine abonnementbasierte Software-Plattform zum Erstellen, Prüfen, Empfangen, Archivieren und Exportieren europäischer elektronischer Rechnungen (EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0)." },
+        { q: "Ist NormInvoice eine Behörde oder Steuerbehörde?", a: "Nein. NormInvoice ist kommerzielle SaaS-Software. Wir handeln nicht als Bank, Steuerbehörde oder staatlich akkreditierter Clearing-Betreiber, sofern nicht ausdrücklich autorisiert und verifiziert." },
+        { q: "Macht eine bestandene Prüfung jede Rechnung automatisch rechtskonform?", a: "Nein. Die technische Prüfung vergleicht Ihr Dokument mit den unterstützten EN-16931- und nationalen Regelwerken, doch die endgültige steuerliche Behandlung, USt-Kategorisierung und die Annahme durch Empfänger oder Gateway liegen in der Verantwortung des Ausstellers und seines qualifizierten Steuerberaters." },
+        { q: "Welche europäischen Länder werden unterstützt?", a: "Auf unserer aktuellen Seite „Länder & Standards“ finden Sie alle 13 europäischen Märkte, wobei jedes Land klar als Verfügbar (Kern), Partner-betrieben oder Geplant gekennzeichnet ist." },
+      ] },
+      { category: "Kostenloser Tarif, 15-Tage-Test & Abos", items: [
+        { q: "Wie funktionieren der kostenlose Tarif und der 15-Tage-Test?", a: "Neue Konten erhalten einen echten, datenbankgestützten 15-Tage-Test ohne Kreditkarte (bis zu 15 finalisierte Rechnungen und voller Workspace-Zugriff). Endet der Test ohne kostenpflichtiges Upgrade, wechselt Ihr Workspace sauber in unseren dauerhaften 0-€-Tarif (bis zu 5 Rechnungen/Monat) — es wird nie still abgebucht." },
+        { q: "Was beinhaltet der Solo-Tarif (29 €/Monat)?", a: "Solo (29 €/Monat) schaltet bis zu 150 finalisierte E-Rechnungen pro Monat, wiederkehrende Rechnungszeitpläne, Lieferanten-Posteingang, Automatisierungsregeln, VIES-USt-Prüfungen, Berichte und DATEV-/FEC-Buchhaltungsexporte frei." },
+        { q: "Kann ich mein Abo online kündigen?", a: "Ja. Workspace-Eigentümer und -Admins können die anstehende Verlängerung jederzeit direkt unter Einstellungen > Abrechnung & Kontingent kündigen oder per E-Mail an official@trendandbrands.com." },
+      ] },
+      { category: "Datenschutz, Sicherheit & Betrieb", items: [
+        { q: "Was passiert mit Dateien, die in den kostenlosen öffentlichen Validator hochgeladen werden?", a: "Uploads im öffentlichen Validator werden ausschließlich im flüchtigen RAM verarbeitet (keine Speicherung) und sofort nach Erstellung Ihres Prüfberichts verworfen." },
+        { q: "Kann ich alle meine Firmenrechnungen und Audit-Logs exportieren?", a: "Ja. Sie können jederzeit einzelne XML-/PDF-Dateien, monatliche ZIP-Archive, DATEV EXTF, französische FEC-Journale, GoBD-Verfahrensdossiers und vollständige DSGVO-Art.-20-JSON-Exporte exportieren." },
+        { q: "Wie kontaktiere ich NormInvoice?", a: "Schreiben Sie an {email}, rufen Sie {phone} an oder senden Sie das Kontaktformular direkt auf dieser Website." },
+      ] },
+    ],
+    ctaTitle: "Noch eine konkrete Frage?", ctaDesc: "Unser Team hilft gerne, Länderunterstützung, Integrationen oder Enterprise-Konditionen zu klären.", ctaBtn: "Kontakt aufnehmen →",
+  },
+  fr: {
+    heroBadge: "Des réponses claires", heroTitle: "Questions fréquentes",
+    heroDesc: "Des détails transparents sur les capacités de NormInvoice, les essais, les tarifs et les limites légales.",
+    groups: [
+      { category: "Produit & conformité", items: [
+        { q: "Qu'est-ce que NormInvoice ?", a: "NormInvoice (un produit de Trend&Brand) est une plateforme logicielle par abonnement pour créer, valider, recevoir, archiver et exporter des factures électroniques européennes (EN 16931, ZUGFeRD 2.3, Factur-X 1.07, XRechnung 3.0.2 & Peppol BIS 3.0)." },
+        { q: "NormInvoice est-il une administration ou une autorité fiscale ?", a: "Non. NormInvoice est un logiciel SaaS commercial. Nous n'agissons pas comme une banque, une autorité fiscale ou un opérateur de clearance accrédité par l'État, sauf autorisation et vérification expresses." },
+        { q: "Une validation réussie rend-elle automatiquement chaque facture conforme sur le plan légal ?", a: "Non. La validation technique vérifie votre document par rapport aux jeux de règles EN 16931 et nationaux pris en charge, mais le traitement fiscal final, la catégorisation de la TVA et l'acceptation par le destinataire ou la passerelle restent de la responsabilité de l'émetteur et de son conseiller fiscal qualifié." },
+        { q: "Quels pays européens sont pris en charge ?", a: "Consultez notre page « Pays & normes » à jour pour les 13 marchés européens, où chaque pays est clairement marqué Disponible (cœur), Opéré par un partenaire ou Planifié." },
+      ] },
+      { category: "Offre gratuite, essai 15 jours & abonnements", items: [
+        { q: "Comment fonctionnent l'offre gratuite et l'essai gratuit de 15 jours ?", a: "Les nouveaux comptes bénéficient d'un véritable essai gratuit de 15 jours suivi en base de données, sans carte bancaire (jusqu'à 15 factures finalisées et accès complet à l'espace de travail). À la fin de l'essai sans mise à niveau payante, votre espace passe proprement à notre offre gratuite permanente à 0 € (jusqu'à 5 factures/mois) — vous n'êtes jamais facturé en silence." },
+        { q: "Que comprend l'offre Solo (29 €/mois) ?", a: "Solo (29 €/mois) débloque jusqu'à 150 factures électroniques finalisées par mois, des échéanciers récurrents, la boîte de réception fournisseurs, des règles d'automatisation, les contrôles TVA VIES, les rapports et les exports comptables DATEV/FEC." },
+        { q: "Puis-je annuler mon abonnement en ligne ?", a: "Oui. Les propriétaires et administrateurs d'espace de travail peuvent annuler le renouvellement à venir à tout moment depuis Paramètres > Facturation & quota, ou en écrivant à official@trendandbrands.com." },
+      ] },
+      { category: "Confidentialité, sécurité & exploitation", items: [
+        { q: "Qu'advient-il des fichiers importés dans le validateur public gratuit ?", a: "Les imports du validateur public sont traités strictement en mémoire vive volatile (aucune conservation) et supprimés immédiatement après la génération de votre rapport de conformité." },
+        { q: "Puis-je exporter toutes les factures et journaux d'audit de mon entreprise ?", a: "Oui. Vous pouvez exporter à tout moment des fichiers XML/PDF individuels, des archives ZIP mensuelles, DATEV EXTF, des journaux FEC français, des dossiers de procédure GoBD et des exports JSON RGPD Art. 20 complets." },
+        { q: "Comment contacter NormInvoice ?", a: "Écrivez à {email}, appelez le {phone}, ou soumettez le formulaire de contact directement sur ce site." },
+      ] },
+    ],
+    ctaTitle: "Vous avez encore une question précise ?", ctaDesc: "Notre équipe se fera un plaisir de clarifier la prise en charge des pays, les intégrations ou les conditions entreprise.", ctaBtn: "Nous contacter →",
+  },
+};
