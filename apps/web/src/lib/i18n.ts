@@ -4208,3 +4208,85 @@ export const ABOUT_STRINGS: Record<AppLocale, AboutStrings> = {
     incorporationLabel: "Immatriculation", ntnLabel: "NTN", ceoLabel: "Dirigeant", getInTouch: "Nous contacter",
   },
 };
+
+// ── Contact page (form) ──
+export interface ContactStrings {
+  heroTitle: string; heroDesc: string;
+  topicHelpTitle: string; topicHelp: { label: string; text: string }[];
+  securityWarn: string;
+  formTitle: string; formDesc: string; inquiryReceived: string;
+  labelName: string; labelEmail: string; labelCompany: string; labelCountry: string; labelTopic: string; labelMessage: string;
+  phName: string; phEmail: string; phCompany: string; phCountry: string; phMessage: string;
+  optSales: string; optSupport: string; optBilling: string; optPrivacy: string; optPartners: string; optGeneral: string;
+  marketingOptIn: string; privacyPre: string; privacyLink: string; privacyPost: string;
+  send: string; sending: string; loading: string; couldNotSubmit: string; submissionFailed: string;
+}
+
+export const CONTACT_STRINGS: Record<AppLocale, ContactStrings> = {
+  en: {
+    heroTitle: "Contact Our Team",
+    heroDesc: "Questions about subscription plans, European country support, integrations, billing, or privacy? Send us a message and we will review it directly.",
+    topicHelpTitle: "Choose the Right Topic",
+    topicHelp: [
+      { label: "Sales & Plans:", text: "Plans (Starter, Solo, Business), pricing & country readiness." },
+      { label: "Technical Support:", text: "Validation codes, imports, webhooks, and workspace setup." },
+      { label: "Billing:", text: "Subscription invoices, plan changes, renewals, and refunds." },
+      { label: "Privacy & Security:", text: "GDPR data requests, DPA execution, and security reports." },
+      { label: "Partners:", text: "Accountants, ERPs, Peppol Access Points & developers." },
+    ],
+    securityWarn: "Never send passwords, API keys, or complete payment card numbers in this form.",
+    formTitle: "Send a Message",
+    formDesc: "Submissions are stored securely in our inquiry queue with a real tracking reference ID.",
+    inquiryReceived: "Inquiry Received",
+    labelName: "Full Name *", labelEmail: "Work Email *", labelCompany: "Company / Firm", labelCountry: "Country", labelTopic: "Topic *", labelMessage: "Message *",
+    phName: "Anna Schmidt", phEmail: "finance@company.eu", phCompany: "Schmidt GmbH", phCountry: "Germany", phMessage: "Describe your invoicing workflow, target EU countries, or question...",
+    optSales: "Sales & Plans", optSupport: "Technical Support", optBilling: "Billing & Subscriptions", optPrivacy: "Privacy & Security", optPartners: "Partners & Developers", optGeneral: "General Inquiry",
+    marketingOptIn: "Optional: I would also like to receive occasional product updates and European compliance release notes by email.",
+    privacyPre: "We use the details you submit to respond to your inquiry in line with our ", privacyLink: "Privacy Policy", privacyPost: ".",
+    send: "Send Message", sending: "Sending Inquiry…", loading: "Loading contact form…", couldNotSubmit: "Could not submit your inquiry.", submissionFailed: "Submission failed.",
+  },
+  de: {
+    heroTitle: "Kontaktieren Sie unser Team",
+    heroDesc: "Fragen zu Abo-Tarifen, Länderunterstützung in Europa, Integrationen, Abrechnung oder Datenschutz? Senden Sie uns eine Nachricht und wir prüfen sie direkt.",
+    topicHelpTitle: "Wählen Sie das richtige Thema",
+    topicHelp: [
+      { label: "Vertrieb & Tarife:", text: "Tarife (Starter, Solo, Business), Preise & Länderbereitschaft." },
+      { label: "Technischer Support:", text: "Prüfcodes, Importe, Webhooks und Workspace-Einrichtung." },
+      { label: "Abrechnung:", text: "Abo-Rechnungen, Tarifwechsel, Verlängerungen und Erstattungen." },
+      { label: "Datenschutz & Sicherheit:", text: "DSGVO-Datenanfragen, AV-Vertragsabschluss und Sicherheitsmeldungen." },
+      { label: "Partner:", text: "Steuerberater, ERPs, Peppol Access Points & Entwickler." },
+    ],
+    securityWarn: "Senden Sie in diesem Formular niemals Passwörter, API-Schlüssel oder vollständige Zahlungskartennummern.",
+    formTitle: "Nachricht senden",
+    formDesc: "Einsendungen werden sicher in unserer Anfrage-Warteschlange mit einer echten Tracking-Referenz-ID gespeichert.",
+    inquiryReceived: "Anfrage erhalten",
+    labelName: "Vollständiger Name *", labelEmail: "Geschäftliche E-Mail *", labelCompany: "Firma", labelCountry: "Land", labelTopic: "Thema *", labelMessage: "Nachricht *",
+    phName: "Anna Schmidt", phEmail: "finanzen@firma.eu", phCompany: "Schmidt GmbH", phCountry: "Deutschland", phMessage: "Beschreiben Sie Ihren Rechnungs-Workflow, Ziel-EU-Länder oder Ihre Frage...",
+    optSales: "Vertrieb & Tarife", optSupport: "Technischer Support", optBilling: "Abrechnung & Abos", optPrivacy: "Datenschutz & Sicherheit", optPartners: "Partner & Entwickler", optGeneral: "Allgemeine Anfrage",
+    marketingOptIn: "Optional: Ich möchte zudem gelegentlich Produkt-Updates und europäische Compliance-Release-Notes per E-Mail erhalten.",
+    privacyPre: "Wir verwenden die von Ihnen übermittelten Angaben, um Ihre Anfrage gemäß unserer ", privacyLink: "Datenschutzerklärung", privacyPost: " zu beantworten.",
+    send: "Nachricht senden", sending: "Anfrage wird gesendet…", loading: "Kontaktformular wird geladen…", couldNotSubmit: "Ihre Anfrage konnte nicht übermittelt werden.", submissionFailed: "Übermittlung fehlgeschlagen.",
+  },
+  fr: {
+    heroTitle: "Contactez notre équipe",
+    heroDesc: "Des questions sur les offres d'abonnement, la prise en charge des pays européens, les intégrations, la facturation ou la confidentialité ? Envoyez-nous un message et nous l'examinerons directement.",
+    topicHelpTitle: "Choisissez le bon sujet",
+    topicHelp: [
+      { label: "Ventes & offres :", text: "Offres (Starter, Solo, Business), tarifs & disponibilité par pays." },
+      { label: "Support technique :", text: "Codes de validation, imports, webhooks et configuration de l'espace de travail." },
+      { label: "Facturation :", text: "Factures d'abonnement, changements d'offre, renouvellements et remboursements." },
+      { label: "Confidentialité & sécurité :", text: "Demandes RGPD, signature du DPA et rapports de sécurité." },
+      { label: "Partenaires :", text: "Comptables, ERP, Peppol Access Points & développeurs." },
+    ],
+    securityWarn: "N'envoyez jamais de mots de passe, de clés API ou de numéros de carte de paiement complets dans ce formulaire.",
+    formTitle: "Envoyer un message",
+    formDesc: "Les soumissions sont stockées en toute sécurité dans notre file de demandes avec un véritable identifiant de suivi.",
+    inquiryReceived: "Demande reçue",
+    labelName: "Nom complet *", labelEmail: "E-mail professionnel *", labelCompany: "Société", labelCountry: "Pays", labelTopic: "Sujet *", labelMessage: "Message *",
+    phName: "Anna Schmidt", phEmail: "finance@societe.eu", phCompany: "Schmidt GmbH", phCountry: "France", phMessage: "Décrivez votre flux de facturation, les pays de l'UE visés ou votre question...",
+    optSales: "Ventes & offres", optSupport: "Support technique", optBilling: "Facturation & abonnements", optPrivacy: "Confidentialité & sécurité", optPartners: "Partenaires & développeurs", optGeneral: "Demande générale",
+    marketingOptIn: "Facultatif : je souhaite aussi recevoir occasionnellement des mises à jour produit et des notes de version sur la conformité européenne par e-mail.",
+    privacyPre: "Nous utilisons les informations que vous soumettez pour répondre à votre demande conformément à notre ", privacyLink: "Politique de confidentialité", privacyPost: ".",
+    send: "Envoyer le message", sending: "Envoi de la demande…", loading: "Chargement du formulaire de contact…", couldNotSubmit: "Impossible de soumettre votre demande.", submissionFailed: "Échec de la soumission.",
+  },
+};
