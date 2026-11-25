@@ -19,12 +19,13 @@ import {
   sellerSettingsToCanonicalParty,
   upsertIntegrationForOrg,
 } from "@/lib/db-store";
+import { publicOrigin } from "@/lib/public-url";
 
 export async function GET(req: NextRequest) {
   const access = await requireTenantAuth(req);
   if (!access.ok) return access.response;
 
-  const origin = req.nextUrl.origin;
+  const origin = publicOrigin(req);
   return NextResponse.json({
     orgId: access.ctx.orgId,
     webhookUrls: {

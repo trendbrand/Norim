@@ -10,6 +10,7 @@ import {
 import { persistUserAndOrgToPostgres } from "@/lib/pg-persistence";
 import { dispatchTransactionalEmail } from "@/lib/email-dispatcher";
 import { escapeHtml } from "@/lib/security";
+import { publicOrigin } from "@/lib/public-url";
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
     // Issue real email-verification token (best-effort transactional email)
     const verifyTok = createAuthTokenForEmail(created.email, "VERIFY_EMAIL");
     if (verifyTok) {
-      const origin = req.nextUrl.origin;
+      const origin = publicOrigin(req);
       const verifyUrl = `${origin}/verify-email?token=${encodeURIComponent(verifyTok.token)}`;
       await dispatchTransactionalEmail({
         to: created.email,

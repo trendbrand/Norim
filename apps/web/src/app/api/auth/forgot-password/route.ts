@@ -3,6 +3,7 @@ import { createAuthTokenForEmail } from "@/lib/db-store";
 import { dispatchTransactionalEmail } from "@/lib/email-dispatcher";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/security";
+import { publicOrigin } from "@/lib/public-url";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     let devResetPath: string | undefined;
 
     if (created) {
-      const origin = req.nextUrl.origin;
+      const origin = publicOrigin(req);
       const resetPath = `/reset-password?token=${encodeURIComponent(created.token)}`;
       const resetUrl = `${origin}${resetPath}`;
       await dispatchTransactionalEmail({
