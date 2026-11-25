@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { verifyBackupCode } from "./totp";
 import {
   CanonicalInvoice,
   GOLDEN_FIXTURES,
@@ -862,6 +863,17 @@ function getDb(): DatabaseSync {
   if (!userCols.some((c) => c.name === "marketing_opt_in")) {
     db.exec("ALTER TABLE users ADD COLUMN marketing_opt_in INTEGER NOT NULL DEFAULT 0;");
   }
+  // Two-factor authentication (TOTP). totp_secret is AES-encrypted at rest;
+  // totp_backup_codes is a JSON array of scrypt-hashed one-time codes.
+  if (!userCols.some((c) => c.name === "totp_secret")) {
+    db.exec("ALTER TABLE users ADD COLUMN totp_secret TEXT;");
+  }
+  if (!userCols.some((c) => c.name === "totp_enabled")) {
+    db.exec("ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!userCols.some((c) => c.name === "totp_backup_codes")) {
+    db.exec("ALTER TABLE users ADD COLUMN totp_backup_codes TEXT;");
+  }
   const subCols = db.prepare("PRAGMA table_info(subscriptions)").all() as Array<{ name: string }>;
   if (!subCols.some((c) => c.name === "trial_started_at")) {
     db.exec("ALTER TABLE subscriptions ADD COLUMN trial_started_at TEXT;");
@@ -1047,11 +1059,11 @@ function seedDemoWorkspaceIfEmpty(db: DatabaseSync) {
 // Organization, User & Team Operations
 // ============================================================================
 
-export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean; sessionVersion: number; emailVerified: boolean }) | null {
+export function findUserByEmailDb(email: string): (UserRecord & { orgId: string; orgName: string; role: MembershipRecord["role"]; onboardingCompleted: boolean; sessionVersion: number; emailVerified: boolean; totpEnabled: boolean }) | null {
   const db = getDb();
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at, u.session_version, u.email_verified,
+      `SELECT u.id, u.email, u.password_hash, u.full_name, u.created_at, u.session_version, u.email_verified, u.totp_enabled,
               m.org_id, m.role, o.name as org_name, o.onboarding_completed
        FROM users u
        JOIN memberships m ON m.user_id = u.id
@@ -1074,7 +1086,73 @@ export function findUserByEmailDb(email: string): (UserRecord & { orgId: string;
     onboardingCompleted: Boolean(row.onboarding_completed),
     sessionVersion: Number(row.session_version) || 0,
     emailVerified: Boolean(row.email_verified),
+    totpEnabled: Boolean(row.totp_enabled),
   };
+}
+
+// ── Two-factor authentication (TOTP) ──
+
+export function getUserTotp(userId: string): { enabled: boolean; secret: string | null; backupCount: number } {
+  const db = getDb();
+  const row = db.prepare("SELECT totp_secret, totp_enabled, totp_backup_codes FROM users WHERE id = ?").get(userId) as
+    | { totp_secret: string | null; totp_enabled: number; totp_backup_codes: string | null }
+    | undefined;
+  if (!row) return { enabled: false, secret: null, backupCount: 0 };
+  let backupCount = 0;
+  try {
+    backupCount = row.totp_backup_codes ? (JSON.parse(row.totp_backup_codes) as string[]).length : 0;
+  } catch {
+    backupCount = 0;
+  }
+  return {
+    enabled: Boolean(row.totp_enabled),
+    secret: row.totp_secret ? decryptField(row.totp_secret) : null,
+    backupCount,
+  };
+}
+
+/** Store a NOT-yet-enabled TOTP secret (pending enrollment confirmation). */
+export function setUserTotpPendingSecret(userId: string, secretPlain: string): void {
+  const db = getDb();
+  db.prepare("UPDATE users SET totp_secret = ?, totp_enabled = 0, totp_backup_codes = NULL WHERE id = ?").run(
+    encryptField(secretPlain),
+    userId
+  );
+}
+
+/** Enable 2FA after the enrollment code is verified; stores hashed backup codes. */
+export function enableUserTotp(userId: string, hashedBackupCodes: string[]): void {
+  const db = getDb();
+  db.prepare("UPDATE users SET totp_enabled = 1, totp_backup_codes = ? WHERE id = ?").run(
+    JSON.stringify(hashedBackupCodes),
+    userId
+  );
+}
+
+/** Turn 2FA off and wipe the secret + backup codes. */
+export function disableUserTotp(userId: string): void {
+  const db = getDb();
+  db.prepare("UPDATE users SET totp_secret = NULL, totp_enabled = 0, totp_backup_codes = NULL WHERE id = ?").run(userId);
+}
+
+/** Verify a one-time backup code and consume it (single use). */
+export function consumeUserBackupCode(userId: string, code: string): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT totp_backup_codes FROM users WHERE id = ?").get(userId) as
+    | { totp_backup_codes: string | null }
+    | undefined;
+  if (!row?.totp_backup_codes) return false;
+  let codes: string[];
+  try {
+    codes = JSON.parse(row.totp_backup_codes) as string[];
+  } catch {
+    return false;
+  }
+  const idx = codes.findIndex((h) => verifyBackupCode(code, h));
+  if (idx < 0) return false;
+  codes.splice(idx, 1);
+  db.prepare("UPDATE users SET totp_backup_codes = ? WHERE id = ?").run(JSON.stringify(codes), userId);
+  return true;
 }
 
 /** Current session version for a user; mismatched tokens are treated as revoked. */

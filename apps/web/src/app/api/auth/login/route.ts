@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, signSessionToken } from "@/lib/auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { findUserByEmailDb, verifyPasswordScrypt } from "@/lib/db-store";
+import { consumeUserBackupCode, findUserByEmailDb, getUserTotp, verifyPasswordScrypt } from "@/lib/db-store";
+import { verifyTotp } from "@/lib/totp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = (await req.json()) as { email?: string; password?: string; demo?: boolean };
+    const body = (await req.json()) as { email?: string; password?: string; demo?: boolean; totpCode?: string; backupCode?: string };
 
     if (body.demo && process.env.ENABLE_DEMO_LOGIN === "false") {
       return NextResponse.json({ error: "Demo login is disabled in production." }, { status: 403 });
@@ -33,6 +34,27 @@ export async function POST(req: NextRequest) {
     if (!body.demo) {
       if (!body.password || !verifyPasswordScrypt(body.password, user.passwordHash)) {
         return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+      }
+    }
+
+    // Second factor (TOTP) when 2FA is enabled for this account.
+    if (!body.demo && user.totpEnabled) {
+      const code = (body.totpCode || "").trim();
+      const backup = (body.backupCode || "").trim();
+      let passed = false;
+      if (code) {
+        const t = getUserTotp(user.id);
+        passed = Boolean(t.secret && verifyTotp(t.secret, code));
+      } else if (backup) {
+        passed = consumeUserBackupCode(user.id, backup);
+      }
+      if (!passed) {
+        const attempted = Boolean(code || backup);
+        // No code yet -> prompt for it (200). Wrong code -> 401.
+        return NextResponse.json(
+          { twoFactorRequired: true, ...(attempted ? { error: "Invalid authentication code." } : {}) },
+          { status: attempted ? 401 : 200 }
+        );
       }
     }
 

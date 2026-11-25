@@ -51,6 +51,8 @@ function LoginInner() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
 
   function redirectAfterAuth(onboardingCompleted: boolean) {
     const target = !onboardingCompleted ? "/onboarding" : nextPath || "/dashboard";
@@ -68,9 +70,11 @@ function LoginInner() {
     setError(null);
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const code = totpCode.trim();
+      const secondFactor = code ? (code.includes("-") ? { backupCode: code } : { totpCode: code }) : {};
       const payload =
         mode === "login"
-          ? { email, password, rememberMe }
+          ? { email, password, rememberMe, ...secondFactor }
           : { email, password, fullName, orgName, countryCode, marketingOptIn, startPlan: initialPlan };
       const res = await fetch(endpoint, {
         method: "POST",
@@ -78,6 +82,12 @@ function LoginInner() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      if (data.twoFactorRequired) {
+        // Prompt for the 2FA code (first pass), or show an error for a wrong code.
+        setTwoFactor(true);
+        setError(data.error || null);
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Authentication failed");
       redirectAfterAuth(Boolean(data.onboardingCompleted));
     } catch (err) {
@@ -327,6 +337,27 @@ function LoginInner() {
               </div>
             )}
 
+            {mode === "login" && twoFactor && (
+              <label className="block text-xs font-bold text-navy-800">
+                Two-factor code
+                <div className="relative mt-1">
+                  <ShieldCheck className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                  <input
+                    autoFocus
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value)}
+                    placeholder="6-digit code or backup code"
+                    className={`${input} mt-0 pl-10`}
+                  />
+                </div>
+                <p className="mt-1 font-medium text-slate-500">
+                  Enter the code from your authenticator app, or a one-time backup code.
+                </p>
+              </label>
+            )}
+
             {error && (
               <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700">
                 {error}
@@ -338,7 +369,7 @@ function LoginInner() {
               disabled={loading}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-accent-600 active:scale-[0.99] disabled:opacity-50"
             >
-              {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create Account"}
+              {loading ? "Please wait…" : mode === "login" ? (twoFactor ? "Verify & log in" : "Log in") : "Create Account"}
               {!loading && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>

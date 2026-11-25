@@ -106,16 +106,24 @@ function SettingsInner() {
   const [newPw, setNewPw] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
+  // Two-factor authentication (2FA / TOTP)
+  const [twoFa, setTwoFa] = useState<{ enabled: boolean; backupCount: number }>({ enabled: false, backupCount: 0 });
+  const [twoFaSetup, setTwoFaSetup] = useState<{ qrDataUrl: string; secret: string } | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [twoFaBackup, setTwoFaBackup] = useState<string[] | null>(null);
+  const [twoFaPassword, setTwoFaPassword] = useState("");
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [st, integ, tm, keys, bill, aud] = await Promise.all([
+      const [st, integ, tm, keys, bill, aud, tfa] = await Promise.all([
         apiJson<any>("/api/v1/settings"),
         apiJson<any>("/api/v1/integrations"),
         apiJson<any>("/api/v1/team"),
         apiJson<any>("/api/v1/api-keys"),
         apiJson<any>("/api/v1/billing/checkout"),
         apiJson<any>("/api/v1/audit/verify"),
+        apiJson<any>("/api/v1/auth/2fa").catch(() => ({ enabled: false, backupCount: 0 })),
       ]);
       setS(st.settings);
       setWebhookUrls(integ.webhookUrls);
@@ -126,6 +134,7 @@ function SettingsInner() {
       setBilling(bill);
       setAuditEvents(aud.events);
       setChainCheck(aud.verification);
+      setTwoFa(tfa);
     } catch (e) {
       setToast({ kind: "error", text: e instanceof Error ? e.message : t.tLoadFailed });
     } finally {
@@ -141,6 +150,69 @@ function SettingsInner() {
     setTab(next);
     setToast(null);
     router.replace(`/settings?tab=${next}`, { scroll: false });
+  }
+
+  async function reload2fa() {
+    try {
+      setTwoFa(await apiJson<{ enabled: boolean; backupCount: number }>("/api/v1/auth/2fa"));
+    } catch {
+      /* ignore */
+    }
+  }
+  async function start2faSetup() {
+    setSaving(true);
+    try {
+      const r = await apiJson<{ qrDataUrl: string; secret: string }>("/api/v1/auth/2fa", {
+        method: "POST",
+        body: JSON.stringify({ action: "setup" }),
+      });
+      setTwoFaSetup({ qrDataUrl: r.qrDataUrl, secret: r.secret });
+      setTwoFaBackup(null);
+      setTwoFaCode("");
+    } catch (e) {
+      setToast({ kind: "error", text: e instanceof Error ? e.message : "Setup failed" });
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function confirm2fa() {
+    setSaving(true);
+    try {
+      const r = await apiJson<{ backupCodes: string[] }>("/api/v1/auth/2fa", {
+        method: "POST",
+        body: JSON.stringify({ action: "enable", code: twoFaCode.trim() }),
+      });
+      setTwoFaBackup(r.backupCodes);
+      setTwoFaSetup(null);
+      setTwoFaCode("");
+      await reload2fa();
+      setToast({ kind: "success", text: "Two-factor authentication enabled." });
+    } catch (e) {
+      setToast({ kind: "error", text: e instanceof Error ? e.message : "Invalid code — try again." });
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function disable2fa() {
+    if (!twoFaPassword) {
+      setToast({ kind: "error", text: "Enter your account password to disable 2FA." });
+      return;
+    }
+    setSaving(true);
+    try {
+      await apiJson("/api/v1/auth/2fa", {
+        method: "POST",
+        body: JSON.stringify({ action: "disable", password: twoFaPassword }),
+      });
+      setTwoFaPassword("");
+      setTwoFaBackup(null);
+      await reload2fa();
+      setToast({ kind: "success", text: "Two-factor authentication disabled." });
+    } catch (e) {
+      setToast({ kind: "error", text: e instanceof Error ? e.message : "Could not disable 2FA." });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveSettings(patch?: Record<string, unknown>) {
@@ -1022,6 +1094,65 @@ function SettingsInner() {
       {/* TAB 7: Security, GoBD Hash-Chain & GDPR */}
       {tab === "security" && (
         <div className="space-y-6">
+          <Card title="Two-Factor Authentication (2FA)" description="Add an authenticator-app code to your login for strong account protection.">
+            {twoFaBackup ? (
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-emerald-700">
+                  2FA is now enabled. Save these one-time backup codes somewhere safe — each works once if you lose your device.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {twoFaBackup.map((c) => (
+                    <span key={c} className="rounded-lg bg-slate-100 px-2 py-1.5 text-center font-mono text-xs text-navy-900">{c}</span>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setTwoFaBackup(null)} className={btnSecondary}>
+                  I&apos;ve saved my backup codes
+                </button>
+              </div>
+            ) : twoFaSetup ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-600">
+                  1. Scan this QR in your authenticator app (Google Authenticator, Authy, 1Password…), or enter the key manually.
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={twoFaSetup.qrDataUrl} alt="2FA QR code" width={176} height={176} className="rounded-lg border border-slate-200" />
+                <p className="text-[11px] text-slate-500">
+                  Manual key: <code className="font-mono font-semibold text-slate-800">{twoFaSetup.secret}</code>
+                </p>
+                <label className={labelCls}>
+                  2. Enter the 6-digit code to confirm
+                  <input value={twoFaCode} onChange={(e) => setTwoFaCode(e.target.value)} inputMode="numeric" placeholder="123456" className={`${inputCls} font-mono`} />
+                </label>
+                <div className="flex gap-2">
+                  <button type="button" disabled={saving || twoFaCode.trim().length < 6} onClick={() => void confirm2fa()} className={btnPrimary}>
+                    <Lock className="h-4 w-4" /> Verify &amp; enable
+                  </button>
+                  <button type="button" onClick={() => { setTwoFaSetup(null); setTwoFaCode(""); }} className={btnSecondary}>Cancel</button>
+                </div>
+              </div>
+            ) : twoFa.enabled ? (
+              <div className="space-y-3">
+                <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                  ✓ 2FA is ON · {twoFa.backupCount} backup codes left
+                </p>
+                <label className={labelCls}>
+                  Enter your account password to turn 2FA off
+                  <input type="password" value={twoFaPassword} onChange={(e) => setTwoFaPassword(e.target.value)} className={inputCls} />
+                </label>
+                <button type="button" disabled={saving} onClick={() => void disable2fa()} className={btnDanger}>Disable 2FA</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-600">
+                  2FA is currently <strong className="text-navy-900">off</strong>. When enabled, signing in also requires a one-time code from your phone.
+                </p>
+                <button type="button" disabled={saving} onClick={() => void start2faSetup()} className={btnPrimary}>
+                  <Lock className="h-4 w-4" /> Enable 2FA
+                </button>
+              </div>
+            )}
+          </Card>
+
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card title={t.changePwTitle} description={t.changePwDesc}>
               <form onSubmit={handleChangePassword} className="space-y-3">
