@@ -4290,3 +4290,161 @@ export const CONTACT_STRINGS: Record<AppLocale, ContactStrings> = {
     send: "Envoyer le message", sending: "Envoi de la demande…", loading: "Chargement du formulaire de contact…", couldNotSubmit: "Impossible de soumettre votre demande.", submissionFailed: "Échec de la soumission.",
   },
 };
+
+// ── Help center page ──
+export interface HelpStrings {
+  badge: string; title: string; desc: string;
+  topics: { title: string; text: string }[];
+  openGuide: string; supportTitle: string; supportPre: string; supportPost: string; contactSupport: string;
+}
+
+export const HELP_STRINGS: Record<AppLocale, HelpStrings> = {
+  en: {
+    badge: "Help Center", title: "How Can We Help?",
+    desc: "Browse documentation for e-invoice creation, validation diagnostics, European country standards, integrations, and billing.",
+    topics: [
+      { title: "Getting Started", text: "Set up company profile, VAT ID, IBAN, numbering prefix, and team roles." },
+      { title: "EN 16931 Validation Errors", text: "Plain-language explanations for 45+ BR-DE-*, BR-CO-*, and BR-FR-* rule codes." },
+      { title: "Country Workflows & Formats", text: "Compare ZUGFeRD, Factur-X, XRechnung, Peppol BIS 3.0, and 13 EU markets." },
+      { title: "Format Finder Tool", text: "Interactive decision guide to choose the right EU invoice standard." },
+      { title: "API & Webhook Docs", text: "Connect Stripe, WooCommerce, Bearer API keys, and TypeScript SDK." },
+      { title: "Plans, Trials & Billing", text: "Manage your Free plan, 15-day trial, paid upgrades, or cancellation." },
+      { title: "Security, GDPR & Data Export", text: "Download Art. 20 exports, review our DPA, or inspect Subprocessor disclosures." },
+    ],
+    openGuide: "Open Guide", supportTitle: "Need Personalized Support?",
+    supportPre: "Email ", supportPost: " with your organization name and invoice reference. Never include passwords or secret API keys.",
+    contactSupport: "Contact Support",
+  },
+  de: {
+    badge: "Hilfe-Center", title: "Wie können wir helfen?",
+    desc: "Durchsuchen Sie die Dokumentation zu E-Rechnungserstellung, Prüfdiagnosen, europäischen Länderstandards, Integrationen und Abrechnung.",
+    topics: [
+      { title: "Erste Schritte", text: "Firmenprofil, USt-IdNr., IBAN, Nummernpräfix und Team-Rollen einrichten." },
+      { title: "EN-16931-Prüffehler", text: "Verständliche Erklärungen für 45+ BR-DE-*, BR-CO-* und BR-FR-* Regelcodes." },
+      { title: "Länder-Workflows & Formate", text: "Vergleichen Sie ZUGFeRD, Factur-X, XRechnung, Peppol BIS 3.0 und 13 EU-Märkte." },
+      { title: "Format-Finder-Tool", text: "Interaktiver Leitfaden zur Wahl des richtigen EU-Rechnungsstandards." },
+      { title: "API- & Webhook-Doku", text: "Stripe, WooCommerce, Bearer-API-Schlüssel und TypeScript-SDK anbinden." },
+      { title: "Tarife, Tests & Abrechnung", text: "Verwalten Sie Ihren kostenlosen Tarif, den 15-Tage-Test, kostenpflichtige Upgrades oder die Kündigung." },
+      { title: "Sicherheit, DSGVO & Datenexport", text: "Art.-20-Exporte herunterladen, unseren AV-Vertrag prüfen oder Unterauftragsverarbeiter einsehen." },
+    ],
+    openGuide: "Leitfaden öffnen", supportTitle: "Persönlichen Support benötigt?",
+    supportPre: "Schreiben Sie an ", supportPost: " mit Ihrem Organisationsnamen und der Rechnungsreferenz. Geben Sie niemals Passwörter oder geheime API-Schlüssel an.",
+    contactSupport: "Support kontaktieren",
+  },
+  fr: {
+    badge: "Centre d'aide", title: "Comment pouvons-nous aider ?",
+    desc: "Parcourez la documentation sur la création de factures électroniques, les diagnostics de validation, les normes par pays européen, les intégrations et la facturation.",
+    topics: [
+      { title: "Prise en main", text: "Configurez le profil de société, le numéro de TVA, l'IBAN, le préfixe de numérotation et les rôles d'équipe." },
+      { title: "Erreurs de validation EN 16931", text: "Explications claires pour plus de 45 codes de règle BR-DE-*, BR-CO-* et BR-FR-*." },
+      { title: "Flux & formats par pays", text: "Comparez ZUGFeRD, Factur-X, XRechnung, Peppol BIS 3.0 et 13 marchés de l'UE." },
+      { title: "Outil Format Finder", text: "Guide de décision interactif pour choisir la bonne norme de facture de l'UE." },
+      { title: "Docs API & Webhook", text: "Connectez Stripe, WooCommerce, les clés API Bearer et le SDK TypeScript." },
+      { title: "Offres, essais & facturation", text: "Gérez votre offre gratuite, l'essai de 15 jours, les mises à niveau payantes ou l'annulation." },
+      { title: "Sécurité, RGPD & export de données", text: "Téléchargez les exports Art. 20, consultez notre DPA ou inspectez les sous-traitants." },
+    ],
+    openGuide: "Ouvrir le guide", supportTitle: "Besoin d'un support personnalisé ?",
+    supportPre: "Écrivez à ", supportPost: " en indiquant le nom de votre organisation et la référence de facture. N'incluez jamais de mots de passe ni de clés API secrètes.",
+    contactSupport: "Contacter le support",
+  },
+};
+
+// ── Security & Trust page ──
+export interface SecurityStrings {
+  heroBadge: string; heroTitle: string; heroDesc: string;
+  cards: { title: string; points: string[] }[];
+  reportTitle: string; reportPre: string; reportPost: string; privacyPolicy: string; reportIssue: string;
+}
+
+export const SECURITY_STRINGS: Record<AppLocale, SecurityStrings> = {
+  en: {
+    heroBadge: "Security & Trust Transparency",
+    heroTitle: "Financial Data Deserves Thoughtful Protection",
+    heroDesc: "NormInvoice is engineered around strict multi-tenant isolation, modern cryptography, tamper-evident audit logs, and defensive XML parsing — with honest reporting of implemented controls.",
+    cards: [
+      { title: "Access Control & Tenant Isolation", points: [
+        "Strict organization-level (org_id) scoping enforced on every database query and API handler.",
+        "Per-user random-salt scrypt password hashing + HMAC-SHA256 HttpOnly session cookies + immediate session revocation on password change.",
+        "Role-based access controls (Owner, Admin, Accountant, Member) and separated Super-Admin authentication.",
+      ] },
+      { title: "Encryption & Secret Protection", points: [
+        "AES-256-GCM encryption at rest for tenant Stripe and WooCommerce webhook secrets (masked in UI).",
+        "SHA-256 hashed Bearer API keys — plaintext displayed once on creation and revocable immediately.",
+        "HMAC-SHA256 webhook verification with 5-minute replay-attack protection.",
+      ] },
+      { title: "Document Integrity & XML Safety", points: [
+        "Append-only SHA-256 hash-chained GoBD audit log per organization with live verification.",
+        "XXE, DOCTYPE, and ENTITY XML injection blocked before parsing; Content-Disposition filename sanitization.",
+        "OWASP HTTP security headers (CSP, X-Frame-Options: DENY, nosniff, CSRF origin guard) and self-hosted fonts.",
+      ] },
+      { title: "EU Hosting & Honest Claims", points: [
+        "Compute and data hosted inside the EU — Germany (Frankfurt) region — keeping invoice data under EU jurisdiction.",
+        "Transparent subprocessor register and international-transfer disclosures in our Privacy Policy.",
+        "We publish only independently verifiable controls — no unverified ISO 27001 / SOC 2 badges or fabricated uptime figures.",
+      ] },
+    ],
+    reportTitle: "Report a Security Vulnerability",
+    reportPre: "Email ", reportPost: " with a concise technical report. Please do not access other users' data or run disruptive tests without written authorization.",
+    privacyPolicy: "Privacy Policy", reportIssue: "Report Issue",
+  },
+  de: {
+    heroBadge: "Sicherheits- & Vertrauens-Transparenz",
+    heroTitle: "Finanzdaten verdienen durchdachten Schutz",
+    heroDesc: "NormInvoice ist auf strikte Mandantentrennung, moderne Kryptografie, manipulationssichere Audit-Logs und defensives XML-Parsing ausgelegt — mit ehrlicher Darstellung der implementierten Kontrollen.",
+    cards: [
+      { title: "Zugriffskontrolle & Mandantentrennung", points: [
+        "Strikte Begrenzung auf Organisationsebene (org_id) bei jeder Datenbankabfrage und jedem API-Handler.",
+        "Pro Benutzer scrypt-Passwort-Hashing mit Zufalls-Salt + HMAC-SHA256-HttpOnly-Session-Cookies + sofortiger Session-Widerruf bei Passwortänderung.",
+        "Rollenbasierte Zugriffskontrolle (Owner, Admin, Steuerberater, Mitglied) und getrennte Super-Admin-Authentifizierung.",
+      ] },
+      { title: "Verschlüsselung & Geheimnisschutz", points: [
+        "AES-256-GCM-Verschlüsselung im Ruhezustand für Stripe- und WooCommerce-Webhook-Geheimnisse der Mandanten (in der UI maskiert).",
+        "SHA-256-gehashte Bearer-API-Schlüssel — Klartext nur einmal bei Erstellung angezeigt und sofort widerrufbar.",
+        "HMAC-SHA256-Webhook-Verifizierung mit 5-Minuten-Replay-Schutz.",
+      ] },
+      { title: "Dokumentenintegrität & XML-Sicherheit", points: [
+        "Nur anfügbares, SHA-256-hash-verkettetes GoBD-Audit-Log je Organisation mit Live-Verifizierung.",
+        "XXE-, DOCTYPE- und ENTITY-XML-Injektionen werden vor dem Parsen blockiert; Content-Disposition-Dateinamen-Bereinigung.",
+        "OWASP-HTTP-Sicherheits-Header (CSP, X-Frame-Options: DENY, nosniff, CSRF-Origin-Schutz) und selbstgehostete Schriften.",
+      ] },
+      { title: "EU-Hosting & ehrliche Aussagen", points: [
+        "Rechenleistung und Daten innerhalb der EU gehostet — Region Deutschland (Frankfurt) — sodass Rechnungsdaten der EU-Gerichtsbarkeit unterliegen.",
+        "Transparentes Unterauftragsverarbeiter-Register und Offenlegung internationaler Übermittlungen in unserer Datenschutzerklärung.",
+        "Wir veröffentlichen nur unabhängig überprüfbare Kontrollen — keine ungeprüften ISO-27001-/SOC-2-Badges oder erfundenen Uptime-Werte.",
+      ] },
+    ],
+    reportTitle: "Sicherheitslücke melden",
+    reportPre: "Schreiben Sie an ", reportPost: " mit einem prägnanten technischen Bericht. Bitte greifen Sie nicht auf die Daten anderer Nutzer zu und führen Sie keine störenden Tests ohne schriftliche Genehmigung durch.",
+    privacyPolicy: "Datenschutzerklärung", reportIssue: "Problem melden",
+  },
+  fr: {
+    heroBadge: "Transparence sécurité & confiance",
+    heroTitle: "Les données financières méritent une protection réfléchie",
+    heroDesc: "NormInvoice est conçu autour d'une isolation multi-locataires stricte, d'une cryptographie moderne, de journaux d'audit inviolables et d'une analyse XML défensive — avec un reporting honnête des contrôles implémentés.",
+    cards: [
+      { title: "Contrôle d'accès & isolation des locataires", points: [
+        "Cloisonnement strict au niveau de l'organisation (org_id) appliqué à chaque requête de base de données et gestionnaire d'API.",
+        "Hachage de mot de passe scrypt avec sel aléatoire par utilisateur + cookies de session HttpOnly HMAC-SHA256 + révocation immédiate de session au changement de mot de passe.",
+        "Contrôles d'accès basés sur les rôles (Owner, Admin, Comptable, Membre) et authentification Super-Admin séparée.",
+      ] },
+      { title: "Chiffrement & protection des secrets", points: [
+        "Chiffrement AES-256-GCM au repos des secrets de webhook Stripe et WooCommerce des locataires (masqués dans l'UI).",
+        "Clés API Bearer hachées en SHA-256 — texte clair affiché une seule fois à la création et révocable immédiatement.",
+        "Vérification de webhook HMAC-SHA256 avec protection anti-rejeu de 5 minutes.",
+      ] },
+      { title: "Intégrité des documents & sécurité XML", points: [
+        "Journal d'audit GoBD en ajout seul, chaîné par hachage SHA-256 par organisation, avec vérification en direct.",
+        "Injections XML XXE, DOCTYPE et ENTITY bloquées avant l'analyse ; assainissement du nom de fichier Content-Disposition.",
+        "En-têtes de sécurité HTTP OWASP (CSP, X-Frame-Options: DENY, nosniff, garde d'origine CSRF) et polices auto-hébergées.",
+      ] },
+      { title: "Hébergement UE & déclarations honnêtes", points: [
+        "Calcul et données hébergés dans l'UE — région Allemagne (Francfort) — gardant les données de facturation sous juridiction de l'UE.",
+        "Registre transparent des sous-traitants et divulgation des transferts internationaux dans notre Politique de confidentialité.",
+        "Nous ne publions que des contrôles vérifiables de façon indépendante — aucun badge ISO 27001 / SOC 2 non vérifié ni chiffre de disponibilité fabriqué.",
+      ] },
+    ],
+    reportTitle: "Signaler une faille de sécurité",
+    reportPre: "Écrivez à ", reportPost: " avec un rapport technique concis. Veuillez ne pas accéder aux données d'autres utilisateurs ni exécuter de tests perturbateurs sans autorisation écrite.",
+    privacyPolicy: "Politique de confidentialité", reportIssue: "Signaler un problème",
+  },
+};
