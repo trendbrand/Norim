@@ -4132,3 +4132,79 @@ export const FEATURES_STRINGS: Record<AppLocale, FeaturesStrings> = {
     ],
   },
 };
+
+// ── About page ──
+export interface AboutStrings {
+  heroTitle: string; heroDesc: string;
+  missionTitle: string; missionDesc: string; missionItems: string[];
+  boundariesTag: string; boundariesTitle: string; boundariesDesc: string;
+  groupTag: string; groupTitle: string;
+  contractingLabel: string; contractingNote: string; relatedLabel: string;
+  incorporationLabel: string; ntnLabel: string; ceoLabel: string; getInTouch: string;
+}
+
+export const ABOUT_STRINGS: Record<AppLocale, AboutStrings> = {
+  en: {
+    heroTitle: "Making European E-Invoicing Clear, Structured, and Manageable",
+    heroDesc: "European markets are transitioning toward structured electronic invoicing — yet every country applies different technical formats, tax fields, validation rules, and transmission networks. NormInvoice brings these workflows together in one coherent, multi-tenant software platform.",
+    missionTitle: "Our Mission & Product Focus",
+    missionDesc: "Make digital invoicing accessible, transparent, and audit-ready for growing businesses, finance teams, and accountants — without forcing teams to stitch together fragile PDF hacks and spreadsheets.",
+    missionItems: [
+      "Deterministic EN 16931, ZUGFeRD 2.3, Factur-X 1.07 & XRechnung 3.0.2 engine",
+      "Outgoing billing, incoming supplier inbox, recurring schedules & approvals",
+      "Tamper-evident GoBD SHA-256 hash-chained audit trail & DATEV/FEC exports",
+      "Transparent country status labels (Available, Partner-Operated, Planned)",
+    ],
+    boundariesTag: "Honest Software Boundaries",
+    boundariesTitle: "A Software Company, Not a Tax Authority",
+    boundariesDesc: "NormInvoice is a subscription-based software service. We are not a bank, payment institution, public tax authority, or government certification body. Where regulated network exchange (such as Peppol Access Points or national clearance platforms) is required, NormInvoice integrates with independent authorized providers rather than claiming unverified accreditation.",
+    groupTag: "Corporate Group Structure",
+    groupTitle: "The Trend&Brand Business Group",
+    contractingLabel: "Contracting Entity",
+    contractingNote: "The final merchant/contracting entity is confirmed in your order form, checkout summary, and Legal Notice.",
+    relatedLabel: "Related Group Entity",
+    incorporationLabel: "Incorporation", ntnLabel: "NTN", ceoLabel: "CEO", getInTouch: "Get in Touch",
+  },
+  de: {
+    heroTitle: "Europäische E-Rechnung klar, strukturiert und beherrschbar machen",
+    heroDesc: "Die europäischen Märkte stellen auf strukturierte elektronische Rechnungen um — doch jedes Land verwendet andere technische Formate, Steuerfelder, Prüfregeln und Übertragungsnetze. NormInvoice führt diese Abläufe in einer kohärenten, mandantenfähigen Software-Plattform zusammen.",
+    missionTitle: "Unsere Mission & Produktfokus",
+    missionDesc: "Digitale Rechnungsstellung für wachsende Unternehmen, Finanzteams und Steuerberater zugänglich, transparent und prüfungssicher machen — ohne dass Teams fragile PDF-Hacks und Tabellen zusammenflicken müssen.",
+    missionItems: [
+      "Deterministische Engine für EN 16931, ZUGFeRD 2.3, Factur-X 1.07 & XRechnung 3.0.2",
+      "Ausgehende Abrechnung, Lieferanten-Posteingang, wiederkehrende Zeitpläne & Freigaben",
+      "Manipulationssichere GoBD-SHA-256-Hash-Kette & DATEV-/FEC-Exporte",
+      "Transparente Länder-Statuslabels (Verfügbar, Partner-betrieben, Geplant)",
+    ],
+    boundariesTag: "Ehrliche Software-Grenzen",
+    boundariesTitle: "Ein Softwareunternehmen, keine Steuerbehörde",
+    boundariesDesc: "NormInvoice ist ein abonnementbasierter Software-Dienst. Wir sind keine Bank, kein Zahlungsinstitut, keine öffentliche Steuerbehörde und keine staatliche Zertifizierungsstelle. Wo regulierter Netzwerk-Austausch (etwa Peppol Access Points oder nationale Clearing-Plattformen) erforderlich ist, integriert NormInvoice unabhängige autorisierte Anbieter, anstatt eine ungeprüfte Akkreditierung zu behaupten.",
+    groupTag: "Konzernstruktur",
+    groupTitle: "Die Trend&Brand-Unternehmensgruppe",
+    contractingLabel: "Vertragspartner",
+    contractingNote: "Der endgültige Händler/Vertragspartner wird in Ihrem Bestellformular, der Checkout-Zusammenfassung und im Impressum bestätigt.",
+    relatedLabel: "Verbundenes Konzernunternehmen",
+    incorporationLabel: "Registrierung", ntnLabel: "NTN", ceoLabel: "Geschäftsführer", getInTouch: "Kontakt aufnehmen",
+  },
+  fr: {
+    heroTitle: "Rendre la facturation électronique européenne claire, structurée et gérable",
+    heroDesc: "Les marchés européens passent à la facturation électronique structurée — mais chaque pays applique des formats techniques, champs fiscaux, règles de validation et réseaux de transmission différents. NormInvoice réunit ces flux dans une plateforme logicielle cohérente et multi-locataires.",
+    missionTitle: "Notre mission & axe produit",
+    missionDesc: "Rendre la facturation numérique accessible, transparente et prête pour l'audit pour les entreprises en croissance, les équipes financières et les comptables — sans forcer les équipes à bricoler des PDF fragiles et des tableurs.",
+    missionItems: [
+      "Moteur déterministe EN 16931, ZUGFeRD 2.3, Factur-X 1.07 & XRechnung 3.0.2",
+      "Facturation sortante, boîte de réception fournisseurs, échéanciers récurrents & approbations",
+      "Piste d'audit GoBD SHA-256 inviolable & exports DATEV/FEC",
+      "Étiquettes de statut pays transparentes (Disponible, Opéré par un partenaire, Planifié)",
+    ],
+    boundariesTag: "Limites logicielles honnêtes",
+    boundariesTitle: "Une société de logiciels, pas une administration fiscale",
+    boundariesDesc: "NormInvoice est un service logiciel par abonnement. Nous ne sommes ni une banque, ni un établissement de paiement, ni une administration fiscale publique, ni un organisme de certification gouvernemental. Lorsqu'un échange réseau réglementé (comme les Peppol Access Points ou les plateformes de clearance nationales) est requis, NormInvoice s'intègre à des prestataires indépendants autorisés plutôt que de revendiquer une accréditation non vérifiée.",
+    groupTag: "Structure du groupe",
+    groupTitle: "Le groupe d'entreprises Trend&Brand",
+    contractingLabel: "Entité contractante",
+    contractingNote: "L'entité marchande/contractante finale est confirmée dans votre bon de commande, le récapitulatif de paiement et les mentions légales.",
+    relatedLabel: "Entité liée du groupe",
+    incorporationLabel: "Immatriculation", ntnLabel: "NTN", ceoLabel: "Dirigeant", getInTouch: "Nous contacter",
+  },
+};

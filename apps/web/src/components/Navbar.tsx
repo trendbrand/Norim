@@ -45,6 +45,8 @@ const COUNTRY_ITEMS = [
   { href: "/countries", label: "All 13 European Markets →", desc: "Full compliance scope & status matrix" },
 ];
 
+const LANG_NAMES: Record<AppLocale, string> = { en: "English", de: "Deutsch", fr: "Français" };
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -85,7 +87,7 @@ export function Navbar() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="shrink-0">
+        <Link href="/" className="shrink-0" aria-label="NormInvoice — Product of Trend&Brand, home">
           <BrandLogo variant="light" />
         </Link>
 
@@ -207,12 +209,20 @@ export function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
-          <div className="hidden rounded-lg border border-slate-200 bg-canvas p-0.5 text-[11px] font-bold sm:flex">
+          <div
+            className="hidden rounded-lg border border-slate-200 bg-canvas p-0.5 text-[11px] font-bold sm:flex"
+            role="group"
+            aria-label="Select language"
+          >
             {(["en", "de", "fr"] as AppLocale[]).map((l) => (
               <button
                 key={l}
                 type="button"
                 onClick={() => setLocale(l)}
+                aria-pressed={locale === l}
+                aria-label={LANG_NAMES[l]}
+                title={LANG_NAMES[l]}
+                lang={l}
                 className={`rounded-md px-2 py-1 uppercase transition-colors ${
                   locale === l ? "bg-navy-900 text-white shadow-sm" : "text-slate-500 hover:text-navy-900"
                 }`}
