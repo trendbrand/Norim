@@ -1,8 +1,14 @@
 /**
- * Production EU Transactional Email Dispatcher (Resend EU / Postmark / Sandbox Log).
- * Delivers self-validated ZUGFeRD/Factur-X PDF/A-3 + XML attachments to buyers,
- * optional Steuerberater Accountant CC, and Action-Required alerts to merchants.
+ * Transactional email dispatcher. Chooses a provider at runtime:
+ *   1. SMTP (e.g. Hostinger) when SMTP_HOST is set — nodemailer over TLS.
+ *   2. Resend HTTP API when RESEND_API_KEY is set.
+ *   3. Sandbox no-op (returns a synthetic id) when neither is configured.
+ * Handles EN 16931 invoice delivery (PDF/A-3 + XML attachments) and all
+ * auth/notification emails (verification, reset, welcome, sign-in, 2FA, billing).
  */
+
+import nodemailer from "nodemailer";
+import { escapeHtml } from "./security";
 
 export interface EInvoiceEmailParams {
   to: string;
@@ -17,11 +23,80 @@ export interface EInvoiceEmailParams {
 
 export interface EmailDispatchResult {
   dispatched: boolean;
-  provider: "resend" | "sandbox-log";
+  provider: "smtp" | "resend" | "sandbox-log";
   messageId: string;
 }
 
-import { escapeHtml } from "./security";
+interface Attachment {
+  filename: string;
+  /** base64-encoded content */
+  content: string;
+}
+
+/** Low-level provider-agnostic sender. */
+async function sendMail(opts: {
+  from?: string;
+  to: string;
+  cc?: string;
+  subject: string;
+  html: string;
+  attachments?: Attachment[];
+}): Promise<EmailDispatchResult> {
+  const from = opts.from || process.env.EMAIL_FROM || "NormInvoice <noreply@norminvoice.eu>";
+
+  // ── Provider 1: SMTP (Hostinger / any mailbox) ──
+  const smtpHost = process.env.SMTP_HOST;
+  if (smtpHost) {
+    const port = Number(process.env.SMTP_PORT || 465);
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port,
+      secure: port === 465, // implicit TLS on 465; STARTTLS is negotiated on 587
+      auth:
+        process.env.SMTP_USER && process.env.SMTP_PASS
+          ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+          : undefined,
+    });
+    const info = await transporter.sendMail({
+      from,
+      to: opts.to,
+      cc: opts.cc,
+      subject: opts.subject,
+      html: opts.html,
+      attachments: opts.attachments?.map((a) => ({
+        filename: a.filename,
+        content: Buffer.from(a.content, "base64"),
+      })),
+    });
+    return { dispatched: true, provider: "smtp", messageId: info.messageId || `smtp_${Date.now()}` };
+  }
+
+  // ── Provider 2: Resend HTTP API ──
+  const resendKey = process.env.RESEND_API_KEY;
+  if (resendKey) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: [opts.to],
+        ...(opts.cc ? { cc: [opts.cc] } : {}),
+        subject: opts.subject,
+        html: opts.html,
+        ...(opts.attachments ? { attachments: opts.attachments } : {}),
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Resend API error (${res.status}): ${txt.slice(0, 200)}`);
+    }
+    const data = (await res.json()) as { id?: string };
+    return { dispatched: true, provider: "resend", messageId: data.id || `resend_${Date.now()}` };
+  }
+
+  // ── Provider 3: Sandbox (never leaks PII in logs) ──
+  return { dispatched: true, provider: "sandbox-log", messageId: `sandbox_${Date.now()}` };
+}
 
 function buildLocalizedBody(p: EInvoiceEmailParams): { subject: string; html: string } {
   const safeNum = escapeHtml(p.invoiceNumber);
@@ -55,53 +130,20 @@ function buildLocalizedBody(p: EInvoiceEmailParams): { subject: string; html: st
 
 export async function dispatchEInvoiceEmail(params: EInvoiceEmailParams): Promise<EmailDispatchResult> {
   const { subject, html } = buildLocalizedBody(params);
-  const resendKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "NormInvoice E-Invoicing <invoices@norminvoice.eu>";
-
-  const attachments: Array<{ filename: string; content: string }> = [
+  const attachments: Attachment[] = [
     { filename: params.xmlAttachment.filename, content: params.xmlAttachment.contentBase64 },
   ];
   if (params.pdfAttachment) {
-    attachments.unshift({
-      filename: params.pdfAttachment.filename,
-      content: params.pdfAttachment.contentBase64,
-    });
+    attachments.unshift({ filename: params.pdfAttachment.filename, content: params.pdfAttachment.contentBase64 });
   }
-
-  if (resendKey) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [params.to],
-        ...(params.cc ? { cc: [params.cc] } : {}),
-        subject,
-        html,
-        attachments,
-      }),
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Resend API error (${res.status}): ${txt.slice(0, 200)}`);
-    }
-    const data = (await res.json()) as { id?: string };
-    return {
-      dispatched: true,
-      provider: "resend",
-      messageId: data.id || `resend_${Date.now()}`,
-    };
-  }
-
-  // Sandbox mode: never leak invoice PII in logs, return synthetic message ID
-  return {
-    dispatched: true,
-    provider: "sandbox-log",
-    messageId: `sandbox_mail_${Date.now()}`,
-  };
+  return sendMail({
+    from: process.env.EMAIL_FROM || "NormInvoice E-Invoicing <invoices@norminvoice.eu>",
+    to: params.to,
+    cc: params.cc,
+    subject,
+    html,
+    attachments,
+  });
 }
 
 export async function dispatchTransactionalEmail(params: {
@@ -109,38 +151,5 @@ export async function dispatchTransactionalEmail(params: {
   subject: string;
   html: string;
 }): Promise<EmailDispatchResult> {
-  const resendKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "NormInvoice <official@trendandbrands.com>";
-
-  if (resendKey) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [params.to],
-        subject: params.subject,
-        html: params.html,
-      }),
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Resend API error (${res.status}): ${txt.slice(0, 200)}`);
-    }
-    const data = (await res.json()) as { id?: string };
-    return {
-      dispatched: true,
-      provider: "resend",
-      messageId: data.id || `resend_${Date.now()}`,
-    };
-  }
-
-  return {
-    dispatched: true,
-    provider: "sandbox-log",
-    messageId: `sandbox_auth_${Date.now()}`,
-  };
+  return sendMail({ to: params.to, subject: params.subject, html: params.html });
 }
