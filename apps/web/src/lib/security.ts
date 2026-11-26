@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession, SessionPayload } from "./auth";
-import { authenticateBearerApiKeyDb } from "./db-store";
+import { authenticateBearerApiKeyDb, getSubscriptionForOrg } from "./db-store";
 
 export function sanitizeSafeFilename(input: string, fallback = "document"): string {
   const cleaned = input
@@ -127,6 +127,37 @@ export async function requireTenantAuth(
         { status: 403 }
       ),
     };
+  }
+
+  // Billing lock: a suspended workspace (trial ended unpaid, or grace expired) is
+  // blocked from the app — but can still reach billing (to pay), data export,
+  // settings and auth, so it can recover. Data is never deleted.
+  const billing = getSubscriptionForOrg(session.orgId);
+  if (billing.suspended) {
+    const path = req.nextUrl.pathname;
+    const recoverable =
+      path.startsWith("/api/v1/billing") ||
+      path.startsWith("/api/v1/account") ||
+      path.startsWith("/api/v1/settings") ||
+      path.startsWith("/api/v1/exports") ||
+      path.startsWith("/api/v1/auth/2fa") ||
+      path.startsWith("/api/auth");
+    if (!recoverable) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          {
+            type: "https://norminvoice.eu/problems/account-suspended",
+            title: "Workspace Paused",
+            status: 402,
+            detail:
+              "Your trial has ended or a payment is overdue. Choose a plan in Settings → Billing to restore access — your data is safe.",
+            suspended: true,
+          },
+          { status: 402 }
+        ),
+      };
+    }
   }
 
   return {

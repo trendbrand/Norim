@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { updateSubscriptionForOrg } from "@/lib/db-store";
+import { markOrgPastDue, updateSubscriptionForOrg } from "@/lib/db-store";
 import { isWebhookTimestampFresh, timingSafeHexEqual } from "@/lib/security";
 
 const PLAN_QUOTAS: Record<"free" | "solo" | "business" | "agency", number> = {
@@ -48,8 +48,19 @@ export async function POST(req: NextRequest) {
     const rawTier = payload.data?.custom_data?.plan_tier?.toLowerCase() ?? "solo";
     const tier = (["free", "solo", "business", "agency"].includes(rawTier) ? rawTier : "solo") as keyof typeof PLAN_QUOTAS;
 
-    if (payload.event_type === "subscription.activated" || payload.event_type === "subscription.updated") {
+    if (
+      payload.event_type === "subscription.activated" ||
+      payload.event_type === "subscription.updated" ||
+      payload.event_type === "subscription.resumed"
+    ) {
+      // Successful payment / plan change -> active (also clears any grace/suspension).
       updateSubscriptionForOrg(orgId, tier, PLAN_QUOTAS[tier]);
+    } else if (
+      payload.event_type === "transaction.payment_failed" ||
+      payload.event_type === "subscription.past_due"
+    ) {
+      // Failed renewal -> start the 5-day grace window; the lifecycle job suspends after it expires.
+      markOrgPastDue(orgId);
     } else if (payload.event_type === "subscription.canceled") {
       updateSubscriptionForOrg(orgId, "free", PLAN_QUOTAS.free);
     }

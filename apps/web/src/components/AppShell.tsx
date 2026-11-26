@@ -60,6 +60,7 @@ export interface AppSession {
     trialDaysRemaining?: number;
     trialEndsAt?: string | null;
     cancelAtPeriodEnd?: boolean;
+    suspended?: boolean;
   };
   quota: { tier: string; monthlyLimit: number; usedThisMonth: number; remaining: number; exceeded: boolean };
 }
@@ -538,6 +539,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
+
+          {sub.suspended ? (
+            <div className="border-b border-red-200 bg-red-50 px-4 py-3 sm:px-6 lg:px-8">
+              <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-red-800">
+                  Your workspace is paused — your trial ended or a payment is overdue. Your data is safe; choose a plan to restore access.
+                </p>
+                <Link href="/settings?tab=billing" className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700">
+                  Choose a plan →
+                </Link>
+              </div>
+            </div>
+          ) : sub.trialActive && (sub.trialDaysRemaining ?? 99) <= 3 ? (
+            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 sm:px-6 lg:px-8">
+              <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-amber-900">
+                  Your trial ends in {sub.trialDaysRemaining} day{(sub.trialDaysRemaining ?? 0) === 1 ? "" : "s"}. Pick a plan to keep full access.
+                </p>
+                <Link href="/settings?tab=billing" className="shrink-0 rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-accent-600">
+                  Choose your plan →
+                </Link>
+              </div>
+            </div>
+          ) : null}
 
           <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">{children}</main>
         </div>

@@ -303,6 +303,8 @@ export interface SubscriptionRecord {
   trialActive: boolean;
   trialDaysRemaining: number;
   cancelAtPeriodEnd: boolean;
+  suspended: boolean;
+  graceUntil: string | null;
   updatedAt: string;
 }
 
@@ -886,6 +888,19 @@ function getDb(): DatabaseSync {
   }
   if (!subCols.some((c) => c.name === "currency")) {
     db.exec("ALTER TABLE subscriptions ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD';");
+  }
+  // Billing lifecycle (trial reminder -> trial-end lock -> 5-day grace -> suspend).
+  if (!subCols.some((c) => c.name === "current_period_end")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN current_period_end TEXT;");
+  }
+  if (!subCols.some((c) => c.name === "grace_until")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN grace_until TEXT;");
+  }
+  if (!subCols.some((c) => c.name === "suspended_at")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN suspended_at TEXT;");
+  }
+  if (!subCols.some((c) => c.name === "last_reminder_at")) {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN last_reminder_at TEXT;");
   }
   const spCols = db.prepare("PRAGMA table_info(seller_profiles)").all() as Array<{ name: string }>;
   if (!spCols.some((c) => c.name === "brand_accent_color")) {
@@ -2474,6 +2489,8 @@ export function getSubscriptionForOrg(orgId: string): SubscriptionRecord {
       trialActive: false,
       trialDaysRemaining: 0,
       cancelAtPeriodEnd: false,
+      suspended: false,
+      graceUntil: null,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -2494,14 +2511,14 @@ export function getSubscriptionForOrg(orgId: string): SubscriptionRecord {
     if (remainingMs > 0) {
       trialActive = true;
       trialDaysRemaining = Math.max(1, Math.ceil(remainingMs / 86_400_000));
-    } else {
-      // Trial expired without card on file -> downgrade cleanly to Free (never silently bill)
-      planTier = "free";
-      status = "active";
-      monthlyQuota = 5;
+    } else if (status !== "suspended") {
+      // Trial expired without a paid plan -> SUSPEND (account locked, data safe)
+      // until the customer chooses/pays a plan. We never silently bill.
+      const now = new Date().toISOString();
+      status = "suspended";
       db.prepare(
-        `UPDATE subscriptions SET plan_tier = 'free', status = 'active', monthly_quota = 5, updated_at = ? WHERE org_id = ?`
-      ).run(new Date().toISOString(), orgId);
+        `UPDATE subscriptions SET status = 'suspended', suspended_at = COALESCE(suspended_at, ?), updated_at = ? WHERE org_id = ?`
+      ).run(now, now, orgId);
     }
   }
 
@@ -2517,6 +2534,8 @@ export function getSubscriptionForOrg(orgId: string): SubscriptionRecord {
     trialActive,
     trialDaysRemaining,
     cancelAtPeriodEnd: Boolean(r.cancel_at_period_end),
+    suspended: status === "suspended",
+    graceUntil: r.grace_until ?? null,
     updatedAt: r.updated_at,
   };
 }
@@ -2547,9 +2566,84 @@ export function updateSubscriptionForOrg(orgId: string, tier: SubscriptionRecord
        trial_started_at = excluded.trial_started_at,
        trial_ends_at = excluded.trial_ends_at,
        cancel_at_period_end = 0,
+       suspended_at = NULL,
+       grace_until = NULL,
        updated_at = excluded.updated_at`
   ).run(orgId, tier, status, quota, trialStart, trialEnd, now);
   return getSubscriptionForOrg(orgId);
+}
+
+// ── Billing lifecycle helpers ──
+
+/** Put a paid subscription into a 5-day grace window (e.g. after a failed renewal). */
+export function markOrgPastDue(orgId: string, graceDays = 5): void {
+  const db = getDb();
+  const now = new Date();
+  const graceUntil = new Date(now.getTime() + graceDays * 86_400_000).toISOString();
+  db.prepare(
+    "UPDATE subscriptions SET status = 'past_due', grace_until = ?, updated_at = ? WHERE org_id = ? AND status != 'suspended'"
+  ).run(graceUntil, now.toISOString(), orgId);
+}
+
+/** Suspend an org (locked, data preserved). */
+export function suspendOrgSubscription(orgId: string): void {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(
+    "UPDATE subscriptions SET status = 'suspended', suspended_at = COALESCE(suspended_at, ?), updated_at = ? WHERE org_id = ?"
+  ).run(now, now, orgId);
+}
+
+/** Restore access after payment / plan choice (clears grace + suspension). */
+export function reactivateOrgSubscription(orgId: string): void {
+  const db = getDb();
+  db.prepare(
+    "UPDATE subscriptions SET status = 'active', grace_until = NULL, suspended_at = NULL, updated_at = ? WHERE org_id = ?"
+  ).run(new Date().toISOString(), orgId);
+}
+
+/** Mark that a trial-ending reminder was sent today (dedupe). */
+export function markTrialReminderSent(orgId: string): void {
+  const db = getDb();
+  db.prepare("UPDATE subscriptions SET last_reminder_at = ? WHERE org_id = ?").run(
+    new Date().toISOString().slice(0, 10),
+    orgId
+  );
+}
+
+export interface LifecycleSubscription {
+  orgId: string;
+  planTier: string;
+  status: string;
+  trialEndsAt: string | null;
+  graceUntil: string | null;
+  lastReminderAt: string | null;
+  ownerEmail: string;
+  orgName: string;
+}
+
+/** All subscriptions with the org owner's email, for the daily lifecycle job. */
+export function listSubscriptionsForLifecycle(): LifecycleSubscription[] {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `SELECT s.org_id, s.plan_tier, s.status, s.trial_ends_at, s.grace_until, s.last_reminder_at,
+              o.name AS org_name,
+              (SELECT u.email FROM memberships m JOIN users u ON u.id = m.user_id
+               WHERE m.org_id = s.org_id AND m.role = 'owner' ORDER BY m.created_at LIMIT 1) AS owner_email
+       FROM subscriptions s JOIN organizations o ON o.id = s.org_id`
+    )
+    .all() as Array<Record<string, any>>;
+  return rows.map((r) => ({
+    orgId: r.org_id,
+    planTier: r.plan_tier || "free",
+    status: r.status || "active",
+    trialEndsAt: r.trial_ends_at ?? null,
+    graceUntil: r.grace_until ?? null,
+    lastReminderAt: r.last_reminder_at ?? null,
+    ownerEmail: r.owner_email || "",
+    orgName: r.org_name || "",
+  }));
 }
 
 export function cancelSubscriptionRenewalForOrg(orgId: string, actorEmail: string): SubscriptionRecord {

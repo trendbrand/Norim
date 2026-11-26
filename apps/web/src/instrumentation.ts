@@ -12,4 +12,10 @@ export async function register() {
   } catch (err) {
     console.error("Failed to start recurring scheduler on boot:", err);
   }
+  try {
+    const { ensureBillingSchedulerStarted } = await import("./lib/billing-lifecycle");
+    ensureBillingSchedulerStarted();
+  } catch (err) {
+    console.error("Failed to start billing lifecycle on boot:", err);
+  }
 }
