@@ -11,6 +11,7 @@ import {
 } from "@/lib/db-store";
 import { getOrgMonthlyQuotaStatus } from "@/lib/quota";
 import { requireTenantAuth } from "@/lib/security";
+import { answerWithClaude } from "@/lib/ai-copilot";
 
 /**
  * Grounded AI Compliance Copilot (Master Plan Module F12 & ADR-006)
@@ -31,6 +32,22 @@ export async function POST(req: NextRequest) {
 
   const lower = q.toLowerCase();
   const orgId = access.ctx.orgId;
+
+  // 0. Real-AI path: when ANTHROPIC_API_KEY is configured, answer with Claude,
+  //    strictly grounded in a context pack built from THIS org's live data + rules.
+  //    Falls through to the deterministic engine below if no key / on any failure.
+  const ai = await answerWithClaude(q, buildCopilotContext(q, orgId));
+  if (ai) {
+    return NextResponse.json({
+      grounded: true,
+      provider: ai.provider,
+      model: ai.model,
+      disclaimer: "AI answer grounded in your live workspace data + EN 16931 rules. Not legal or tax advice.",
+      answer: ai.answer,
+      citations: ["Live workspace data", "EN 16931 ruleset"],
+      actions: [{ label: "Open Dashboard", href: "/dashboard" }],
+    });
+  }
 
   // 1. Specific EN 16931 / XRechnung / Factur-X Rule ID lookup (e.g. BR-DE-15, BR-CO-15, BR-FR-05)
   const ruleMatch = q.match(/\b(BR-[A-Z]{2,3}-\d+|BR-\d+|PDFA-3B-\d+|PEPPOL-[A-Z0-9-]+)\b/i);
@@ -180,4 +197,73 @@ export async function POST(req: NextRequest) {
       { label: "Financial & VAT Reports", href: "/reports" },
     ],
   });
+}
+
+/** Build a compact, permission-scoped grounding pack for the AI (this org only). */
+function buildCopilotContext(q: string, orgId: string): string {
+  const parts: string[] = [];
+  try {
+    const rep = getOrgAnalyticsReport(orgId);
+    parts.push(
+      `WORKSPACE KPIs: outgoing=${rep.kpis.outgoingCount}, incoming=${rep.kpis.incomingCount}, totalInvoiced=€${rep.kpis.totalInvoiced.toFixed(2)}, collected=€${rep.kpis.totalCollected.toFixed(2)}, outstanding=€${rep.kpis.totalOutstanding.toFixed(2)}, firstPassValidation=${rep.kpis.firstPassValidationRate}%, ageing(1-30/31-60/60+)=€${rep.ageing.days1to30.toFixed(2)}/€${rep.ageing.days31to60.toFixed(2)}/€${rep.ageing.days60plus.toFixed(2)}.`
+    );
+  } catch {
+    /* ignore */
+  }
+  try {
+    const sub = getSubscriptionForOrg(orgId);
+    const quota = getOrgMonthlyQuotaStatus(orgId);
+    parts.push(
+      `SUBSCRIPTION: plan=${sub.planTier}, status=${sub.status}, trialActive=${sub.trialActive}, trialDaysLeft=${sub.trialDaysRemaining}, usage=${quota.usedThisMonth}/${quota.monthlyLimit}.`
+    );
+  } catch {
+    /* ignore */
+  }
+  const ruleMatch = q.match(/\b(BR-[A-Z]{2,3}-\d+|BR-\d+|PDFA-3B-\d+)\b/i);
+  if (ruleMatch) {
+    try {
+      const k = getRuleKnowledge(ruleMatch[1]!.toUpperCase());
+      parts.push(`RULE ${k.ruleId} (${k.fieldBt}): ${k.titleEn}. ${k.messageEn} Fix: ${k.fixHintEn}`);
+    } catch {
+      /* ignore */
+    }
+  }
+  const lower = q.toLowerCase();
+  const country = EU_COUNTRY_MODULES.find(
+    (m) => lower.includes(m.name.toLowerCase()) || new RegExp(`\\b${m.code.toLowerCase()}\\b`).test(lower)
+  );
+  if (country) {
+    parts.push(
+      `COUNTRY ${country.name} (${country.status}): ${country.mandateTimeline}. Formats: ${country.supportedFormats.join(", ")}. Network: ${country.networkModel}. Retention: ${country.retentionYears}y.`
+    );
+  }
+  try {
+    const blocked = listInvoicesForOrg(orgId, { status: "ACTION_REQUIRED" });
+    if (blocked.length) {
+      parts.push(
+        `ACTION-REQUIRED (${blocked.length}): ${blocked.slice(0, 6).map((i) => `${i.invoiceNumber}[${i.diagnostics.map((d) => d.ruleId).join(",") || "error"}]`).join("; ")}.`
+      );
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const recent = listInvoicesForOrg(orgId).slice(0, 10);
+    if (recent.length) {
+      parts.push(
+        `RECENT INVOICES: ${recent.map((i) => `${i.invoiceNumber} ${i.buyerName} €${i.grossAmount.toFixed(2)} ${i.paymentStatus} due ${i.dueDate || i.issueDate}`).join("; ")}.`
+      );
+    }
+  } catch {
+    /* ignore */
+  }
+  const incoming = (() => {
+    try {
+      return listIncomingInvoicesForOrg(orgId).filter((i) => i.approvalStatus === "PENDING_REVIEW" || i.isDuplicate).length;
+    } catch {
+      return 0;
+    }
+  })();
+  if (incoming) parts.push(`INCOMING PENDING REVIEW: ${incoming}.`);
+  return parts.join("\n");
 }
