@@ -3,6 +3,8 @@ import { SESSION_COOKIE_NAME, signSessionToken } from "@/lib/auth";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { consumeUserBackupCode, findUserByEmailDb, getUserTotp, verifyPasswordScrypt } from "@/lib/db-store";
 import { verifyTotp } from "@/lib/totp";
+import { dispatchTransactionalEmail } from "@/lib/email-dispatcher";
+import { escapeHtml } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,6 +90,16 @@ export async function POST(req: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
+
+    // Best-effort security notification of a new sign-in (never blocks login).
+    if (!body.demo) {
+      const when = new Date().toUTCString();
+      void dispatchTransactionalEmail({
+        to: user.email,
+        subject: "New sign-in to your NormInvoice account",
+        html: `<p>Hello ${escapeHtml(user.fullName)},</p><p>Your NormInvoice account was just signed in to on <strong>${when}</strong>.</p><p>If this was you, no action is needed. If you don't recognize it, change your password right away and enable two-factor authentication in Settings → Security.</p><p style="font-size:12px;color:#64748b;">Automated security notice from NormInvoice.</p>`,
+      }).catch(() => {});
+    }
 
     return res;
   } catch (err) {

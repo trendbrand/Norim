@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
       const verifyUrl = `${origin}/verify-email?token=${encodeURIComponent(verifyTok.token)}`;
       await dispatchTransactionalEmail({
         to: created.email,
-        subject: "Verify your NormInvoice account email",
-        html: `<p>Hello ${escapeHtml(created.fullName)},</p><p>Welcome to NormInvoice (Product of Trend&amp;Brand). Please verify your email address:</p><p><a href="${verifyUrl}">Verify Email Address</a></p>`,
+        subject: "Welcome to NormInvoice — verify your email",
+        html: `<p>Hello ${escapeHtml(created.fullName)},</p><p>Welcome to NormInvoice (Product of Trend&amp;Brand)! Your 15-day free trial is active — you can create, validate and send EN 16931 e-invoices right away.</p><p>Please verify your email address to secure your account:</p><p><a href="${verifyUrl}">Verify email address</a></p><p style="font-size:12px;color:#64748b;">If you didn't create this account, you can safely ignore this email.</p>`,
       }).catch(() => {});
     }
 

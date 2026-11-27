@@ -11,6 +11,7 @@ import {
   verifyPasswordScrypt,
 } from "@/lib/db-store";
 import { generateBackupCodes, generateTotpSecret, hashBackupCode, otpauthUrl, verifyTotp } from "@/lib/totp";
+import { dispatchTransactionalEmail } from "@/lib/email-dispatcher";
 
 /** Current 2FA status for the signed-in user. */
 export async function GET(req: NextRequest) {
@@ -55,6 +56,13 @@ export async function POST(req: NextRequest) {
     const backupCodes = generateBackupCodes(10);
     enableUserTotp(userId, backupCodes.map(hashBackupCode));
     appendOrgAuditEvent(access.ctx.orgId, null, "SECURITY", "2FA_ENABLED", access.ctx.actorEmail, { userId });
+    if (access.ctx.actorEmail) {
+      void dispatchTransactionalEmail({
+        to: access.ctx.actorEmail,
+        subject: "Two-factor authentication enabled",
+        html: `<p>Two-factor authentication was just <strong>enabled</strong> on your NormInvoice account. From now on you'll enter a one-time code at sign-in.</p><p>If you didn't do this, contact support immediately and reset your password.</p>`,
+      }).catch(() => {});
+    }
     return NextResponse.json({ enabled: true, backupCodes });
   }
 
@@ -65,6 +73,13 @@ export async function POST(req: NextRequest) {
     }
     disableUserTotp(userId);
     appendOrgAuditEvent(access.ctx.orgId, null, "SECURITY", "2FA_DISABLED", access.ctx.actorEmail, { userId });
+    if (access.ctx.actorEmail) {
+      void dispatchTransactionalEmail({
+        to: access.ctx.actorEmail,
+        subject: "Two-factor authentication disabled",
+        html: `<p>Two-factor authentication was just <strong>disabled</strong> on your NormInvoice account. Your account is now protected by password only.</p><p>If you didn't do this, your account may be compromised — reset your password and re-enable 2FA immediately.</p>`,
+      }).catch(() => {});
+    }
     return NextResponse.json({ enabled: false });
   }
 
