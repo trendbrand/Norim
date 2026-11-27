@@ -4334,7 +4334,7 @@ export function getOrgDashboardSnapshot(orgId: string, days = 30) {
       id: "notif_trial",
       kind: subscription.trialDaysRemaining <= 3 ? "warning" : "info",
       title: `Free Trial Active — ${subscription.trialDaysRemaining} day${subscription.trialDaysRemaining === 1 ? "" : "s"} left`,
-      detail: "Upgrade to Solo ($39/month) anytime or continue on the Free plan when trial ends.",
+      detail: "Upgrade to Starter (€12/month) or Solo (€29/month) anytime. When your trial ends, choose a plan to keep access — your data stays safe.",
       href: "/settings?tab=billing",
       createdAt: subscription.updatedAt,
     });

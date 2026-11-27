@@ -46,20 +46,49 @@ export default function HomePage() {
   const { locale } = useLocale();
   const h = HOME_STRINGS[locale];
 
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://norminvoice.eu";
   const softwareJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "NormInvoice — Product of Trend&Brand",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    url: siteUrl,
     description:
-      "European E-Invoicing & Financial Automation Platform: zero-retention ZUGFeRD, Factur-X & XRechnung validator, outgoing & incoming e-invoices, GoBD hash-chained archive, and DATEV/FEC exports.",
+      "European e-invoicing & compliance platform: EN 16931 / ZUGFeRD 2.3 / Factur-X 1.07 / XRechnung 3.0.2 / Peppol BIS 3.0 validator and workspace, GoBD hash-chained archive, and DATEV/FEC exports.",
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "EUR",
+      lowPrice: "0",
+      highPrice: "129",
+      offerCount: "5",
+    },
+    featureList: [
+      "EN 16931 validation",
+      "ZUGFeRD 2.3",
+      "Factur-X 1.07",
+      "XRechnung 3.0.2",
+      "Peppol BIS 3.0",
+      "Incoming supplier inbox",
+      "Recurring invoices",
+      "GoBD audit archive",
+      "DATEV & FEC exports",
+    ],
+  };
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "NormInvoice",
+    legalName: "NormInvoice — Product of Trend&Brand",
+    url: siteUrl,
+    description: "European EN 16931 e-invoicing software (ZUGFeRD, Factur-X, XRechnung, Peppol BIS).",
+    areaServed: "EU",
   };
 
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
 
       {/* 1. Deep Navy & Orange Enterprise Hero */}
       <section className="relative overflow-hidden bg-navy-900 text-white">

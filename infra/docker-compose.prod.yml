@@ -27,6 +27,9 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.web
+      args:
+        # Baked into the client bundle for correct canonical/SEO URLs.
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://norminvoice.eu}
     restart: unless-stopped
     env_file: ../.env
     environment:

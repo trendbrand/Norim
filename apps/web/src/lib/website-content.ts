@@ -352,7 +352,7 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
         id: "billing",
         heading: "5. Subscriptions, Free Plan, 15-Day Trial & Fees",
         paragraphs: [
-          "NormInvoice offers an ongoing limited Free plan ($0), an optional 15-day Free Trial with no credit card required, and paid monthly subscriptions starting with the Solo plan ($39/month), alongside Business, Agency, and Enterprise tiers. Free trials do not silently convert into paid charges when no payment authorization is on file. Applicable taxes, billing cadence, quotas, and renewal terms are disclosed clearly prior to paid checkout.",
+          "NormInvoice offers an ongoing limited Free plan (€0), an optional 15-day Free Trial with no credit card required, and paid monthly subscriptions starting with the Starter plan (€12/month), alongside Solo (€29/month), Business, Agency, and Enterprise tiers. Free trials do not silently convert into paid charges when no payment authorization is on file. Applicable taxes, billing cadence, quotas, and renewal terms are disclosed clearly prior to paid checkout.",
         ],
       },
       {
@@ -376,7 +376,7 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
     slug: "subscription-billing",
     title: "Subscription & Billing Policy",
     badge: "Transparent SaaS Pricing & Renewals",
-    subtitle: "Clear rules on Free plan limits, 15-day Free Trials, $39/month Solo subscriptions, taxes, and renewals.",
+    subtitle: "Clear rules on Free plan limits, 15-day Free Trials, €12/month Starter & €29/month Solo subscriptions, taxes, and renewals.",
     effectiveNote: "Draft Version 1.0 · Prepared 22 November 2026",
     sections: [
       {
@@ -385,7 +385,7 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
         bullets: [
           { label: "Free Plan ($0/month)", text: "Ongoing free access including the zero-retention validator and up to 5 finalized e-invoices per month." },
           { label: "15-Day Free Trial ($0)", text: "Real time-bounded 15-day evaluation tracked in the database from signup, including up to 15 finalized e-invoices and core workflow access with no credit card required." },
-          { label: "Solo Plan ($39/month)", text: "Designed for solo founders and small businesses: up to 150 finalized e-invoices/month, recurring schedules, automations, incoming inbox, reports, and exports." },
+          { label: "Solo Plan (€29/month)", text: "Designed for solo founders and small businesses: up to 150 finalized e-invoices/month, recurring schedules, automations, incoming inbox, reports, and exports." },
           { label: "Business ($49/month) & Agency ($129/month)", text: "Higher monthly quotas (500 / 2,500 invoices), Stripe & WooCommerce bridges, multi-member RBAC, and API keys." },
           { label: "Enterprise (Custom)", text: "Tailored volume, dedicated onboarding, and custom commercial schedules arranged via official@trendandbrands.com." },
         ],

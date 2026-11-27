@@ -13,6 +13,10 @@ COPY packages/einvoice-core packages/einvoice-core
 COPY packages/db packages/db
 COPY apps/web apps/web
 
+# Public site URL is inlined into the client bundle at build time (NEXT_PUBLIC_*),
+# so canonical URLs, sitemap, robots and JSON-LD point at the real domain.
+ARG NEXT_PUBLIC_APP_URL=https://norminvoice.eu
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NEXT_STANDALONE=true
 RUN pnpm --filter @norminvoice/einvoice-core build && \
     pnpm --filter @norminvoice/db build && \
